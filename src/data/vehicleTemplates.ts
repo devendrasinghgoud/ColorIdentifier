@@ -29,6 +29,14 @@ export interface VehicleConfiguration {
   regions: Record<string, VehicleRegionConfig>;
 }
 
+export interface WheelSpec {
+  cx: number;
+  cy: number;
+  r: number;
+  rimR: number;
+  isBike?: boolean;
+}
+
 export type VehicleTemplate = {
   id: string;
   type: 'car' | 'bike';
@@ -42,11 +50,14 @@ export type VehicleTemplate = {
   glassPaths: string[];
   shadowPaths: string[];
   wheelPaths: string[];
+  wheelSpecs?: WheelSpec[];
   trimPaths: string[];
+  headlightPaths?: string[];
+  taillightPaths?: string[];
 };
 
 export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
-  // Cars
+  // 1. Executive Sports Sedan
   {
     id: 'car-sedan',
     type: 'car',
@@ -55,36 +66,86 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Aerodynamic four-door luxury sedan with sweeping roofline and sculpted door panels.',
     defaultColor: '#3B82F6',
     viewBox: '0 0 900 360',
+    wheelSpecs: [
+      { cx: 305, cy: 270, r: 46, rimR: 32 },
+      { cx: 710, cy: 270, r: 46, rimR: 32 }
+    ],
     panels: [
-      { id: 'bonnet', name: 'Bonnet / Hood', d: 'M 610,175 L 740,175 L 820,195 L 815,220 L 710,215 L 610,185 Z' },
-      { id: 'roof', name: 'Roof Panel', d: 'M 430,110 L 610,110 L 610,125 L 430,125 Z' },
-      { id: 'front-fender', name: 'Front Fender', d: 'M 740,175 L 820,195 L 820,240 L 755,240 C 740,215 675,215 660,240 L 660,185 Z' },
-      { id: 'front-bumper', name: 'Front Bumper', d: 'M 820,195 C 840,200 855,220 855,245 L 850,265 C 845,275 835,280 815,280 L 755,280 L 755,240 L 820,240 Z' },
-      { id: 'front-door', name: 'Front Door', d: 'M 525,178 L 660,178 L 660,265 L 525,265 Z' },
-      { id: 'rear-door', name: 'Rear Door', d: 'M 400,180 L 525,180 L 525,265 L 400,265 Z' },
-      { id: 'rear-quarter', name: 'Rear Quarter Panel', d: 'M 200,190 L 310,185 L 430,110 L 430,180 L 400,180 L 400,265 L 355,265 C 340,225 275,225 260,265 L 200,265 Z' },
-      { id: 'rear-bumper', name: 'Rear Bumper', d: 'M 120,240 C 120,210 140,195 200,190 L 200,280 L 150,280 C 130,280 120,265 120,240 Z' },
-      { id: 'side-skirt', name: 'Side Skirt', d: 'M 355,265 L 660,265 L 660,280 L 355,280 Z' },
-      { id: 'side-mirror', name: 'Side Mirror', d: 'M 605,170 C 625,168 628,178 615,182 Z' },
-      { id: 'spoiler', name: 'Rear Spoiler', d: 'M 115,225 C 130,223 145,225 145,232 L 118,235 Z' }
+      {
+        id: 'bonnet',
+        name: 'Bonnet / Hood',
+        d: 'M 612,174 C 674,172 756,180 832,196 C 836,208 828,218 816,219 C 742,211 672,201 612,183 Z'
+      },
+      {
+        id: 'roof',
+        name: 'Roof Panel & Cantrail',
+        d: 'M 416,112 C 488,107 552,109 614,116 L 614,128 C 552,122 488,120 416,125 Z'
+      },
+      {
+        id: 'front-fender',
+        name: 'Front Fender',
+        d: 'M 740,174 C 776,182 812,192 832,196 L 832,234 C 824,235 814,235 804,236 C 794,236 780,240 762,246 C 748,220 682,220 662,246 C 658,238 656,220 656,182 C 685,178 715,176 740,174 Z'
+      },
+      {
+        id: 'front-bumper',
+        name: 'Front Bumper & Splitter',
+        d: 'M 832,196 C 854,204 868,222 866,248 C 864,264 854,272 836,274 L 762,274 L 762,246 C 780,240 794,236 804,236 C 814,235 824,235 832,234 Z'
+      },
+      {
+        id: 'front-door',
+        name: 'Front Door',
+        d: 'M 520,176 L 656,176 L 656,264 C 610,265 565,265 520,264 Z'
+      },
+      {
+        id: 'rear-door',
+        name: 'Rear Door',
+        d: 'M 395,178 L 520,178 L 520,264 C 475,265 435,265 395,264 Z'
+      },
+      {
+        id: 'rear-quarter',
+        name: 'Rear Quarter Panel',
+        d: 'M 195,198 C 242,192 300,186 395,178 L 395,264 C 365,264 358,255 352,246 C 336,220 274,220 258,246 C 250,256 240,264 195,264 Z'
+      },
+      {
+        id: 'rear-bumper',
+        name: 'Rear Bumper & Diffuser',
+        d: 'M 118,228 C 116,206 138,198 195,198 L 195,274 C 155,274 135,272 124,264 C 116,254 116,240 118,228 Z'
+      },
+      {
+        id: 'side-skirt',
+        name: 'Side Skirt',
+        d: 'M 352,264 L 662,264 L 662,276 C 550,277 450,277 352,276 Z'
+      },
+      {
+        id: 'side-mirror',
+        name: 'Side Mirror',
+        d: 'M 608,166 C 628,164 634,174 624,180 C 614,182 606,176 608,166 Z'
+      },
+      {
+        id: 'spoiler',
+        name: 'Rear Decklid Lip',
+        d: 'M 115,224 C 128,220 142,222 142,229 C 130,232 118,231 115,224 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 330,180 L 435,120 L 525,120 L 525,180 Z',
-      'M 535,120 L 605,120 L 710,175 L 535,178 Z'
+      'M 334,178 C 368,148 398,124 430,118 L 522,118 L 522,176 Z',
+      'M 532,118 L 608,118 C 642,136 678,158 708,174 L 532,176 Z'
     ],
     shadowPaths: [
-      'M 100,285 C 300,295 600,295 870,285 C 880,295 850,305 480,305 C 150,305 90,295 100,285 Z'
+      'M 80,286 C 280,302 620,302 880,286 C 895,300 850,314 480,314 C 130,314 70,300 80,286 Z'
     ],
     wheelPaths: [
-      'M 310,275 m -45,0 a 45,45 0 1,0 90,0 a 45,45 0 1,0 -90,0',
-      'M 710,275 m -45,0 a 45,45 0 1,0 90,0 a 45,45 0 1,0 -90,0'
+      'M 305,270 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0',
+      'M 710,270 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0'
     ],
     trimPaths: [
-      'M 120,245 L 175,242 L 180,252 L 122,253 Z',
-      'M 825,205 L 852,210 L 850,225 L 820,220 Z'
+      'M 830,212 L 858,218 L 854,232 L 826,226 Z',
+      'M 120,244 L 176,242 L 180,252 L 122,253 Z'
     ]
   },
+
+  // 2. Modern Compact SUV
   {
     id: 'car-suv',
     type: 'car',
@@ -93,35 +154,82 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'High-riding versatile SUV with muscular arches, upright greenhouse, and roof rails.',
     defaultColor: '#6C5CE7',
     viewBox: '0 0 900 360',
+    wheelSpecs: [
+      { cx: 315, cy: 265, r: 50, rimR: 32 },
+      { cx: 715, cy: 265, r: 50, rimR: 32 }
+    ],
     panels: [
-      { id: 'bonnet', name: 'Bonnet / Hood', d: 'M 675,85 L 770,145 L 835,175 L 830,205 L 720,195 L 675,145 Z' },
-      { id: 'roof', name: 'Roof Panel', d: 'M 405,85 L 675,85 L 675,100 L 405,100 Z' },
-      { id: 'front-fender', name: 'Front Fender', d: 'M 770,145 L 835,175 L 835,235 L 760,235 C 745,210 675,210 660,235 L 660,170 Z' },
-      { id: 'front-bumper', name: 'Front Bumper', d: 'M 835,175 C 855,185 865,205 865,235 L 860,260 C 855,270 840,275 815,275 L 760,275 L 760,235 L 835,235 Z' },
-      { id: 'front-door', name: 'Front Door', d: 'M 525,165 L 660,165 L 660,260 L 525,260 Z' },
-      { id: 'rear-door', name: 'Rear Door', d: 'M 400,165 L 525,165 L 525,260 L 400,260 Z' },
-      { id: 'rear-quarter', name: 'Rear Quarter Panel', d: 'M 200,175 L 305,170 L 405,85 L 405,165 L 400,165 L 400,260 L 365,260 C 350,215 280,215 265,260 L 200,260 Z' },
-      { id: 'rear-bumper', name: 'Rear Bumper', d: 'M 115,235 C 115,195 140,180 200,175 L 200,275 L 145,275 C 125,275 115,255 115,235 Z' },
-      { id: 'side-skirt', name: 'Side Skirt & Steps', d: 'M 365,260 L 660,260 L 660,275 L 365,275 Z' },
-      { id: 'side-mirror', name: 'Side Mirror', d: 'M 610,155 C 628,153 630,165 615,168 Z' }
+      {
+        id: 'bonnet',
+        name: 'Bonnet / Hood',
+        d: 'M 672,88 C 720,118 780,148 836,176 C 840,192 832,204 818,206 C 758,200 706,170 672,142 Z'
+      },
+      {
+        id: 'roof',
+        name: 'High-Clearance Roof',
+        d: 'M 395,84 C 480,82 580,84 672,88 L 672,102 C 580,98 480,96 395,98 Z'
+      },
+      {
+        id: 'front-fender',
+        name: 'Flared Front Arch & Fender',
+        d: 'M 764,146 C 802,160 826,170 836,176 L 836,230 C 826,230 818,232 806,234 C 794,234 780,238 764,242 C 750,214 680,214 662,242 C 658,230 656,195 656,168 Z'
+      },
+      {
+        id: 'front-bumper',
+        name: 'Front Skid Bumper',
+        d: 'M 836,176 C 860,188 870,208 868,238 C 864,258 852,268 830,272 L 764,272 L 764,242 C 780,238 794,234 806,234 C 818,232 826,230 836,230 Z'
+      },
+      {
+        id: 'front-door',
+        name: 'Front Door',
+        d: 'M 525,162 L 656,162 L 656,258 C 610,259 565,259 525,258 Z'
+      },
+      {
+        id: 'rear-door',
+        name: 'Rear Door',
+        d: 'M 400,162 L 525,162 L 525,258 C 480,259 440,259 400,258 Z'
+      },
+      {
+        id: 'rear-quarter',
+        name: 'Rear Quarter & Pillar',
+        d: 'M 198,175 C 248,170 310,166 400,162 L 400,258 C 370,258 364,250 358,242 C 342,214 278,214 262,242 C 254,250 244,258 198,258 Z'
+      },
+      {
+        id: 'rear-bumper',
+        name: 'Rear Step Bumper',
+        d: 'M 115,232 C 114,196 138,180 198,175 L 198,272 C 152,272 132,270 122,260 C 114,248 114,238 115,232 Z'
+      },
+      {
+        id: 'side-skirt',
+        name: 'Rocker Panels & Steps',
+        d: 'M 358,258 L 662,258 L 662,272 C 550,273 450,273 358,272 Z'
+      },
+      {
+        id: 'side-mirror',
+        name: 'Side Mirror',
+        d: 'M 608,152 C 628,150 634,160 622,166 C 612,168 604,162 608,152 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 320,165 L 415,95 L 515,95 L 515,165 Z',
-      'M 525,95 L 610,95 L 610,165 L 525,165 Z',
-      'M 620,95 L 670,95 L 745,150 L 620,165 Z'
+      'M 322,162 C 354,124 384,102 414,96 L 518,96 L 518,162 Z',
+      'M 526,96 L 610,96 L 610,162 L 526,162 Z',
+      'M 618,96 L 668,96 C 696,118 726,138 748,152 L 618,162 Z'
     ],
     shadowPaths: [
-      'M 90,285 C 300,298 600,298 885,285 C 895,298 860,310 490,310 C 140,310 80,298 90,285 Z'
+      'M 80,286 C 280,302 620,302 885,286 C 898,300 855,316 480,316 C 130,316 68,300 80,286 Z'
     ],
     wheelPaths: [
-      'M 315,270 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0',
-      'M 710,270 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0'
+      'M 315,265 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0',
+      'M 715,265 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0'
     ],
     trimPaths: [
-      'M 400,75 L 680,75 L 678,82 L 402,82 Z'
+      'M 390,74 L 680,74 L 678,82 L 392,82 Z',
+      'M 835,188 L 864,194 L 860,208 L 832,204 Z'
     ]
   },
+
+  // 3. Urban Hatchback
   {
     id: 'car-hatchback',
     type: 'car',
@@ -130,34 +238,80 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Sporty compact five-door hatchback with short overhangs and dynamic posture.',
     defaultColor: '#E0115F',
     viewBox: '0 0 900 360',
+    wheelSpecs: [
+      { cx: 312, cy: 272, r: 44, rimR: 30 },
+      { cx: 700, cy: 272, r: 44, rimR: 30 }
+    ],
     panels: [
-      { id: 'bonnet', name: 'Bonnet / Hood', d: 'M 600,105 L 690,120 L 730,190 L 815,205 L 810,225 L 700,215 L 600,180 Z' },
-      { id: 'roof', name: 'Roof Panel', d: 'M 390,105 L 600,105 L 600,120 L 390,120 Z' },
-      { id: 'front-fender', name: 'Front Fender', d: 'M 730,190 L 815,205 L 810,245 L 745,245 C 730,220 665,220 650,245 L 650,185 Z' },
-      { id: 'front-bumper', name: 'Front Bumper', d: 'M 815,205 C 835,210 845,230 845,250 L 840,268 C 835,278 820,280 800,280 L 745,280 L 745,245 L 810,245 Z' },
-      { id: 'front-door', name: 'Front Door', d: 'M 495,175 L 650,175 L 650,265 L 495,265 Z' },
-      { id: 'rear-door', name: 'Rear Door', d: 'M 380,175 L 495,175 L 495,265 L 380,265 Z' },
-      { id: 'rear-quarter', name: 'Rear Quarter Panel', d: 'M 210,185 L 300,180 L 390,105 L 390,175 L 380,175 L 380,265 L 360,265 C 345,225 280,225 265,265 L 210,265 Z' },
-      { id: 'rear-bumper', name: 'Rear Bumper', d: 'M 130,240 C 130,205 155,190 210,185 L 210,280 L 155,280 C 135,280 130,265 130,240 Z' },
-      { id: 'side-skirt', name: 'Side Skirt', d: 'M 360,265 L 650,265 L 650,280 L 360,280 Z' },
-      { id: 'spoiler', name: 'Roof Spoiler', d: 'M 380,102 C 390,100 405,102 405,110 L 380,110 Z' }
+      {
+        id: 'bonnet',
+        name: 'Bonnet / Hood',
+        d: 'M 598,108 C 650,132 710,172 815,204 C 820,216 812,226 798,226 C 730,220 660,195 598,178 Z'
+      },
+      {
+        id: 'roof',
+        name: 'Sport Roof Panel',
+        d: 'M 385,104 C 455,102 525,104 598,108 L 598,122 C 525,118 455,116 385,118 Z'
+      },
+      {
+        id: 'front-fender',
+        name: 'Front Fender',
+        d: 'M 728,188 C 765,198 795,202 815,204 L 810,242 C 802,243 792,243 782,244 C 770,244 756,248 742,252 C 730,224 666,224 648,252 C 646,238 646,210 646,182 Z'
+      },
+      {
+        id: 'front-bumper',
+        name: 'Front Aero Bumper',
+        d: 'M 815,204 C 838,212 848,230 846,252 C 842,268 832,276 810,278 L 742,278 L 742,252 C 756,248 770,244 782,244 C 792,243 802,243 810,242 Z'
+      },
+      {
+        id: 'front-door',
+        name: 'Front Door',
+        d: 'M 495,174 L 646,174 L 646,264 C 600,265 550,265 495,264 Z'
+      },
+      {
+        id: 'rear-door',
+        name: 'Rear Door',
+        d: 'M 380,174 L 495,174 L 495,264 C 450,265 415,265 380,264 Z'
+      },
+      {
+        id: 'rear-quarter',
+        name: 'Rear Quarter & Hatch Flank',
+        d: 'M 208,184 C 255,180 315,176 380,174 L 380,264 C 362,264 356,256 350,248 C 334,222 274,222 258,248 C 250,256 242,264 208,264 Z'
+      },
+      {
+        id: 'rear-bumper',
+        name: 'Rear Bumper',
+        d: 'M 128,238 C 126,204 150,190 208,184 L 208,278 C 165,278 145,276 135,266 C 128,256 127,246 128,238 Z'
+      },
+      {
+        id: 'side-skirt',
+        name: 'Side Skirt',
+        d: 'M 350,264 L 648,264 L 648,278 C 550,279 450,279 350,278 Z'
+      },
+      {
+        id: 'spoiler',
+        name: 'Roof Hatch Spoiler',
+        d: 'M 374,100 C 388,98 406,100 406,110 L 374,110 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 315,175 L 395,115 L 485,115 L 485,175 Z',
-      'M 495,115 L 590,115 L 670,165 L 495,175 Z'
+      'M 312,174 C 342,138 368,114 394,112 L 484,112 L 484,174 Z',
+      'M 494,112 L 588,112 C 618,132 648,154 672,168 L 494,174 Z'
     ],
     shadowPaths: [
-      'M 110,285 C 300,296 600,296 860,285 C 870,296 840,306 480,306 C 140,306 100,296 110,285 Z'
+      'M 90,286 C 280,302 610,302 865,286 C 878,300 842,314 475,314 C 130,314 78,300 90,286 Z'
     ],
     wheelPaths: [
-      'M 312,275 m -44,0 a 44,44 0 1,0 88,0 a 44,44 0 1,0 -88,0',
-      'M 698,275 m -44,0 a 44,44 0 1,0 88,0 a 44,44 0 1,0 -88,0'
+      'M 312,272 m -44,0 a 44,44 0 1,0 88,0 a 44,44 0 1,0 -88,0',
+      'M 700,272 m -44,0 a 44,44 0 1,0 88,0 a 44,44 0 1,0 -88,0'
     ],
     trimPaths: [
-      'M 130,245 L 175,243 L 178,252 L 132,253 Z'
+      'M 128,244 L 175,242 L 178,252 L 130,253 Z'
     ]
   },
+
+  // 4. Gran Turismo Coupe
   {
     id: 'car-coupe',
     type: 'car',
@@ -166,32 +320,74 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Fastback two-door grand tourer with stretched hood and aggressive wide stance.',
     defaultColor: '#111827',
     viewBox: '0 0 900 360',
+    wheelSpecs: [
+      { cx: 302, cy: 272, r: 46, rimR: 34 },
+      { cx: 715, cy: 272, r: 46, rimR: 34 }
+    ],
     panels: [
-      { id: 'bonnet', name: 'Bonnet / Hood', d: 'M 600,115 L 755,185 L 835,200 L 830,225 L 720,215 L 600,185 Z' },
-      { id: 'roof', name: 'Roof Panel', d: 'M 440,115 L 600,115 L 600,128 L 440,128 Z' },
-      { id: 'front-fender', name: 'Front Fender', d: 'M 755,185 L 835,200 L 830,240 L 760,240 C 745,215 680,215 665,240 L 665,190 Z' },
-      { id: 'front-bumper', name: 'Front Bumper', d: 'M 835,200 C 855,205 865,225 865,250 L 860,268 C 855,278 840,280 815,280 L 760,280 L 760,240 L 830,240 Z' },
-      { id: 'front-door', name: 'Long Coupe Door', d: 'M 480,180 L 665,180 L 665,265 L 480,265 Z' },
-      { id: 'rear-quarter', name: 'Rear Fastback Quarter', d: 'M 190,195 L 340,190 L 440,115 L 440,180 L 480,180 L 480,265 L 350,265 C 335,225 270,225 255,265 L 190,265 Z' },
-      { id: 'rear-bumper', name: 'Rear Bumper', d: 'M 110,245 C 110,215 135,200 190,195 L 190,280 L 140,280 C 120,280 110,265 110,245 Z' },
-      { id: 'side-skirt', name: 'Aero Side Skirt', d: 'M 350,265 L 665,265 L 665,280 L 350,280 Z' },
-      { id: 'spoiler', name: 'Ducktail Spoiler', d: 'M 110,235 C 125,232 140,233 140,240 L 115,242 Z' }
+      {
+        id: 'bonnet',
+        name: 'Long Stretched Hood',
+        d: 'M 596,118 C 665,142 748,180 836,198 C 840,210 832,222 818,224 C 740,216 660,198 596,182 Z'
+      },
+      {
+        id: 'roof',
+        name: 'Swept Fastback Roof',
+        d: 'M 436,112 C 490,110 545,112 596,118 L 596,130 C 545,124 490,122 436,124 Z'
+      },
+      {
+        id: 'front-fender',
+        name: 'Front Aero Fender',
+        d: 'M 752,184 C 788,192 820,196 836,198 L 832,238 C 824,239 814,239 804,240 C 794,240 780,244 764,248 C 750,222 682,222 664,248 C 662,238 662,205 662,188 Z'
+      },
+      {
+        id: 'front-bumper',
+        name: 'Front Bumper & Lip',
+        d: 'M 836,198 C 858,206 870,226 868,248 C 864,266 852,274 830,276 L 764,276 L 764,248 C 780,244 794,240 804,240 C 814,239 824,239 832,238 Z'
+      },
+      {
+        id: 'front-door',
+        name: 'Long Coupe Door',
+        d: 'M 476,178 L 662,178 L 662,264 C 600,265 540,265 476,264 Z'
+      },
+      {
+        id: 'rear-quarter',
+        name: 'Rear Fastback Haunches',
+        d: 'M 188,194 C 255,188 335,182 476,178 L 476,264 C 362,264 356,256 348,248 C 334,222 270,222 254,248 C 246,256 238,264 188,264 Z'
+      },
+      {
+        id: 'rear-bumper',
+        name: 'Rear Diffuser Bumper',
+        d: 'M 108,242 C 108,214 132,198 188,194 L 188,278 C 146,278 126,276 116,266 C 110,256 108,248 108,242 Z'
+      },
+      {
+        id: 'side-skirt',
+        name: 'Aero Side Skirt',
+        d: 'M 348,264 L 664,264 L 664,278 C 550,279 450,279 348,278 Z'
+      },
+      {
+        id: 'spoiler',
+        name: 'Ducktail Spoiler',
+        d: 'M 108,232 C 124,228 142,230 142,238 L 112,240 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 355,185 L 445,125 L 585,125 L 705,180 Z'
+      'M 350,182 C 388,142 420,122 444,120 L 582,120 C 624,142 668,166 704,180 Z'
     ],
     shadowPaths: [
-      'M 90,285 C 300,296 600,296 880,285 C 890,296 855,306 480,306 C 130,306 80,296 90,285 Z'
+      'M 80,286 C 280,302 620,302 885,286 C 896,300 855,314 478,314 C 125,314 68,300 80,286 Z'
     ],
     wheelPaths: [
-      'M 302,275 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0',
-      'M 712,275 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0'
+      'M 302,272 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0',
+      'M 715,272 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0'
     ],
     trimPaths: [
-      'M 835,210 L 860,215 L 858,228 L 832,222 Z'
+      'M 834,208 L 862,214 L 858,226 L 832,222 Z'
     ]
   },
+
+  // 5. Mid-Engine Supercar
   {
     id: 'car-sportscar',
     type: 'car',
@@ -200,32 +396,74 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Ultra-low exotic sports car with dramatic intakes and aggressive aerodynamics.',
     defaultColor: '#FFBF00',
     viewBox: '0 0 900 360',
+    wheelSpecs: [
+      { cx: 292, cy: 274, r: 48, rimR: 36 },
+      { cx: 724, cy: 274, r: 46, rimR: 34 }
+    ],
     panels: [
-      { id: 'bonnet', name: 'Front Hood', d: 'M 550,135 L 680,185 L 840,205 L 835,225 L 700,215 L 550,185 Z' },
-      { id: 'roof', name: 'Canopy Roof', d: 'M 390,135 L 550,135 L 550,148 L 390,148 Z' },
-      { id: 'front-fender', name: 'Front Aero Fender', d: 'M 680,185 L 840,205 L 835,245 L 770,245 C 755,225 690,225 675,245 L 675,195 Z' },
-      { id: 'front-bumper', name: 'Front Splitter & Bumper', d: 'M 840,205 C 865,210 875,230 875,255 L 870,270 C 865,280 845,282 820,282 L 770,282 L 770,245 L 835,245 Z' },
-      { id: 'front-door', name: 'Dihedral Door', d: 'M 460,185 L 675,185 L 675,268 L 460,268 Z' },
-      { id: 'rear-quarter', name: 'Rear Intake & Engine Bay', d: 'M 180,200 L 290,195 L 390,135 L 390,185 L 460,185 L 460,268 L 340,268 C 325,225 260,225 245,268 L 180,268 Z' },
-      { id: 'rear-bumper', name: 'Rear Diffuser & Bumper', d: 'M 100,250 C 100,225 125,205 180,200 L 180,282 L 135,282 C 115,282 100,270 100,250 Z' },
-      { id: 'side-skirt', name: 'Carbon Side Skirt', d: 'M 340,268 L 675,268 L 675,282 L 340,282 Z' },
-      { id: 'spoiler', name: 'Active Rear Wing', d: 'M 95,215 C 110,212 135,212 140,222 L 98,225 Z' }
+      {
+        id: 'bonnet',
+        name: 'Front Aero Hood',
+        d: 'M 548,136 C 618,162 708,188 842,204 C 846,216 836,224 820,224 C 740,218 640,195 548,182 Z'
+      },
+      {
+        id: 'roof',
+        name: 'Low Canopy Roof',
+        d: 'M 388,132 C 440,130 495,132 548,136 L 548,148 C 495,144 440,142 388,144 Z'
+      },
+      {
+        id: 'front-fender',
+        name: 'Front Aero Fender',
+        d: 'M 678,184 C 740,195 805,200 842,204 L 838,242 C 830,243 820,243 810,244 C 798,244 786,248 772,252 C 758,226 692,226 676,252 C 674,238 674,205 674,192 Z'
+      },
+      {
+        id: 'front-bumper',
+        name: 'Front Splitter & Bumper',
+        d: 'M 842,204 C 868,212 880,232 878,254 C 874,272 860,278 834,280 L 772,280 L 772,252 C 786,248 798,244 810,244 C 820,243 830,243 838,242 Z'
+      },
+      {
+        id: 'front-door',
+        name: 'Dihedral Door',
+        d: 'M 458,182 L 674,182 L 674,266 C 600,267 530,267 458,266 Z'
+      },
+      {
+        id: 'rear-quarter',
+        name: 'Rear Intake & Engine Bay',
+        d: 'M 178,198 C 242,192 320,188 458,182 L 458,266 C 352,266 346,258 338,250 C 324,224 260,224 244,250 C 236,258 226,266 178,266 Z'
+      },
+      {
+        id: 'rear-bumper',
+        name: 'Rear Diffuser & Exhaust',
+        d: 'M 98,248 C 98,224 122,204 178,198 L 178,280 C 135,280 115,278 104,268 C 98,258 98,252 98,248 Z'
+      },
+      {
+        id: 'side-skirt',
+        name: 'Carbon Side Skirt',
+        d: 'M 338,266 L 676,266 L 676,280 C 550,281 450,281 338,280 Z'
+      },
+      {
+        id: 'spoiler',
+        name: 'Active GT Wing',
+        d: 'M 92,212 C 112,208 140,208 144,220 L 96,222 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 305,190 L 395,145 L 535,145 L 610,185 Z'
+      'M 302,188 C 348,154 386,140 404,138 L 532,138 C 564,156 596,174 612,184 Z'
     ],
     shadowPaths: [
-      'M 80,286 C 300,298 600,298 895,286 C 905,298 860,308 485,308 C 120,308 70,298 80,286 Z'
+      'M 75,286 C 280,302 620,302 895,286 C 906,300 862,314 485,314 C 120,314 62,300 75,286 Z'
     ],
     wheelPaths: [
-      'M 292,276 m -48,0 a 48,48 0 1,0 96,0 a 48,48 0 1,0 -96,0',
-      'M 722,276 m -48,0 a 48,48 0 1,0 96,0 a 48,48 0 1,0 -96,0'
+      'M 292,274 m -48,0 a 48,48 0 1,0 96,0 a 48,48 0 1,0 -96,0',
+      'M 724,274 m -46,0 a 46,46 0 1,0 92,0 a 46,46 0 1,0 -92,0'
     ],
     trimPaths: [
-      'M 545,210 L 610,210 L 595,255 L 540,255 Z'
+      'M 542,210 L 610,210 L 596,252 L 538,252 Z'
     ]
   },
+
+  // 6. Crew-Cab Utility Pickup
   {
     id: 'car-pickup',
     type: 'car',
@@ -234,35 +472,75 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Rugged full-size utility pickup truck with upright front fascia and expansive cargo bed.',
     defaultColor: '#DC143C',
     viewBox: '0 0 900 360',
+    wheelSpecs: [
+      { cx: 310, cy: 262, r: 52, rimR: 32 },
+      { cx: 715, cy: 262, r: 52, rimR: 32 }
+    ],
     panels: [
-      { id: 'bonnet', name: 'Bonnet / Hood', d: 'M 620,90 L 675,145 L 845,150 L 840,180 L 720,175 L 620,145 Z' },
-      { id: 'roof', name: 'Cab Roof', d: 'M 440,90 L 620,90 L 620,105 L 440,105 Z' },
-      { id: 'front-fender', name: 'Front Fender', d: 'M 675,145 L 845,150 L 840,225 L 760,225 C 745,200 675,200 660,225 L 660,150 Z' },
-      { id: 'front-bumper', name: 'Steel Front Bumper', d: 'M 845,150 C 865,155 875,175 875,215 L 870,265 C 865,275 845,275 815,275 L 760,275 L 760,225 L 840,225 Z' },
-      { id: 'front-door', name: 'Front Door', d: 'M 525,145 L 660,145 L 660,260 L 525,260 Z' },
-      { id: 'rear-door', name: 'Rear Cab Door', d: 'M 400,145 L 525,145 L 525,260 L 400,260 Z' },
-      { id: 'rear-quarter', name: 'Cargo Bed & Flank', d: 'M 105,150 L 375,150 L 375,260 L 360,260 C 345,205 275,205 260,260 L 130,260 C 115,260 105,250 105,230 Z' },
-      { id: 'rear-bumper', name: 'Rear Step Bumper', d: 'M 105,230 L 130,230 L 130,268 L 105,268 Z' },
-      { id: 'side-skirt', name: 'Side Running Board', d: 'M 360,260 L 660,260 L 660,275 L 360,275 Z' }
+      {
+        id: 'bonnet',
+        name: 'Chiseled Power Hood',
+        d: 'M 618,92 C 655,124 720,146 846,150 C 850,166 844,178 828,180 C 765,178 695,152 618,142 Z'
+      },
+      {
+        id: 'roof',
+        name: 'Cab Roof',
+        d: 'M 436,88 C 496,86 558,88 618,92 L 618,106 C 558,102 496,100 436,102 Z'
+      },
+      {
+        id: 'front-fender',
+        name: 'Front Fender & Arch',
+        d: 'M 674,144 C 740,148 812,150 846,150 L 842,224 C 832,224 822,226 810,228 C 796,228 780,234 764,240 C 748,210 678,210 662,240 C 660,225 660,180 660,148 Z'
+      },
+      {
+        id: 'front-bumper',
+        name: 'Steel Front Bumper',
+        d: 'M 846,150 C 868,156 880,178 878,218 C 874,260 858,272 830,274 L 764,274 L 764,240 C 780,234 796,228 810,228 C 822,226 832,224 842,224 Z'
+      },
+      {
+        id: 'front-door',
+        name: 'Front Cab Door',
+        d: 'M 524,144 L 660,144 L 660,258 C 615,259 570,259 524,258 Z'
+      },
+      {
+        id: 'rear-door',
+        name: 'Rear Cab Door',
+        d: 'M 398,144 L 524,144 L 524,258 C 480,259 440,259 398,258 Z'
+      },
+      {
+        id: 'rear-quarter',
+        name: 'Cargo Bed & Flank',
+        d: 'M 104,150 C 180,150 280,148 376,146 L 376,258 C 362,258 356,248 348,240 C 332,210 268,210 252,240 C 244,248 234,258 132,258 C 118,258 106,248 104,228 Z'
+      },
+      {
+        id: 'rear-bumper',
+        name: 'Rear Step Bumper',
+        d: 'M 104,228 L 132,228 L 132,268 L 104,268 Z'
+      },
+      {
+        id: 'side-skirt',
+        name: 'Running Boards',
+        d: 'M 348,258 L 662,258 L 662,274 C 550,275 450,275 348,274 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 445,100 L 515,100 L 515,145 L 400,145 Z',
-      'M 525,100 L 605,100 L 655,145 L 525,145 Z'
+      'M 440,102 L 516,102 L 516,144 L 398,144 Z',
+      'M 524,102 L 606,102 C 628,120 646,134 656,144 L 524,144 Z'
     ],
     shadowPaths: [
-      'M 85,282 C 300,296 600,296 890,282 C 900,296 860,308 490,308 C 130,308 75,296 85,282 Z'
+      'M 80,284 C 280,300 620,300 890,284 C 902,298 860,314 485,314 C 125,314 68,298 80,284 Z'
     ],
     wheelPaths: [
-      'M 310,265 m -52,0 a 52,52 0 1,0 104,0 a 52,52 0 1,0 -104,0',
-      'M 710,265 m -52,0 a 52,52 0 1,0 104,0 a 52,52 0 1,0 -104,0'
+      'M 310,262 m -52,0 a 52,52 0 1,0 104,0 a 52,52 0 1,0 -104,0',
+      'M 715,262 m -52,0 a 52,52 0 1,0 104,0 a 52,52 0 1,0 -104,0'
     ],
     trimPaths: [
-      'M 845,160 L 875,160 L 872,185 L 842,180 Z'
+      'M 846,158 L 878,160 L 874,186 L 842,182 Z'
     ]
   },
 
-  // Motorcycles
+  // 7. Supersport 1000cc Racing Motorcycle
   {
     id: 'bike-sportbike',
     type: 'bike',
@@ -271,28 +549,55 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Track-focused supersport motorcycle with aerodynamic full fairing and sharp tail section.',
     defaultColor: '#0E3A75',
     viewBox: '0 0 800 450',
+    wheelSpecs: [
+      { cx: 205, cy: 335, r: 64, rimR: 44, isBike: true },
+      { cx: 600, cy: 335, r: 64, rimR: 44, isBike: true }
+    ],
     panels: [
-      { id: 'fuel-tank', name: 'Fuel Tank', d: 'M 360,210 C 370,165 420,155 480,170 C 510,180 540,210 500,245 L 430,245 Z' },
-      { id: 'fairing', name: 'Front & Side Fairing', d: 'M 480,245 L 580,205 L 610,245 L 520,330 L 460,330 L 440,270 Z' },
-      { id: 'seat-cowl', name: 'Tail Section & Seat Cowl', d: 'M 270,185 L 360,185 L 350,210 L 250,210 Z' },
-      { id: 'front-mudguard', name: 'Front Fender', d: 'M 545,295 C 570,275 615,275 640,305 L 625,315 C 605,295 575,295 555,310 Z' },
-      { id: 'belly-pan', name: 'Lower Belly Pan', d: 'M 430,315 L 520,325 L 495,350 L 415,340 Z' }
+      {
+        id: 'fuel-tank',
+        name: 'Sculpted Fuel Tank',
+        d: 'M 358,212 C 370,162 422,154 484,172 C 514,182 542,212 502,246 L 430,246 Z'
+      },
+      {
+        id: 'fairing',
+        name: 'Front & Side Racing Fairing',
+        d: 'M 482,246 L 582,204 C 606,220 616,242 612,252 L 524,332 L 462,332 L 442,272 Z'
+      },
+      {
+        id: 'seat-cowl',
+        name: 'Aerodynamic Tail Cowl',
+        d: 'M 268,184 L 362,184 L 352,212 L 248,212 Z'
+      },
+      {
+        id: 'front-mudguard',
+        name: 'Front Fender / Mudguard',
+        d: 'M 552,292 C 578,272 626,272 652,304 L 634,314 C 612,294 582,294 562,310 Z'
+      },
+      {
+        id: 'belly-pan',
+        name: 'Lower Engine Belly Pan',
+        d: 'M 430,314 L 524,324 L 498,352 L 414,342 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 570,170 L 615,185 L 590,205 L 555,190 Z'
+      'M 572,168 L 618,184 L 592,204 L 556,188 Z'
     ],
     shadowPaths: [
-      'M 120,410 C 300,420 500,420 680,410 C 690,420 660,430 400,430 C 180,430 110,420 120,410 Z'
+      'M 120,412 C 300,422 500,422 680,412 C 692,422 660,432 400,432 C 180,432 110,422 120,412 Z'
     ],
     wheelPaths: [
-      'M 210,340 m -65,0 a 65,65 0 1,0 130,0 a 65,65 0 1,0 -130,0',
-      'M 590,340 m -65,0 a 65,65 0 1,0 130,0 a 65,65 0 1,0 -130,0'
+      'M 205,335 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0',
+      'M 600,335 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0'
     ],
     trimPaths: [
-      'M 330,250 L 440,250 L 430,340 L 340,320 Z'
+      'M 330,248 L 442,248 L 432,342 L 342,322 Z',
+      'M 420,345 L 560,356 L 560,374 L 420,362 Z'
     ]
   },
+
+  // 8. V-Twin Cruiser
   {
     id: 'bike-cruiser',
     type: 'bike',
@@ -301,25 +606,43 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Classic low-slung cruiser with teardrop fuel tank, deep fenders, and forward controls.',
     defaultColor: '#16181D',
     viewBox: '0 0 800 450',
+    wheelSpecs: [
+      { cx: 195, cy: 342, r: 66, rimR: 44, isBike: true },
+      { cx: 610, cy: 342, r: 66, rimR: 44, isBike: true }
+    ],
     panels: [
-      { id: 'fuel-tank', name: 'Teardrop Fuel Tank', d: 'M 340,220 C 350,180 400,175 460,195 C 480,205 490,225 460,245 L 350,245 Z' },
-      { id: 'rear-mudguard', name: 'Deep Rear Fender', d: 'M 130,310 C 130,270 170,250 230,250 L 245,280 C 190,280 170,295 160,330 Z' },
-      { id: 'front-mudguard', name: 'Classic Front Fender', d: 'M 580,260 C 620,260 655,280 660,320 L 630,330 C 620,300 600,285 570,285 Z' }
+      {
+        id: 'fuel-tank',
+        name: 'Teardrop Fuel Tank',
+        d: 'M 338,222 C 348,178 402,174 464,196 C 484,206 492,226 462,246 L 348,246 Z'
+      },
+      {
+        id: 'rear-mudguard',
+        name: 'Deep Rear Fender',
+        d: 'M 128,308 C 128,266 170,248 232,248 L 246,278 C 192,278 172,294 162,332 Z'
+      },
+      {
+        id: 'front-mudguard',
+        name: 'Classic Front Valanced Fender',
+        d: 'M 582,258 C 624,258 660,278 666,322 L 634,332 C 624,300 602,284 572,284 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [],
     shadowPaths: [
-      'M 100,410 C 300,420 500,420 700,410 C 710,420 680,430 400,430 C 160,430 90,420 100,410 Z'
+      'M 100,412 C 300,422 500,422 700,412 C 712,422 680,432 400,432 C 160,432 90,422 100,412 Z'
     ],
     wheelPaths: [
-      'M 195,345 m -68,0 a 68,68 0 1,0 136,0 a 68,68 0 1,0 -136,0',
-      'M 605,345 m -68,0 a 68,68 0 1,0 136,0 a 68,68 0 1,0 -136,0'
+      'M 195,342 m -66,0 a 66,66 0 1,0 132,0 a 66,66 0 1,0 -132,0',
+      'M 610,342 m -66,0 a 66,66 0 1,0 132,0 a 66,66 0 1,0 -132,0'
     ],
     trimPaths: [
-      'M 350,255 L 450,255 L 430,350 L 330,350 Z',
-      'M 380,350 L 570,360 L 570,375 L 380,365 Z'
+      'M 350,252 L 452,252 L 432,352 L 332,352 Z',
+      'M 380,352 L 572,362 L 572,378 L 380,368 Z'
     ]
   },
+
+  // 9. Streetfighter Naked
   {
     id: 'bike-naked',
     type: 'bike',
@@ -328,25 +651,47 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Aggressive street motorcycle with exposed trellis frame and minimalist bodywork.',
     defaultColor: '#D40026',
     viewBox: '0 0 800 450',
+    wheelSpecs: [
+      { cx: 205, cy: 338, r: 64, rimR: 44, isBike: true },
+      { cx: 598, cy: 338, r: 64, rimR: 44, isBike: true }
+    ],
     panels: [
-      { id: 'fuel-tank', name: 'Muscular Fuel Tank', d: 'M 370,205 C 380,165 435,160 485,180 C 510,195 520,225 480,240 L 380,240 Z' },
-      { id: 'seat-cowl', name: 'Sharp Tail Cowl', d: 'M 270,190 L 350,190 L 335,215 L 255,215 Z' },
-      { id: 'fairing', name: 'Headlight Mask & Shrouds', d: 'M 560,230 L 590,235 L 575,255 L 550,245 Z' },
-      { id: 'front-mudguard', name: 'Shorty Front Fender', d: 'M 550,290 C 575,275 615,275 640,305 L 625,315 C 605,295 575,295 555,310 Z' }
+      {
+        id: 'fuel-tank',
+        name: 'Muscular Chiseled Tank',
+        d: 'M 368,206 C 378,162 436,158 488,180 C 514,196 524,226 482,242 L 378,242 Z'
+      },
+      {
+        id: 'seat-cowl',
+        name: 'Sharp Tail Cowl',
+        d: 'M 268,188 L 352,188 L 336,216 L 254,216 Z'
+      },
+      {
+        id: 'fairing',
+        name: 'Headlight Mask & Radiator Shrouds',
+        d: 'M 558,228 L 592,234 L 576,256 L 548,246 Z'
+      },
+      {
+        id: 'front-mudguard',
+        name: 'Shorty Front Fender',
+        d: 'M 548,288 C 574,272 616,272 642,304 L 626,314 C 606,294 576,294 554,310 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [],
     shadowPaths: [
-      'M 120,410 C 300,420 500,420 680,410 C 690,420 660,430 400,430 C 180,430 110,420 120,410 Z'
+      'M 120,412 C 300,422 500,422 680,412 C 692,422 660,432 400,432 C 180,432 110,422 120,412 Z'
     ],
     wheelPaths: [
-      'M 205,340 m -65,0 a 65,65 0 1,0 130,0 a 65,65 0 1,0 -130,0',
-      'M 595,340 m -65,0 a 65,65 0 1,0 130,0 a 65,65 0 1,0 -130,0'
+      'M 205,338 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0',
+      'M 598,338 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0'
     ],
     trimPaths: [
-      'M 360,250 L 460,250 L 440,340 L 340,330 Z'
+      'M 360,248 L 462,248 L 442,342 L 342,332 Z'
     ]
   },
+
+  // 10. Adventure Tourer
   {
     id: 'bike-adventure',
     type: 'bike',
@@ -355,27 +700,49 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Long-distance dual-sport adventure bike with tall rally windscreen and prominent beak.',
     defaultColor: '#22D3EE',
     viewBox: '0 0 800 450',
+    wheelSpecs: [
+      { cx: 195, cy: 338, r: 66, rimR: 44, isBike: true },
+      { cx: 610, cy: 338, r: 68, rimR: 46, isBike: true }
+    ],
     panels: [
-      { id: 'fuel-tank', name: 'Long-Range Fuel Tank', d: 'M 380,190 C 390,150 445,145 510,165 C 530,175 550,205 500,235 L 390,235 Z' },
-      { id: 'fairing', name: 'Front Rally Beak & Fairing', d: 'M 510,235 L 610,235 L 580,265 L 500,255 Z' },
-      { id: 'seat-cowl', name: 'Subframe & Tail Section', d: 'M 270,175 L 370,175 L 350,205 L 250,205 Z' },
-      { id: 'front-mudguard', name: 'High Front Fender', d: 'M 560,285 C 585,270 625,270 650,300 L 635,310 C 615,290 585,290 565,305 Z' }
+      {
+        id: 'fuel-tank',
+        name: 'Long-Range Fuel Tank',
+        d: 'M 378,192 C 388,148 446,144 512,166 C 532,176 552,206 502,236 L 388,236 Z'
+      },
+      {
+        id: 'fairing',
+        name: 'Front Rally Beak & Fairing',
+        d: 'M 508,234 L 612,234 L 582,266 L 498,256 Z'
+      },
+      {
+        id: 'seat-cowl',
+        name: 'Subframe & Tail Section',
+        d: 'M 268,174 L 372,174 L 352,206 L 248,206 Z'
+      },
+      {
+        id: 'front-mudguard',
+        name: 'High Front Fender',
+        d: 'M 562,284 C 588,268 628,268 654,298 L 638,308 C 618,288 588,288 568,304 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [
-      'M 540,130 L 565,95 L 585,130 L 555,160 Z'
+      'M 538,128 L 566,92 L 588,128 L 556,158 Z'
     ],
     shadowPaths: [
-      'M 110,410 C 300,420 500,420 690,410 C 700,420 670,430 400,430 C 170,430 100,420 110,410 Z'
+      'M 110,412 C 300,422 500,422 690,412 C 702,422 670,432 400,432 C 170,432 100,422 110,412 Z'
     ],
     wheelPaths: [
-      'M 195,340 m -68,0 a 68,68 0 1,0 136,0 a 68,68 0 1,0 -136,0',
-      'M 605,340 m -68,0 a 68,68 0 1,0 136,0 a 68,68 0 1,0 -136,0'
+      'M 195,338 m -66,0 a 66,66 0 1,0 132,0 a 66,66 0 1,0 -132,0',
+      'M 610,338 m -68,0 a 68,68 0 1,0 136,0 a 68,68 0 1,0 -136,0'
     ],
     trimPaths: [
-      'M 370,245 L 470,245 L 450,345 L 350,335 Z'
+      'M 370,244 L 472,244 L 452,346 L 352,336 Z'
     ]
   },
+
+  // 11. Urban Commuter
   {
     id: 'bike-commuter',
     type: 'bike',
@@ -384,22 +751,38 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
     description: 'Lightweight everyday street bike with upright ergonomic seating and clean bodywork.',
     defaultColor: '#6CB33F',
     viewBox: '0 0 800 450',
+    wheelSpecs: [
+      { cx: 200, cy: 340, r: 64, rimR: 44, isBike: true },
+      { cx: 602, cy: 340, r: 64, rimR: 44, isBike: true }
+    ],
     panels: [
-      { id: 'fuel-tank', name: 'Compact Fuel Tank', d: 'M 350,210 C 360,170 410,165 470,185 C 490,195 500,225 460,240 L 360,240 Z' },
-      { id: 'seat-cowl', name: 'Utility Tail Cowl', d: 'M 250,190 L 340,190 L 330,215 L 240,215 Z' },
-      { id: 'front-mudguard', name: 'City Front Mudguard', d: 'M 550,290 C 575,275 615,275 640,305 L 625,315 C 605,295 575,295 555,310 Z' }
+      {
+        id: 'fuel-tank',
+        name: 'Compact Commuter Tank',
+        d: 'M 348,210 C 358,168 412,164 472,184 C 492,196 502,226 462,242 L 358,242 Z'
+      },
+      {
+        id: 'seat-cowl',
+        name: 'Utility Tail Cowl',
+        d: 'M 248,188 L 342,188 L 332,216 L 238,216 Z'
+      },
+      {
+        id: 'front-mudguard',
+        name: 'City Front Mudguard',
+        d: 'M 548,288 C 574,272 616,272 642,304 L 626,314 C 606,294 576,294 554,310 Z'
+      }
     ],
     get bodyPaths() { return this.panels.map(p => p.d); },
     glassPaths: [],
     shadowPaths: [
-      'M 120,410 C 300,420 500,420 680,410 C 690,420 660,430 400,430 C 180,430 110,420 120,410 Z'
+      'M 120,412 C 300,422 500,422 680,412 C 692,422 660,432 400,432 C 180,432 110,422 120,412 Z'
     ],
     wheelPaths: [
       'M 200,340 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0',
-      'M 600,340 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0'
+      'M 602,340 m -64,0 a 64,64 0 1,0 128,0 a 64,64 0 1,0 -128,0'
     ],
     trimPaths: [
-      'M 340,245 L 440,245 L 420,335 L 330,325 Z'
+      'M 340,244 L 442,244 L 422,336 L 332,326 Z'
     ]
   }
 ];

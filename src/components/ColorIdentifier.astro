@@ -275,7 +275,8 @@ const {
   let sourceWidth = 0;
   let sourceHeight = 0;
   let isFrozen = false;
-  let cameraTimer = 0;
+  let cameraAnimId: number | null = null;
+  let loadedImage: HTMLImageElement | null = null;
 
   function say(text: string) {
     if (message) message.textContent = text;
@@ -312,8 +313,9 @@ const {
     const h = source ? source.videoHeight : sourceHeight;
     if (!w || !h) return;
 
-    const maxWidth = 1200;
-    const scale = Math.min(1, maxWidth / Math.max(w, h));
+    // Preserve full native resolution up to 4K UHD (3840px)
+    const maxDim = 3840;
+    const scale = Math.min(1, maxDim / Math.max(w, h));
     const baseW = Math.round(w * scale);
     const baseH = Math.round(h * scale);
 
@@ -322,11 +324,14 @@ const {
       canvas.height = baseH;
     }
 
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, baseW, baseH);
+
     if (source) {
       ctx.drawImage(source, 0, 0, baseW, baseH);
     } else {
-      const img = (window as Window & { __colorImage?: HTMLImageElement }).__colorImage;
+      const img = loadedImage || (window as Window & { __colorImage?: HTMLImageElement }).__colorImage;
       if (img) ctx.drawImage(img, 0, 0, baseW, baseH);
     }
 
@@ -505,10 +510,10 @@ const {
       return;
     }
 
-    const x = Math.round(((clientX - rect.left) / rect.width) * canvas.width);
-    const y = Math.round(((clientY - rect.top) / rect.height) * canvas.height);
-    const clampedX = Math.max(0, Math.min(canvas.width - 1, x));
-    const clampedY = Math.max(0, Math.min(canvas.height - 1, y));
+    const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    const clampedX = Math.max(0, Math.min(canvas.width - 1, Math.round(normX * (canvas.width - 1))));
+    const clampedY = Math.max(0, Math.min(canvas.height - 1, Math.round(normY * (canvas.height - 1))));
 
     if (coordDisplay) {
       coordDisplay.textContent = `X: ${clampedX}, Y: ${clampedY}`;
@@ -517,8 +522,8 @@ const {
     // Render 9x9 pixels magnified onto 100x100 magnifier canvas
     const sampleSize = 9;
     const half = Math.floor(sampleSize / 2);
-    const startX = Math.max(0, clampedX - half);
-    const startY = Math.max(0, clampedY - half);
+    const startX = Math.max(0, Math.min(canvas.width - sampleSize, clampedX - half));
+    const startY = Math.max(0, Math.min(canvas.height - sampleSize, clampedY - half));
 
     magCtx.imageSmoothingEnabled = false;
     magCtx.clearRect(0, 0, 100, 100);
@@ -535,28 +540,26 @@ const {
   function pointFromEvent(clientX: number, clientY: number) {
     if (!canvas || !ctx) return;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.round(((clientX - rect.left) / rect.width) * canvas.width);
-    const y = Math.round(((clientY - rect.top) / rect.height) * canvas.height);
-    const clampedX = Math.max(0, Math.min(canvas.width - 1, x));
-    const clampedY = Math.max(0, Math.min(canvas.height - 1, y));
+    const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    const clampedX = Math.max(0, Math.min(canvas.width - 1, Math.round(normX * (canvas.width - 1))));
+    const clampedY = Math.max(0, Math.min(canvas.height - 1, Math.round(normY * (canvas.height - 1))));
 
     const px = ctx.getImageData(clampedX, clampedY, 1, 1).data;
     selectRgb(px[0], px[1], px[2], true);
 
-    if (crosshair) {
-      const stageRect = stage?.getBoundingClientRect();
-      if (stageRect) {
-        crosshair.hidden = false;
-        crosshair.style.left = `${clientX - stageRect.left}px`;
-        crosshair.style.top = `${clientY - stageRect.top}px`;
-      }
+    if (crosshair && stage) {
+      const stageRect = stage.getBoundingClientRect();
+      crosshair.hidden = false;
+      crosshair.style.left = `${clientX - stageRect.left}px`;
+      crosshair.style.top = `${clientY - stageRect.top}px`;
     }
   }
 
   function stopCameraTracks() {
-    if (cameraTimer) {
-      window.clearInterval(cameraTimer);
-      cameraTimer = 0;
+    if (cameraAnimId) {
+      cancelAnimationFrame(cameraAnimId);
+      cameraAnimId = null;
     }
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
@@ -573,6 +576,13 @@ const {
     if (startButton) startButton.disabled = false;
   }
 
+  function cameraLoop() {
+    if (mode === 'camera' && stream) {
+      drawSource();
+      cameraAnimId = requestAnimationFrame(cameraLoop);
+    }
+  }
+
   async function startCameraStream(facing: 'environment' | 'user') {
     if (!navigator.mediaDevices?.getUserMedia) {
       say('Camera access is not supported by your browser or requires HTTPS. Use image upload instead.');
@@ -584,8 +594,8 @@ const {
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 }
         },
         audio: false
       });
@@ -603,13 +613,7 @@ const {
       if (flipButton) flipButton.disabled = false;
 
       drawSource();
-      cameraTimer = window.setInterval(() => {
-        if (mode !== 'camera' || !stream) {
-          window.clearInterval(cameraTimer);
-          return;
-        }
-        drawSource();
-      }, 90);
+      cameraAnimId = requestAnimationFrame(cameraLoop);
 
       say('Camera active. Tap or click anywhere on the feed to freeze or sample a pixel.');
     } catch (err: unknown) {
@@ -643,6 +647,7 @@ const {
     img.onload = () => {
       sourceWidth = img.naturalWidth;
       sourceHeight = img.naturalHeight;
+      loadedImage = img;
       (window as Window & { __colorImage?: HTMLImageElement }).__colorImage = img;
       drawSource();
       showActiveStage();

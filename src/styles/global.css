@@ -473,15 +473,19 @@ img, svg, video, canvas { max-width: 100%; }
   background: var(--surface-soft);
   border: 2px dashed var(--border-strong);
   border-radius: 16px;
-  min-height: 280px;
-  display: grid;
-  place-items: center;
+  min-height: 320px;
+  max-height: 68vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   position: relative;
   user-select: none;
+  transition: border-color 0.2s ease, min-height 0.2s ease;
 }
 .scanner-stage.has-content {
   border-style: solid;
+  background: #070B16;
 }
 .scanner-empty {
   display: flex;
@@ -519,12 +523,16 @@ img, svg, video, canvas { max-width: 100%; }
 
 #sample-canvas {
   display: block;
-  max-height: 540px;
-  width: auto;
+  max-height: 62vh;
   max-width: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   cursor: crosshair;
   touch-action: none;
+  border-radius: 8px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease-out;
 }
 
 .camera-wrapper {

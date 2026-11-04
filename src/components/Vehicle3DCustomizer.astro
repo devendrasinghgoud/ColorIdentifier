@@ -799,52 +799,72 @@ const presetColors = [
 
     // Three.js Scene Setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0e1322);
+    scene.background = new THREE.Color(0x0b1020);
 
     const camera = new THREE.PerspectiveCamera(40, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 100);
     camera.position.set(3.8, 1.8, 3.8);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.15;
     canvasContainer.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent camera from going underneath ground
+    controls.maxPolarAngle = Math.PI / 2 + 0.02; // Prevent camera from going underneath ground
     controls.minDistance = 2.0;
-    controls.maxDistance = 10.0;
+    controls.maxDistance = 9.0;
 
-    // Studio Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    // Professional Automotive Photography Studio Lighting Setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
     scene.add(ambientLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.7);
-    hemiLight.position.set(0, 20, 0);
+    const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x0f172a, 0.65);
+    hemiLight.position.set(0, 15, 0);
     scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    dirLight.position.set(5, 10, 7);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    scene.add(dirLight);
+    // 1. Overhead softbox light (simulates photography studio lightbank)
+    const overheadLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    overheadLight.position.set(0, 10, 0);
+    scene.add(overheadLight);
 
-    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.6);
-    fillLight.position.set(-6, 6, -5);
-    scene.add(fillLight);
+    // 2. Front 3/4 Key light with soft shadow
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    keyLight.position.set(6, 7, 7);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 4;
+    keyLight.shadow.camera.bottom = -4;
+    keyLight.shadow.bias = -0.0005;
+    keyLight.shadow.radius = 2.5;
+    scene.add(keyLight);
+
+    // 3. Side Rim / Horizon Accent Light (creates sharp metallic shoulder line reflection)
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.1);
+    rimLight.position.set(-8, 3.5, 2);
+    scene.add(rimLight);
+
+    // 4. Rear Separation Light
+    const rearLight = new THREE.DirectionalLight(0xa78bfa, 0.7);
+    rearLight.position.set(-4, 5, -8);
+    scene.add(rearLight);
 
     // Subtle Ground Grid & Shadow Plane
     const groundGeom = new THREE.PlaneGeometry(30, 30);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x0b1020,
-      roughness: 0.9,
-      metalness: 0.1
+      color: 0x080d1a,
+      roughness: 0.85,
+      metalness: 0.15
     });
     const ground = new THREE.Mesh(groundGeom, groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -939,22 +959,31 @@ const presetColors = [
       if (undoStack.length > 30) undoStack.shift();
     }
 
-    // Material finish presets
-    function applyFinishToMaterial(mat: THREE.MeshStandardMaterial, finish: string, roughness?: number, metalness?: number) {
+    // Material finish presets with automotive clearcoat simulation
+    function applyFinishToMaterial(mat: THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial, finish: string, roughness?: number, metalness?: number) {
+      const phys = mat as THREE.MeshPhysicalMaterial;
       if (finish === 'glossy') {
-        mat.roughness = roughness !== undefined ? roughness : 0.2;
-        mat.metalness = metalness !== undefined ? metalness : 0.65;
+        phys.roughness = roughness !== undefined ? roughness : 0.16;
+        phys.metalness = metalness !== undefined ? metalness : 0.65;
+        phys.clearcoat = 1.0;
+        phys.clearcoatRoughness = 0.04;
       } else if (finish === 'metallic') {
-        mat.roughness = roughness !== undefined ? roughness : 0.22;
-        mat.metalness = metalness !== undefined ? metalness : 0.92;
+        phys.roughness = roughness !== undefined ? roughness : 0.2;
+        phys.metalness = metalness !== undefined ? metalness : 0.92;
+        phys.clearcoat = 1.0;
+        phys.clearcoatRoughness = 0.08;
       } else if (finish === 'satin') {
-        mat.roughness = roughness !== undefined ? roughness : 0.45;
-        mat.metalness = metalness !== undefined ? metalness : 0.35;
+        phys.roughness = roughness !== undefined ? roughness : 0.42;
+        phys.metalness = metalness !== undefined ? metalness : 0.35;
+        phys.clearcoat = 0.35;
+        phys.clearcoatRoughness = 0.4;
       } else if (finish === 'matte') {
-        mat.roughness = roughness !== undefined ? roughness : 0.82;
-        mat.metalness = metalness !== undefined ? metalness : 0.08;
+        phys.roughness = roughness !== undefined ? roughness : 0.82;
+        phys.metalness = metalness !== undefined ? metalness : 0.08;
+        phys.clearcoat = 0.0;
+        phys.clearcoatRoughness = 1.0;
       }
-      mat.needsUpdate = true;
+      phys.needsUpdate = true;
     }
 
     // Load Model function
@@ -977,8 +1006,18 @@ const presetColors = [
       if (unavailableBanner) unavailableBanner.style.display = 'none';
       if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
-      // Remove previously loaded object
+      // Remove previously loaded object with full GPU resource disposal
       if (loadedObject) {
+        loadedObject.traverse((c) => {
+          if (c instanceof THREE.Mesh) {
+            c.geometry?.dispose();
+            if (Array.isArray(c.material)) {
+              c.material.forEach((m) => m.dispose());
+            } else if (c.material) {
+              c.material.dispose();
+            }
+          }
+        });
         scene.remove(loadedObject);
         loadedObject = null;
       }
@@ -1007,13 +1046,20 @@ const presetColors = [
               // Check if mesh is a body mesh
               const panelDef = model.namedBodyMeshes.find((p) => p.meshName === child.name);
               if (panelDef) {
-                // Ensure unique cloned material
-                child.material = (child.material as THREE.Material).clone();
-                const m = child.material as THREE.MeshStandardMaterial;
+                // Upgrade to MeshPhysicalMaterial for real automotive dual-layer clearcoat
+                const origCol = (child.material as THREE.MeshStandardMaterial).color || new THREE.Color(0x3b82f6);
+                const physMat = new THREE.MeshPhysicalMaterial({
+                  color: origCol.clone(),
+                  metalness: 0.65,
+                  roughness: 0.18,
+                  clearcoat: 1.0,
+                  clearcoatRoughness: 0.04
+                });
+                child.material = physMat;
                 const panelCfg = cfg[panelDef.id];
                 if (panelCfg) {
-                  m.color.set(panelCfg.color);
-                  applyFinishToMaterial(m, panelCfg.finish, panelCfg.roughness, panelCfg.metalness);
+                  physMat.color.set(panelCfg.color);
+                  applyFinishToMaterial(physMat, panelCfg.finish, panelCfg.roughness, panelCfg.metalness);
                 }
               }
             }
