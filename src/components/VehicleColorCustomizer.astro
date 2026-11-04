@@ -1,5 +1,5 @@
 ---
-import { VEHICLE_TEMPLATES, type VehicleTemplate } from '../data/vehicleTemplates';
+import { VEHICLE_TEMPLATES } from '../data/vehicleTemplates';
 
 interface Props {
   initialType?: 'car' | 'bike';
@@ -1300,5 +1300,5 @@ const bikes = VEHICLE_TEMPLATES.filter((t) => t.type === 'bike');
   });
 
   // Initial load
-  setVehicleType(initialType);
+  setVehicleType(currentType);
 </script>

@@ -750,7 +750,6 @@ const presetColors = [
     const unavailableBanner = container.querySelector<HTMLElement>('#unavailable-banner');
     const webglFallback = container.querySelector<HTMLElement>('#webgl-fallback');
     const unavailTitle = container.querySelector<HTMLElement>('#unavail-title');
-    const unavailDesc = container.querySelector<HTMLElement>('#unavail-desc');
     const unavailAttribution = container.querySelector<HTMLElement>('#unavail-attribution');
     const btnLoadFallback = container.querySelector<HTMLButtonElement>('#btn-load-fallback');
 
@@ -874,7 +873,6 @@ const presetColors = [
     const urlParams = new URLSearchParams(window.location.search);
     const paramModel = urlParams.get('model');
     const paramColor = urlParams.get('color');
-    const paramName = urlParams.get('name');
 
     if (paramModel) {
       const found = VEHICLE_MODELS_3D.find((m) => m.id === paramModel);
@@ -1419,9 +1417,8 @@ const presetColors = [
     window.addEventListener('resize', handleResize);
 
     // Animation Loop with Idle Optimization
-    let animationFrameId: number;
     function animate() {
-      animationFrameId = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
