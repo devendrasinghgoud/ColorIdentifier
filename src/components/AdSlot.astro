@@ -1,0 +1,19 @@
+---
+/**
+ * Disabled by default. Before enabling: configure a consent-management platform,
+ * verify regional requirements, and set PUBLIC_ADSENSE_CLIENT + PUBLIC_ADSENSE_SLOT.
+ * Do not load ad scripts before the required consent state is known.
+ */
+const { label = 'Advertisement' } = Astro.props;
+const client = import.meta.env.PUBLIC_ADSENSE_CLIENT;
+const slot = import.meta.env.PUBLIC_ADSENSE_SLOT;
+const enabled = Boolean(client && slot && import.meta.env.PUBLIC_ADS_ENABLED === 'true');
+---
+{enabled && <aside class="ad-slot" aria-label={label}>
+  <span>{label}</span>
+  <ins class="adsbygoogle" style="display:block" data-ad-client={client} data-ad-slot={slot} data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script is:inline>
+    // Intentionally no automatic script injection here. Load AdSense only after
+    // the site's consent manager confirms the appropriate consent state.
+  </script>
+</aside>}

@@ -1,0 +1,4 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'; import { NAMED_COLORS } from '../../data/colors';
+---
+<BaseLayout title="Color Names — Browse Named Colors and HEX Codes" description="Browse color names with visual swatches, HEX values, descriptions and practical usage notes."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Color Names</div><span class="eyebrow">Color reference library</span><h1>Color Names and HEX Codes</h1><p>Explore named colors, their digital values and ideas for using them in a design.</p></div><div class="color-reference-grid section" style="padding-top:10px">{NAMED_COLORS.map(c=><a class="color-reference" href={`/colors/${c.name.toLowerCase().replaceAll(' ','-')}/`}><div class="color-reference-swatch" style={`background:${c.hex}`}></div><div class="color-reference-body"><strong>{c.name}</strong><code>{c.hex}</code></div></a>)}</div></div></BaseLayout>

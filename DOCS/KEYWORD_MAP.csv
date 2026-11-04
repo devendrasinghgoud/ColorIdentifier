@@ -1,0 +1,19 @@
+cluster,seed_keyword,target_url,intent,priority,validation_status
+General,color identifier,/color-identifier/,tool,high,unvalidated
+General,identify color from photo,/color-identifier/,tool,high,unvalidated
+General,identify color from camera,/color-identifier/,tool,high,unvalidated
+Automotive,car color identifier,/car-color-identifier/,tool,high,unvalidated
+Automotive,identify car paint color from photo,/car-color-identifier/,tool,high,unvalidated
+Automotive,car paint color finder,/car-color-identifier/,tool,high,unvalidated
+Motorcycle,bike color identifier,/bike-color-identifier/,tool,high,unvalidated
+Motorcycle,motorcycle color finder,/bike-color-identifier/,tool,medium,unvalidated
+Image,image color picker,/image-color-picker/,tool,high,unvalidated
+Image,pick color from image,/image-color-picker/,tool,high,unvalidated
+Conversion,hex to rgb,/hex-to-rgb/,tool,high,unvalidated
+Conversion,rgb to hex,/rgb-to-hex/,tool,high,unvalidated
+Color names,color name finder,/color-name-finder/,tool,medium,unvalidated
+Palette,color palette generator,/color-palette-generator/,tool,medium,unvalidated
+Accessibility,color contrast checker,/color-contrast-checker/,tool,medium,unvalidated
+Automotive,how to find car factory paint code,/car-paint-color-codes/,informational,medium,unvalidated
+Education,hex vs rgb vs hsl,/blog/hex-rgb-hsl-color-formats/,informational,medium,unvalidated
+Education,how to identify car color from photo,/blog/how-to-identify-car-color-from-photo/,informational,high,unvalidated

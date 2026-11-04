@@ -1,0 +1,123 @@
+<section class="scanner-card" aria-labelledby="scanner-title">
+  <div class="scanner-heading"><div><span class="eyebrow">START IDENTIFYING</span><h2 id="scanner-title">Choose a photo or use your camera</h2><p>Sample a point on the image to read its visible screen color.</p></div><span class="scanner-icon" aria-hidden="true">✳</span></div>
+  <div class="scanner-actions"><label class="button button-primary upload-button" for="color-image"><span aria-hidden="true">↑</span> Upload image</label><input id="color-image" type="file" accept="image/*" hidden /><button class="button button-secondary" id="start-camera" type="button">◎ Use camera</button><button class="button button-quiet" id="stop-camera" type="button" disabled>Stop camera</button></div>
+  <p class="privacy-hint">Your image is processed in this browser. It is not uploaded to a server by this tool.</p>
+  <div class="scanner-stage" id="scanner-stage"><div class="scanner-empty" id="scanner-empty"><div class="empty-art"><span>▧</span><i></i></div><strong>Your image will appear here</strong><span>Upload a photo or enable your camera to begin.</span></div><video id="camera-video" playsinline muted hidden></video><canvas id="sample-canvas" aria-label="Image color sampling area" hidden></canvas></div>
+  <div class="scanner-controls"><label for="zoom-range">Image zoom</label><input id="zoom-range" type="range" min="1" max="4" step="0.1" value="1" disabled /><output id="zoom-value">1.0×</output><button id="reset-image" class="text-button" type="button" disabled>Reset view</button></div>
+  <div class="result-panel" aria-live="polite"><div class="result-swatch" id="result-swatch"><span>?</span></div><div class="result-values"><div class="result-title-row"><div><span class="eyebrow">SELECTED COLOR</span><h3 id="color-name">No color selected</h3></div><button class="button button-primary button-small" id="copy-hex" type="button" disabled>Copy HEX</button></div><div class="value-grid"><div><span>HEX</span><strong id="hex-value">—</strong></div><div><span>RGB</span><strong id="rgb-value">—</strong></div><div><span>HSL</span><strong id="hsl-value">—</strong></div></div></div></div>
+  <div class="palette-result"><div class="palette-head"><div><h3>Sampled colors</h3><p>Click a swatch to select it again.</p></div><button id="extract-palette" class="text-button" type="button" disabled>Extract dominant colors</button></div><div id="sampled-swatches" class="sampled-swatches"><span class="muted">Your sampled colors will appear here.</span></div></div>
+  <p class="scanner-message" id="scanner-message" role="status"></p>
+</section>
+<script>
+  import { getColorResult, nearestNamedColor } from '../lib/color';
+  import { NAMED_COLORS } from '../data/colors';
+  const fileInput = document.querySelector<HTMLInputElement>('#color-image');
+  const video = document.querySelector<HTMLVideoElement>('#camera-video');
+  const canvas = document.querySelector<HTMLCanvasElement>('#sample-canvas');
+  const ctx = canvas?.getContext('2d', { willReadFrequently: true });
+  const empty = document.querySelector<HTMLElement>('#scanner-empty');
+  const stage = document.querySelector<HTMLElement>('#scanner-stage');
+  const startButton = document.querySelector<HTMLButtonElement>('#start-camera');
+  const stopButton = document.querySelector<HTMLButtonElement>('#stop-camera');
+  const resetButton = document.querySelector<HTMLButtonElement>('#reset-image');
+  const zoom = document.querySelector<HTMLInputElement>('#zoom-range');
+  const zoomValue = document.querySelector<HTMLOutputElement>('#zoom-value');
+  const message = document.querySelector<HTMLElement>('#scanner-message');
+  const sampled = document.querySelector<HTMLElement>('#sampled-swatches');
+  const copyButton = document.querySelector<HTMLButtonElement>('#copy-hex');
+  const extractButton = document.querySelector<HTMLButtonElement>('#extract-palette');
+  const swatch = document.querySelector<HTMLElement>('#result-swatch');
+  let stream: MediaStream | null = null;
+  let mode: 'image' | 'camera' | null = null;
+  let currentHex = '';
+  let zoomFactor = 1;
+  let samples: string[] = [];
+  let sourceWidth = 0, sourceHeight = 0;
+
+  function say(text: string) { if (message) message.textContent = text; }
+  function showStage() { if (empty) empty.hidden = true; if (canvas) canvas.hidden = false; if (zoom) zoom.disabled = false; if (resetButton) resetButton.disabled = false; if (extractButton) extractButton.disabled = false; }
+  function drawSource() {
+    if (!canvas || !ctx) return;
+    const source = mode === 'camera' ? video : null;
+    if (source && source.readyState < 2) return;
+    const w = source ? source.videoWidth : sourceWidth;
+    const h = source ? source.videoHeight : sourceHeight;
+    if (!w || !h) return;
+    const max = 1100;
+    const scale = Math.min(1, max / Math.max(w, h));
+    const baseW = Math.round(w * scale), baseH = Math.round(h * scale);
+    canvas.width = baseW; canvas.height = baseH;
+    ctx.clearRect(0, 0, baseW, baseH);
+    if (source) ctx.drawImage(source, 0, 0, baseW, baseH);
+    else {
+      const img = (window as Window & { __colorImage?: HTMLImageElement }).__colorImage;
+      if (img) ctx.drawImage(img, 0, 0, baseW, baseH);
+    }
+    canvas.style.transform = `scale(${zoomFactor})`;
+    canvas.style.transformOrigin = 'center center';
+  }
+  function selectRgb(r: number, g: number, b: number) {
+    const result = getColorResult({ r, g, b }); currentHex = result.hex;
+    const name = nearestNamedColor(result.rgb, NAMED_COLORS);
+    document.querySelector<HTMLElement>('#color-name')!.textContent = name;
+    document.querySelector<HTMLElement>('#hex-value')!.textContent = result.hex;
+    document.querySelector<HTMLElement>('#rgb-value')!.textContent = `${result.rgb.r}, ${result.rgb.g}, ${result.rgb.b}`;
+    document.querySelector<HTMLElement>('#hsl-value')!.textContent = `${result.hsl.h}°, ${result.hsl.s}%, ${result.hsl.l}%`;
+    if (swatch) { swatch.style.background = result.hex; swatch.innerHTML = ''; }
+    if (copyButton) copyButton.disabled = false;
+    if (!samples.includes(result.hex)) samples.unshift(result.hex);
+    samples = samples.slice(0, 12); renderSamples();
+  }
+  function renderSamples() {
+    if (!sampled) return;
+    sampled.innerHTML = '';
+    samples.forEach((hex) => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'sample-chip'; button.title = `Select ${hex}`;
+      const color = document.createElement('span'); color.style.background = hex; const label = document.createElement('small'); label.textContent = hex;
+      button.append(color, label); button.addEventListener('click', () => { const rgb = getColorResultFromHex(hex); if (rgb) selectRgb(rgb.r, rgb.g, rgb.b); }); sampled.append(button);
+    });
+  }
+  function getColorResultFromHex(hex: string) { const n = Number.parseInt(hex.slice(1), 16); return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }; }
+  function pointFromEvent(event: PointerEvent) {
+    if (!canvas || !ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    // Canvas display may be zoomed; normalize to its untransformed visual dimensions.
+    const x = Math.round(((event.clientX - rect.left) / rect.width) * canvas.width);
+    const y = Math.round(((event.clientY - rect.top) / rect.height) * canvas.height);
+    const px = ctx.getImageData(Math.max(0, Math.min(canvas.width - 1, x)), Math.max(0, Math.min(canvas.height - 1, y)), 1, 1).data;
+    selectRgb(px[0], px[1], px[2]);
+  }
+  function stopCamera() { stream?.getTracks().forEach((track) => track.stop()); stream = null; if (video) { video.pause(); video.srcObject = null; video.hidden = true; } if (stopButton) stopButton.disabled = true; if (startButton) startButton.disabled = false; }
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0]; if (!file) return;
+    if (!file.type.startsWith('image/')) { say('Please choose a valid image file.'); return; }
+    if (file.size > 15 * 1024 * 1024) { say('Please choose an image smaller than 15 MB.'); return; }
+    stopCamera(); mode = 'image'; zoomFactor = 1; if (zoom) zoom.value = '1';
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => { sourceWidth = img.naturalWidth; sourceHeight = img.naturalHeight; (window as Window & { __colorImage?: HTMLImageElement }).__colorImage = img; drawSource(); showStage(); say('Image ready. Tap the exact area whose color you want to identify.'); URL.revokeObjectURL(url); };
+    img.onerror = () => say('This image could not be opened. Try another image.'); img.src = url;
+  });
+  startButton?.addEventListener('click', async () => {
+    if (!navigator.mediaDevices?.getUserMedia) { say('Camera access is unavailable. Use image upload instead.'); return; }
+    try {
+      stopCamera(); stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      mode = 'camera'; if (video) { video.srcObject = stream; video.hidden = false; await video.play(); }
+      if (canvas) canvas.hidden = false; showStage(); if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = false;
+      drawSource(); const timer = window.setInterval(() => { if (mode !== 'camera' || !stream) { window.clearInterval(timer); return; } drawSource(); }, 120);
+      say('Camera is active. Tap the preview to sample a color.');
+    } catch (error) { say(error instanceof Error && error.name === 'NotAllowedError' ? 'Camera permission was denied. Allow camera access or upload a photo.' : 'Could not start the camera. Check browser permissions or upload a photo.'); }
+  });
+  stopButton?.addEventListener('click', () => { stopCamera(); mode = null; say('Camera stopped. You can upload an image or start the camera again.'); });
+  canvas?.addEventListener('click', (event) => pointFromEvent(event));
+  zoom?.addEventListener('input', () => { zoomFactor = Number(zoom.value); if (zoomValue) zoomValue.value = `${zoomFactor.toFixed(1)}×`; drawSource(); });
+  resetButton?.addEventListener('click', () => { zoomFactor = 1; if (zoom) zoom.value = '1'; if (zoomValue) zoomValue.value = '1.0×'; drawSource(); });
+  copyButton?.addEventListener('click', async () => { if (!currentHex) return; try { await navigator.clipboard.writeText(currentHex); copyButton.textContent = 'Copied!'; window.setTimeout(() => { if (copyButton) copyButton.textContent = 'Copy HEX'; }, 1400); } catch { say('Clipboard access is unavailable. Select and copy the HEX value manually.'); } });
+  extractButton?.addEventListener('click', () => {
+    if (!canvas || !ctx) return; const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; const buckets = new Map<string, number>();
+    // Sample a grid and quantize channels to 4-bit buckets for a lightweight dominant-color estimate.
+    const step = Math.max(1, Math.floor(Math.sqrt((canvas.width * canvas.height) / 1800)));
+    for (let y = 0; y < canvas.height; y += step * 3) for (let x = 0; x < canvas.width; x += step * 3) { const i = (y * canvas.width + x) * 4; if (data[i + 3] < 180) continue; const r = Math.round(data[i] / 16) * 16, g = Math.round(data[i + 1] / 16) * 16, b = Math.round(data[i + 2] / 16) * 16; const hex = getColorResult({ r, g, b }).hex; buckets.set(hex, (buckets.get(hex) || 0) + 1); }
+    const top = [...buckets.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([hex]) => hex); top.forEach((hex) => { if (!samples.includes(hex)) samples.push(hex); }); samples = samples.slice(0, 12); renderSamples(); say('Dominant colors estimated from sampled image pixels. Results can vary with lighting and image compression.');
+  });
+  window.addEventListener('beforeunload', stopCamera);
+</script>
