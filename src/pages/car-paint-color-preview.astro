@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { VEHICLE_PAINTS } from '../data/vehiclePaints';
+import JsonLd from '../components/JsonLd.astro';
+
+const carPaints = VEHICLE_PAINTS.filter((p) => p.type === 'car');
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Car Paint Color Preview & Virtual Sprayout Guide',
+  description: 'Preview car paint colors online. Compare solid, metallic, pearl, and matte automotive finishes and explore verified manufacturer OEM color formulations.',
+  author: { '@type': 'Organization', name: 'ColorCode Identifier Editorial Team' }
+};
+
+const finishComparison = [
+  { finish: 'Solid Gloss', reflection: 'Direct specular shine', maintenance: 'Easy to polish and blend', cost: 'Standard ($)' },
+  { finish: 'Metallic Flake', reflection: 'Angular flop & sparkle', maintenance: 'Requires careful spray technique', cost: 'Moderate ($$)' },
+  { finish: 'Pearl / Tri-Coat', reflection: 'Prismatic color-shift', maintenance: 'Complex multi-stage blending', cost: 'Premium ($$$)' },
+  { finish: 'Matte / Satin', reflection: 'Velvety diffuse sheen', maintenance: 'No polishing or buffing allowed', cost: 'High ($$$$)' }
+];
+---
+
+<BaseLayout
+  title="Car Paint Color Preview — Virtual Automotive Finishes & Sprayouts"
+  description="Preview automotive paint colors before spraying. Compare solid, metallic, pearl, and matte finishes, test virtual sprayouts, and explore verified OEM paint formulas."
+>
+  <JsonLd data={pageSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Car Paint Color Preview
+      </div>
+      <span class="eyebrow">Virtual Automotive Sprayouts</span>
+      <h1>Car Paint Color Preview & Finish Guide</h1>
+      <p>
+        Explore how automotive colors look under varying clear coats and lighting conditions. Preview virtual sprayouts, compare finish physics, and launch our interactive customizer.
+      </p>
+    </div>
+
+    <!-- CTA to launch interactive customizer -->
+    <div class="soft-panel" style="margin-bottom:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;">
+        <div>
+          <span class="eyebrow">Interactive 3D Simulation</span>
+          <h2 style="font-size:24px;margin:6px 0;">Want to visualize a color on a full vehicle?</h2>
+          <p style="margin:0;font-size:14px;max-width:540px;">
+            Open our interactive Car Color Customizer to test sedans, SUVs, supercars, and pickup trucks in any custom HEX shade with real-time finish toggling.
+          </p>
+        </div>
+        <a class="button button-primary" href="/car-color-customizer/">
+          Open Car Color Customizer →
+        </a>
+      </div>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>What Is a Paint Sprayout Test Card?</h2>
+        <p>
+          In professional collision repair and custom automotive refinishing, a <strong>sprayout card</strong> (or test panel) is a metal or cardboard card sprayed with the exact ground coat, basecoat, and clear coat formula intended for the vehicle.
+        </p>
+        <p>
+          Sprayout cards allow technicians to evaluate color accuracy in both indoor halogen lighting and natural outdoor midday sun before committing liters of paint to an actual vehicle.
+        </p>
+
+        <h2>Automotive Finish Types Compared</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Finish Type</th>
+              <th>Light Reflection</th>
+              <th>Refinish Maintenance</th>
+              <th>Relative Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {finishComparison.map((f) => (
+              <tr>
+                <td><strong>{f.finish}</strong></td>
+                <td>{f.reflection}</td>
+                <td>{f.maintenance}</td>
+                <td>{f.cost}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h2>Virtual Sprayout Gallery: Verified OEM Formulas</h2>
+        <p>
+          Click any verified manufacturer paint below to preview it on our 3D customizer or inspect its detailed color metrics:
+        </p>
+
+        <div class="color-reference-grid" style="margin:20px 0;">
+          {carPaints.map((p) => (
+            <a class="color-reference" href={`/car-color-customizer/?color=${encodeURIComponent(p.hex)}`}>
+              <div class="color-reference-swatch" style={`background:${p.hex};`}></div>
+              <div class="color-reference-body">
+                <span class="tag-badge" style="font-size:10px;margin-bottom:4px;">{p.manufacturer}</span>
+                <strong>{p.paintName}</strong>
+                <code style="color:var(--brand-indigo);font-weight:700;">OEM: {p.oemCode}</code>
+                <small style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">Finish: {p.finish}</small>
+                <span class="tool-arrow" style="font-size:11px;margin-top:6px;">Preview on Car →</span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <h2>Factors That Change How Car Paint Appears</h2>
+        <ul>
+          <li><strong>Panel Angle & Flop:</strong> Metallic pigments reflect light directly off the face of microscopic aluminum plates. A door panel viewed from 90° looks significantly brighter than when viewed at a 15° acute angle.</li>
+          <li><strong>Sunlight vs Overcast:</strong> Full sunlight reveals sparkling pearl mica and metallic flakes, whereas overcast daylight exposes the true base hue saturation.</li>
+          <li><strong>Clear Coat Thickness:</strong> High-solids 2K polyurethane clear coats add optical depth and magnify the underlying metallic effect through light refraction.</li>
+        </ul>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Explore Tools</h3>
+        <a href="/car-color-customizer/">Car Color Customizer</a>
+        <a href="/car-color-identifier/">Car Paint Identifier</a>
+        <a href="/car-paint-color-codes/">OEM Stamped Label Guide</a>
+        <a href="/motorcycle-paint-color-preview/">Motorcycle Paint Preview</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

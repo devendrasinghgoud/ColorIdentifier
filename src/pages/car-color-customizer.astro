@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import VehicleColorCustomizer from '../components/VehicleColorCustomizer.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Car Color Customizer & Visualizer',
+  applicationCategory: 'DesignApplication',
+  operatingSystem: 'Any',
+  description: 'Customize and preview car colors in real time. Choose sedan, SUV, coupe, truck, or upload your own car photo to preview glossy, metallic, matte, and satin finishes.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'Can I upload a photo of my own car to change its color?',
+    a: 'Yes. Click "Upload Your Vehicle Photo" to load any picture. Use the built-in selection brush to mark your painted body panels. The customizer recolors only the marked area while preserving reflections, shadows, windows, and wheels.'
+  },
+  {
+    q: 'How does the customizer preserve shadows and panel reflections?',
+    a: 'Our browser-native recoloring engine computes the relative luminance of your car’s body panels and blends your chosen hue and saturation into the surface, keeping door creases, ambient shadows, and specular highlights intact.'
+  },
+  {
+    q: 'What finishes can I simulate on my vehicle?',
+    a: 'You can simulate four core automotive finishes: Glossy (standard clear coat with bright highlights), Metallic (simulated aluminum flakes and angle-dependent flop), Matte (flat non-reflective sheen), and Satin (subtle silky luster).'
+  },
+  {
+    q: 'Are my uploaded car photos stored on your server?',
+    a: 'No. All image processing and recoloring happen 100% locally in your browser memory. We never store, transmit, or analyze your personal vehicle photos on any external server.'
+  }
+];
+---
+
+<BaseLayout
+  title="Car Color Customizer — Change & Preview Car Colors Online Free"
+  description="Customize and visualize any car color online. Test sedans, SUVs, coupes, or upload your own car photo. Preview glossy, metallic, matte, and satin finishes."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Car Color Customizer
+      </div>
+      <span class="eyebrow">Virtual Paint & Wrap Visualizer</span>
+      <h1>Car Color Customizer & Paint Visualizer</h1>
+      <p>
+        Preview any vehicle body color before repainting or wrapping. Select from six body styles or upload your own car photo to experiment with custom shades and finishes.
+      </p>
+    </div>
+
+    <VehicleColorCustomizer
+      initialType="car"
+      title="Car Paint & Wrap Customizer"
+      subtitle="Select a body style or upload your car photo. Pick any HEX code to preview glossy, metallic, matte, and satin automotive finishes."
+    />
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Change Your Car’s Color Online</h2>
+        <ol>
+          <li><strong>Select a Template or Upload:</strong> Choose between our pre-masked sedan, SUV, hatchback, coupe, supercar, and pickup templates, or click <strong>Upload Your Vehicle Photo</strong>.</li>
+          <li><strong>Mark Body Panels (for Uploaded Photos):</strong> Use the selection brush to highlight painted panels (doors, hood, roof, fenders). Non-painted surfaces like windows and headlights remain protected.</li>
+          <li><strong>Choose Your Color:</strong> Enter any HEX code, use the native color picker, or click popular automotive presets like Soul Red, Racing Blue, or Alpine White.</li>
+          <li><strong>Simulate Finishes:</strong> Toggle between Glossy, Metallic, Matte, and Satin coats, and fine-tune saturation intensity and brightness offset.</li>
+          <li><strong>Download & Share:</strong> Save a high-resolution PNG mockup of your build or copy the exact color code for your vinyl wrapper or body shop.</li>
+        </ol>
+
+        <h2>Paint vs Vinyl Wrap: Which Are You Visualizing?</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Factor</th>
+              <th>Automotive Spray Paint</th>
+              <th>Vinyl Vehicle Wrap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Application</strong></td>
+              <td>Permanent multi-stage liquid spray (primer + base + clear).</td>
+              <td>Removable cast vinyl adhesive film applied to factory paint.</td>
+            </tr>
+            <tr>
+              <td><strong>Durability</strong></td>
+              <td>10+ years with proper wash and ceramic coating maintenance.</td>
+              <td>3 to 7 years depending on climate, UV exposure, and film grade.</td>
+            </tr>
+            <tr>
+              <td><strong>Finish Options</strong></td>
+              <td>Solid, metallic flake, pearl tri-coat, candy tint, satin clear.</td>
+              <td>Gloss, matte, satin, color-shift, carbon fiber, brushed metal.</td>
+            </tr>
+            <tr>
+              <td><strong>Reversibility</strong></td>
+              <td>Requires full panel sanding and professional respray.</td>
+              <td>100% peelable with zero damage to underlying OEM paint.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Automotive Tools</h3>
+        <a href="/car-color-identifier/">Car Paint Identifier</a>
+        <a href="/car-paint-color-codes/">OEM Paint Code Guide</a>
+        <a href="/car-paint-color-preview/">Car Paint Preview & Sprayouts</a>
+        <a href="/bike-color-customizer/">Motorcycle Customizer</a>
+        <a href="/color-palette-extractor/">Palette Extractor</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

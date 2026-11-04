@@ -1,4 +1,195 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'; import ColorIdentifier from '../components/ColorIdentifier.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ColorIdentifier from '../components/ColorIdentifier.astro';
+import { VEHICLE_PAINTS } from '../data/vehiclePaints';
+import JsonLd from '../components/JsonLd.astro';
+
+const bikePaints = VEHICLE_PAINTS.filter((p) => p.type === 'motorcycle');
+const manufacturers = ['All', ...new Set(bikePaints.map((p) => p.manufacturer))];
+const finishes = ['All', 'Solid', 'Metallic', 'Pearl', 'Matte', 'Gloss', 'Satin'];
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Motorcycle Paint Color Identifier & OEM Code Finder',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Identify motorcycle fuel tanks, fairings and painted components from a camera or photo, with verified motorcycle OEM paint codes.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'Why is motorcycle paint tricky to identify from photos?',
+    a: 'Motorcycle fuel tanks and aerodynamic fairings have compound curves that create intense specular highlights and deep shadow transitions in single exposures. In addition, motorcycle manufacturers frequently use multi-stage candy, pearl, or tinted clear coats over metallic bases.'
+  },
+  {
+    q: 'Where do I find my motorcycle’s factory color code?',
+    a: 'Motorcycle color code tags are often located under the passenger or rider seat, inside the subframe, under the fuel tank, or printed in the owner service record book.'
+  },
+  {
+    q: 'Can this tool guarantee an exact touch-up paint match?',
+    a: 'No camera-based tool can guarantee an exact physical match for liquid touch-up paint. Use our digital scanner to determine visible color space values and find the closest verified OEM reference code, then order samples through an authorized dealer or specialized motorcycle refinisher.'
+  }
+];
 ---
-<BaseLayout title="Bike Color Identifier — Identify Motorcycle Color from Photo" description="Find the visible color of a motorcycle from a photo or camera. Sample tanks, fairings and panels to get HEX, RGB and HSL values."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Bike Color Identifier</div><span class="eyebrow">For riders and motorcycle enthusiasts</span><h1>Bike Color Identifier from Photo</h1><p>Use a camera or upload a motorcycle photo to sample the visible color of a tank, fairing, fender or painted panel.</p></div><ColorIdentifier/><div class="content-layout"><article class="prose"><h2>How to identify a motorcycle color</h2><ol><li>Choose a clear photo of the painted motorcycle part.</li><li>Open the scanner and upload the photo or start the camera.</li><li>Select a representative point on the fuel tank, fairing or body panel.</li><li>Read the HEX, RGB and HSL values and save useful samples.</li></ol><h2>Get a more consistent sample</h2><p>Motorcycle surfaces are often curved and glossy. Reflections from the sky, nearby objects and bright sunlight can shift the sampled value. Take a photo in soft, even light and sample a part of the panel with minimal glare.</p><h2>Can I use this value to repaint my bike?</h2><p>Use the result as a visual digital reference only. It is not a guaranteed motorcycle factory paint code or a paint-mixing formula. For an accurate repair, confirm the OEM paint code for the exact manufacturer, model and model year, then consult a paint supplier.</p><h2>Related color tools</h2><p>Explore the <a href="/car-color-identifier/">car color identifier</a>, <a href="/color-identifier/">general color identifier</a> and <a href="/hex-to-rgb/">HEX to RGB converter</a>.</p></article><aside class="sidebar-card"><h3>Explore</h3><a href="/car-color-identifier/">Car color identifier</a><a href="/car-paint-color-codes/">Vehicle paint code guide</a><a href="/color-name-finder/">Color name finder</a><a href="/blog/">Color guides</a></aside></div></div></BaseLayout>
+
+<BaseLayout
+  title="Motorcycle Paint Color Identifier — Identify Bike Paint from a Photo"
+  description="Identify motorcycle paint colors from a photo or live camera. Sample fuel tanks and fairings, view HEX, RGB and HSL values, and browse verified motorcycle OEM paint codes."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Motorcycle Paint Identifier
+      </div>
+      <span class="eyebrow">Motorcycle Color Intelligence</span>
+      <h1>Motorcycle Paint Color Identifier from Photo</h1>
+      <p>
+        Sample visible paint colors from motorcycle tanks, fairings, and custom parts.
+        Identify digital values and compare with verified factory OEM paint codes from top motorcycle builders.
+      </p>
+    </div>
+
+    <ColorIdentifier
+      eyebrow="MOTORCYCLE PAINT SCANNER"
+      title="Sample Fuel Tank or Fairing"
+      subtitle="Point your camera or upload a clear photo of your motorcycle. Tap an evenly lit portion of the tank or panel."
+    />
+
+    <section class="section" style="padding-top:20px;">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Manufacturer Paint Register</span>
+          <h2>Verified Motorcycle OEM Paint Codes</h2>
+          <p>
+            Explore factory color specifications for iconic motorcycles.
+            All codes are verified against manufacturer color indices.
+          </p>
+        </div>
+      </div>
+
+      <div class="converter-card" style="max-width:100%;margin-bottom:24px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;">
+          <div class="field">
+            <label for="bike-make-filter">Filter by Manufacturer</label>
+            <select id="bike-make-filter">
+              {manufacturers.map((m) => (
+                <option value={m}>{m === 'All' ? 'All Brands' : m}</option>
+              ))}
+            </select>
+          </div>
+          <div class="field">
+            <label for="bike-finish-filter">Finish Type</label>
+            <select id="bike-finish-filter">
+              {finishes.map((f) => (
+                <option value={f}>{f === 'All' ? 'All Finishes' : `${f} Finish`}</option>
+              ))}
+            </select>
+          </div>
+          <div class="field">
+            <label for="bike-search-input">Search Color or Model</label>
+            <input id="bike-search-input" placeholder="e.g. Lime Green, Racing Blue, Panigale, GSX" />
+          </div>
+        </div>
+      </div>
+
+      <div class="color-reference-grid" id="bike-paint-grid">
+        {bikePaints.map((p) => (
+          <div
+            class="color-reference bike-paint-card"
+            data-make={p.manufacturer}
+            data-finish={p.finish}
+            data-name={p.paintName.toLowerCase()}
+            data-code={p.oemCode.toLowerCase()}
+            data-model={p.model.toLowerCase()}
+          >
+            <div class="color-reference-swatch" style={`background:${p.hex};`}></div>
+            <div class="color-reference-body">
+              <span class="tag-badge" style="font-size:10px;margin-bottom:4px;">{p.manufacturer}</span>
+              <strong>{p.paintName}</strong>
+              <code style="color:var(--brand-indigo);font-weight:700;">OEM: {p.oemCode}</code>
+              <small style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">
+                {p.model} ({p.years})
+              </small>
+              <div style="margin-top:6px;font-size:11px;color:var(--success);">
+                ✓ Verified OEM code
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Sample Motorcycle Paint Accurately</h2>
+        <ol>
+          <li>Park the bike in shaded outdoor lighting or on an overcast afternoon to minimize harsh glare on curved surfaces.</li>
+          <li>Avoid chrome, engine cases, and edge highlights—focus on the flat crest of the fuel tank or the widest fairing flank.</li>
+          <li>Capture high-resolution photos without flash photography.</li>
+          <li>Sample multiple adjacent pixels to evaluate how the curvature and metallic flakes alter local brightness.</li>
+        </ol>
+
+        <h2>Candy, Tri-Coat, and Pearl Motorcycle Finishes</h2>
+        <p>
+          Unlike standard automotive solid basecoats, motorcycle finishes frequently employ specialized three-stage paint systems.
+          A metallic silver or gold ground-coat is applied first, followed by a translucent candy color mid-coat, and sealed under a high-gloss clear coat.
+          Because depth and lighting fundamentally shape the color you see in person, camera RGB values represent a 2D screen interpretation rather than a formula recipe.
+        </p>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Tools</h3>
+        <a href="/car-color-identifier/">Car Paint Identifier</a>
+        <a href="/car-paint-color-codes/">Automotive Paint Guide</a>
+        <a href="/color-palette-generator/">Generate Matching Palette</a>
+        <a href="/color-mixer/">Color Mixer</a>
+        <a href="/blog/understanding-automotive-paint-colors/">Paint Tech Explained</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const makeFilter = document.querySelector<HTMLSelectElement>('#bike-make-filter');
+  const finishFilter = document.querySelector<HTMLSelectElement>('#bike-finish-filter');
+  const searchInput = document.querySelector<HTMLInputElement>('#bike-search-input');
+  const cards = document.querySelectorAll<HTMLElement>('.bike-paint-card');
+
+  function updateBikeFilters() {
+    const make = makeFilter?.value || 'All';
+    const finish = finishFilter?.value || 'All';
+    const q = (searchInput?.value || '').trim().toLowerCase();
+
+    cards.forEach((card) => {
+      const cardMake = card.getAttribute('data-make') || '';
+      const cardFinish = card.getAttribute('data-finish') || '';
+      const cardName = card.getAttribute('data-name') || '';
+      const cardCode = card.getAttribute('data-code') || '';
+      const cardModel = card.getAttribute('data-model') || '';
+
+      const matchMake = make === 'All' || cardMake === make;
+      const matchFinish = finish === 'All' || cardFinish === finish;
+      const matchQ = !q || cardName.includes(q) || cardCode.includes(q) || cardMake.toLowerCase().includes(q) || cardModel.includes(q);
+
+      card.style.display = matchMake && matchFinish && matchQ ? '' : 'none';
+    });
+  }
+
+  makeFilter?.addEventListener('change', updateBikeFilters);
+  finishFilter?.addEventListener('change', updateBikeFilters);
+  searchInput?.addEventListener('input', updateBikeFilters);
+</script>

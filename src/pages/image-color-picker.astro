@@ -1,4 +1,86 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'; import ColorIdentifier from '../components/ColorIdentifier.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ColorIdentifier from '../components/ColorIdentifier.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Image Color Picker & Pixel Loupe Magnifier',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Pick exact colors from any image using a browser-based pixel magnifier. Inspect HEX, RGB, HSL, HSV, and CMYK with 100% private local processing.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'How does the precision loupe magnifier work?',
+    a: 'As you move your cursor or finger across your uploaded picture, our floating 9×9 pixel loupe zooms into the pixels immediately surrounding your pointer. The central crosshair locks onto the exact center pixel to eliminate guesswork.'
+  },
+  {
+    q: 'What image formats are supported?',
+    a: 'You can upload PNG, JPEG, JPG, and WebP images up to 25 MB. All decoding and sampling occur strictly in client-side memory.'
+  },
+  {
+    q: 'Can I extract multiple color swatches from one image?',
+    a: 'Yes. Each time you click or tap a pixel, a swatch is added to your sampled palette list below the tool. You can copy each value independently, export the palette as JSON or CSS tokens, or compare pairs of colors.'
+  }
+];
 ---
-<BaseLayout title="Image Color Picker — Pick HEX, RGB and HSL from a Photo" description="Pick a color from any image using a browser-based image color picker. Upload a photo, select a pixel and copy HEX, RGB or HSL values."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Image Color Picker</div><span class="eyebrow">Pick a pixel from a picture</span><h1>Image Color Picker</h1><p>Upload an image and select any visible pixel to get its HEX, RGB and HSL color values. Images stay in your browser during processing.</p></div><ColorIdentifier/><div class="content-layout"><article class="prose"><h2>Pick a color from an image</h2><p>Use the upload control to choose a PNG, JPEG, WebP or other browser-supported image. Once the image is displayed, click or tap the exact point you want to inspect.</p><h2>Supported color values</h2><p>The picker returns HEX for web design, RGB for screen color channels and HSL for hue, saturation and lightness. The values describe the pixel as represented in the image file; they do not correct for the lighting or camera profile used to create it.</p><h2>Related tools</h2><ul><li><a href="/color-identifier/">Camera color identifier</a></li><li><a href="/hex-to-rgb/">HEX to RGB converter</a></li><li><a href="/color-name-finder/">Color name finder</a></li></ul></article></div></div></BaseLayout>
+
+<BaseLayout
+  title="Image Color Picker — Sample Pixels & Extract HEX, RGB, HSL from Photos"
+  description="Pick any pixel color from uploaded PNG, JPG, or WebP images using a precision magnifier. Copy HEX, RGB, and HSL codes, and extract custom palettes privately."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Image Color Picker
+      </div>
+      <span class="eyebrow">Precision Pixel Picker</span>
+      <h1>Image Color Picker with Magnifier</h1>
+      <p>Upload any picture, zoom in with the precision loupe crosshair, and extract exact digital color codes with one click.</p>
+    </div>
+
+    <ColorIdentifier
+      eyebrow="PRECISION IMAGE PICKER"
+      title="Upload and Inspect Pixels"
+      subtitle="Click or tap any pixel on your image. Use the 9x9 magnifier loupe to sample micro-details with pinpoint accuracy."
+    />
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Pick a Color from an Image</h2>
+        <ol>
+          <li>Click <strong>Upload image</strong> or drag and drop your photo into the stage.</li>
+          <li>Hover over the image on desktop, or drag your finger across the surface on touchscreens.</li>
+          <li>Observe the magnified pixel grid in the floating loupe.</li>
+          <li>Click or lift your finger to sample the active pixel.</li>
+          <li>Review HEX, RGB, RGBA, HSL, HSV, and CMYK values, and save to your favorites.</li>
+        </ol>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Color Tools</h3>
+        <a href="/color-identifier/">Live Camera Scanner</a>
+        <a href="/color-palette-extractor/">Palette Extractor</a>
+        <a href="/color-mixer/">Color Mixer</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+        <a href="/workspace/">Personal Workspace</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

@@ -1,4 +1,213 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'; import ColorIdentifier from '../components/ColorIdentifier.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ColorIdentifier from '../components/ColorIdentifier.astro';
+import { VEHICLE_PAINTS } from '../data/vehiclePaints';
+import JsonLd from '../components/JsonLd.astro';
+
+const carPaints = VEHICLE_PAINTS.filter((p) => p.type === 'car');
+const manufacturers = ['All', ...new Set(carPaints.map((p) => p.manufacturer))];
+const finishes = ['All', 'Solid', 'Metallic', 'Pearl', 'Matte', 'Gloss', 'Satin'];
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Car Paint Color Identifier & Code Lookup',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Identify visible car paint colors from photos or live camera, inspect digital values, and search verified OEM paint codes.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'Can a photo tell me my car’s exact factory paint code?',
+    a: 'No. A camera photograph captures the visible light arriving at the sensor under specific ambient conditions. Automotive finishes often use multi-stage primers, metallic flakes, and pearl mica layers beneath clear coat that cannot be determined solely from an sRGB image. Always verify your OEM paint code on your vehicle’s compliance plate.'
+  },
+  {
+    q: 'Where is the manufacturer paint code located on my vehicle?',
+    a: 'The factory paint code is usually stamped on the driver-side door jamb sticker (VIN label), under the engine hood on the firewall, inside the glovebox, or in the spare tire well in the trunk.'
+  },
+  {
+    q: 'How should I take a photo for the most accurate color sample?',
+    a: 'Photograph your car in open, indirect daylight (such as an overcast morning) rather than direct noon sunlight or deep shadow. Clean the panel thoroughly and sample a broad flat section, avoiding reflection glare and panel edges.'
+  }
+];
 ---
-<BaseLayout title="Car Color Identifier — Identify Car Paint from a Photo" description="Identify the visible color of a car from a camera or photo. Sample body panels and discover HEX, RGB, HSL values and similar digital shades."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Car Color Identifier</div><span class="eyebrow">For car owners and automotive enthusiasts</span><h1>Car Color Identifier from Photo</h1><p>Sample a car's visible body color using your phone camera or an uploaded photo. Get digital color values and explore similar shades.</p></div><ColorIdentifier/><div class="content-layout"><article class="prose"><h2>How to find a car color from a photo</h2><ol><li>Take a clear photo of the painted body panel, ideally in even daylight.</li><li>Avoid strong reflections, deep shadows and bright highlights.</li><li>Upload the image or use the camera scanner above.</li><li>Select a representative area of the paint, away from trim, glass and reflections.</li><li>Review the sampled HEX, RGB and HSL values.</li></ol><h2>Tips for better car color samples</h2><ul><li>Use diffuse daylight rather than direct midday sun.</li><li>Sample a broad, evenly lit painted panel.</li><li>Take more than one sample and compare the results.</li><li>For metallic or pearlescent finishes, understand that a single pixel cannot represent the full appearance.</li></ul><h2>Does this find the original car paint code?</h2><p>No. A camera sample is a digital estimate of the visible color, not the manufacturer's refinish code. Vehicle paint can include metallic flakes, pearl layers and clear coats that cannot be identified from one RGB sample. Check the vehicle identification label, owner's documentation or an authorized dealer for the correct OEM code.</p><h2>Related tools</h2><p>Try the <a href="/bike-color-identifier/">bike color identifier</a>, <a href="/color-name-finder/">color name finder</a> or <a href="/color-palette-generator/">color palette generator</a> to explore related colors.</p></article><aside class="sidebar-card"><h3>Vehicle color tools</h3><a href="/bike-color-identifier/">Bike color identifier</a><a href="/car-paint-color-codes/">Car paint code guide</a><a href="/image-color-picker/">Image color picker</a><a href="/color-identifier/">General color identifier</a></aside></div></div></BaseLayout>
+
+<BaseLayout
+  title="Car Paint Color Identifier — Identify Car Paint from a Photo & Match OEM Codes"
+  description="Identify car paint colors from photos or live camera. Sample panels to read HEX, RGB, and HSL, explore closest verified manufacturer OEM paint codes, and filter by make and finish."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Car Paint Identifier
+      </div>
+      <span class="eyebrow">Automotive Color Intelligence</span>
+      <h1>Car Paint Color Identifier from Photo</h1>
+      <p>
+        Sample visible paint colors from vehicle body panels using your camera or uploaded image.
+        Inspect digital color values, explore similar shades, and compare with verified manufacturer OEM paint codes.
+      </p>
+    </div>
+
+    <ColorIdentifier
+      eyebrow="VEHICLE PAINT SCANNER"
+      title="Sample Car Body Panel"
+      subtitle="Point your camera at a clean, evenly lit door or hood panel, or upload a vehicle photo to extract screen color values."
+    />
+
+    <section class="section" style="padding-top:20px;">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Authoritative Reference</span>
+          <h2>Verified Automotive OEM Paint Database</h2>
+          <p>
+            Filter genuine manufacturer paint codes by make, model year, and finish type.
+            Color swatches are digital reference estimates.
+          </p>
+        </div>
+      </div>
+
+      <div class="converter-card" style="max-width:100%;margin-bottom:24px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;">
+          <div class="field">
+            <label for="car-make-filter">Filter by Manufacturer</label>
+            <select id="car-make-filter">
+              {manufacturers.map((m) => (
+                <option value={m}>{m === 'All' ? 'All Manufacturers' : m}</option>
+              ))}
+            </select>
+          </div>
+          <div class="field">
+            <label for="car-finish-filter">Paint Finish</label>
+            <select id="car-finish-filter">
+              {finishes.map((f) => (
+                <option value={f}>{f === 'All' ? 'All Finishes' : `${f} Finish`}</option>
+              ))}
+            </select>
+          </div>
+          <div class="field">
+            <label for="car-search-input">Search Paint Name or Code</label>
+            <input id="car-search-input" placeholder="e.g. Soul Red, Oxford White, 040, G1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="color-reference-grid" id="car-paint-grid">
+        {carPaints.map((p) => (
+          <div
+            class="color-reference car-paint-card"
+            data-make={p.manufacturer}
+            data-finish={p.finish}
+            data-name={p.paintName.toLowerCase()}
+            data-code={p.oemCode.toLowerCase()}
+          >
+            <div class="color-reference-swatch" style={`background:${p.hex};`}></div>
+            <div class="color-reference-body">
+              <span class="tag-badge" style="font-size:10px;margin-bottom:4px;">{p.manufacturer}</span>
+              <strong>{p.paintName}</strong>
+              <code style="color:var(--brand-indigo);font-weight:700;">OEM: {p.oemCode}</code>
+              <small style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">
+                Finish: {p.finish} · {p.years}
+              </small>
+              <div style="margin-top:6px;font-size:11px;color:var(--success);">
+                ✓ Verified OEM code
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>Understanding Automotive Color Matching</h2>
+        <p>
+          Identifying automotive paint involves three distinct levels of precision:
+        </p>
+
+        <div style="display:grid;gap:12px;margin:20px 0;">
+          <div class="callout" style="border-left-color:var(--brand-cyan);">
+            <strong>1. Image-Based Estimated Color</strong>
+            <p style="margin:4px 0 0;font-size:13px;">
+              The exact red, green, and blue light captured by your camera sensor. This represents screen color, which shifts depending on sky conditions, direct sunlight, reflections, and phone processing.
+            </p>
+          </div>
+          <div class="callout" style="border-left-color:var(--brand-violet);">
+            <strong>2. Visual Automotive Shade Match</strong>
+            <p style="margin:4px 0 0;font-size:13px;">
+              A close digital similarity between your sampled color and known automotive paints in our library.
+            </p>
+          </div>
+          <div class="callout" style="border-left-color:var(--success);">
+            <strong>3. Verified Factory OEM Paint Code</strong>
+            <p style="margin:4px 0 0;font-size:13px;">
+              The official manufacturer refinish code (such as Toyota 040 or Mazda 46V) used by body shops to mix physical pigment, binder, and pearl flake formulas.
+            </p>
+          </div>
+        </div>
+
+        <h2>Step-by-Step: Sampling Vehicle Paint</h2>
+        <ol>
+          <li>Wash or wipe down the target panel to remove surface road film and dust.</li>
+          <li>Position the vehicle in diffuse outdoor shade or on an overcast day to eliminate harsh specular reflections.</li>
+          <li>Take a photo squarely perpendicular to a flat body panel (door or hood center).</li>
+          <li>Upload the photo to the scanner above, or activate your camera with the target crosshair.</li>
+          <li>Select 2–3 different evenly lit points on the panel and compare the sampled values.</li>
+        </ol>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Vehicle Paint Guides</h3>
+        <a href="/bike-color-identifier/">Motorcycle Paint Identifier</a>
+        <a href="/car-paint-color-codes/">Car Paint Code Lookup Guide</a>
+        <a href="/image-color-picker/">Image Color Picker</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+        <a href="/blog/understanding-automotive-paint-colors/">Understanding Paint Types</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const makeFilter = document.querySelector<HTMLSelectElement>('#car-make-filter');
+  const finishFilter = document.querySelector<HTMLSelectElement>('#car-finish-filter');
+  const searchInput = document.querySelector<HTMLInputElement>('#car-search-input');
+  const cards = document.querySelectorAll<HTMLElement>('.car-paint-card');
+
+  function updateCarFilters() {
+    const make = makeFilter?.value || 'All';
+    const finish = finishFilter?.value || 'All';
+    const q = (searchInput?.value || '').trim().toLowerCase();
+
+    cards.forEach((card) => {
+      const cardMake = card.getAttribute('data-make') || '';
+      const cardFinish = card.getAttribute('data-finish') || '';
+      const cardName = card.getAttribute('data-name') || '';
+      const cardCode = card.getAttribute('data-code') || '';
+
+      const matchMake = make === 'All' || cardMake === make;
+      const matchFinish = finish === 'All' || cardFinish === finish;
+      const matchQ = !q || cardName.includes(q) || cardCode.includes(q) || cardMake.toLowerCase().includes(q);
+
+      card.style.display = matchMake && matchFinish && matchQ ? '' : 'none';
+    });
+  }
+
+  makeFilter?.addEventListener('change', updateCarFilters);
+  finishFilter?.addEventListener('change', updateCarFilters);
+  searchInput?.addEventListener('input', updateCarFilters);
+</script>

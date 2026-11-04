@@ -1,0 +1,274 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Color Palette Extractor from Image',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Upload any photo or image to extract its dominant cohesive color palette. Export swatches as PNG, JSON, or CSS variables.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'How does dominant color extraction work?',
+    a: 'The browser decodes your image into an HTML canvas, samples pixel values across an optimized spatial grid, filters out transparent or near-black noise, and quantizes colors into frequency clusters to isolate the most prominent tones.'
+  },
+  {
+    q: 'Are my images uploaded to an external server?',
+    a: 'No. All image decoding and palette extraction algorithms execute 100% locally in your web browser. No image data is ever sent across the network.'
+  }
+];
+---
+
+<BaseLayout
+  title="Color Palette Extractor — Extract Dominant Colors from Any Image"
+  description="Extract a coordinated color palette from any photo or graphic. Adjust palette size, copy HEX codes, and export swatches as PNG, JSON, or CSS variables."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Color Palette Extractor
+      </div>
+      <span class="eyebrow">Creative Palette Tool</span>
+      <h1>Color Palette Extractor from Image</h1>
+      <p>Upload a photo or illustration to automatically isolate its dominant colors and export a clean design palette.</p>
+    </div>
+
+    <div class="converter-card" style="max-width:100%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <label class="button button-primary upload-button" for="palette-file">
+          <span>📁</span> Upload Image
+        </label>
+        <input id="palette-file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" hidden />
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          <label for="palette-size" style="font-size:12px;font-weight:700;">Palette Size:</label>
+          <select id="palette-size" style="padding:6px 10px;border-radius:8px;font-size:13px;">
+            <option value="4">4 Colors</option>
+            <option value="5" selected>5 Colors</option>
+            <option value="6">6 Colors</option>
+            <option value="8">8 Colors</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="scanner-stage" id="stage" style="min-height:220px;">
+        <div id="empty-state" class="scanner-empty">
+          <div class="empty-art"><span>▦</span><i></i></div>
+          <strong>Upload a photo to extract colors</strong>
+          <span>Supports PNG, JPG, and WebP up to 25MB. Processed entirely in your browser.</span>
+        </div>
+        <img id="preview-img" style="max-height:420px;border-radius:12px;display:none;object-fit:contain;" alt="Uploaded preview" />
+      </div>
+
+      <div id="palette-output-container" style="display:none;margin-top:24px;">
+        <div class="section-heading" style="margin-bottom:12px;">
+          <h3 style="font-size:16px;margin:0;color:var(--ink);">Extracted Palette</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="btn-export-png" class="button button-secondary button-small" type="button">Download Swatches PNG</button>
+            <button id="btn-export-json" class="button button-secondary button-small" type="button">Export JSON</button>
+            <button id="btn-export-css" class="button button-secondary button-small" type="button">Export CSS</button>
+          </div>
+        </div>
+
+        <div id="swatch-strip" style="display:flex;height:84px;border-radius:14px;overflow:hidden;border:1px solid var(--border);margin-bottom:14px;"></div>
+        <div id="swatch-chips" class="sampled-swatches"></div>
+      </div>
+
+      <p id="palette-msg" class="scanner-message" role="status"></p>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Generate a Palette from an Image</h2>
+        <ol>
+          <li>Click <strong>Upload Image</strong> and select a landscape, brand photo, or UI screenshot.</li>
+          <li>Choose your target palette size (between 4 and 8 primary tones).</li>
+          <li>The algorithm clusters color frequencies to extract dominant, visually balanced tones.</li>
+          <li>Click any swatch to copy its HEX value, or download the full palette card as a high-res PNG.</li>
+        </ol>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Tools</h3>
+        <a href="/image-color-picker/">Image Color Picker</a>
+        <a href="/color-palette-generator/">Color Palette Generator</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+        <a href="/workspace/">Personal Workspace</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { getColorResult, parseHex } from '../lib/color';
+
+  const fileInput = document.querySelector<HTMLInputElement>('#palette-file');
+  const sizeSelect = document.querySelector<HTMLSelectElement>('#palette-size');
+  const previewImg = document.querySelector<HTMLImageElement>('#preview-img');
+  const emptyState = document.querySelector<HTMLElement>('#empty-state');
+  const outContainer = document.querySelector<HTMLElement>('#palette-output-container');
+  const strip = document.querySelector<HTMLElement>('#swatch-strip');
+  const chips = document.querySelector<HTMLElement>('#swatch-chips');
+  const msg = document.querySelector<HTMLElement>('#palette-msg');
+
+  const exportPngBtn = document.querySelector<HTMLButtonElement>('#btn-export-png');
+  const exportJsonBtn = document.querySelector<HTMLButtonElement>('#btn-export-json');
+  const exportCssBtn = document.querySelector<HTMLButtonElement>('#btn-export-css');
+
+  let extractedHexes: string[] = [];
+
+  function extractColors() {
+    if (!previewImg || !previewImg.naturalWidth) return;
+    const canvas = document.createElement('canvas');
+    const maxDim = 300;
+    const scale = Math.min(1, maxDim / Math.max(previewImg.naturalWidth, previewImg.naturalHeight));
+    const w = Math.round(previewImg.naturalWidth * scale);
+    const h = Math.round(previewImg.naturalHeight * scale);
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(previewImg, 0, 0, w, h);
+
+    const data = ctx.getImageData(0, 0, w, h).data;
+    const buckets = new Map<string, number>();
+    const count = Number(sizeSelect?.value || 5);
+
+    for (let i = 0; i < data.length; i += 16) {
+      if (data[i + 3] < 128) continue;
+      // Quantize to 32-step buckets to group close shades together
+      const r = Math.round(data[i] / 24) * 24;
+      const g = Math.round(data[i + 1] / 24) * 24;
+      const b = Math.round(data[i + 2] / 24) * 24;
+      const hex = getColorResult({ r, g, b }).hex;
+      buckets.set(hex, (buckets.get(hex) || 0) + 1);
+    }
+
+    extractedHexes = [...buckets.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, count)
+      .map(([hex]) => hex);
+
+    renderPalette();
+  }
+
+  function renderPalette() {
+    if (!strip || !chips || !outContainer) return;
+    outContainer.style.display = 'block';
+    strip.innerHTML = '';
+    chips.innerHTML = '';
+
+    extractedHexes.forEach((hex) => {
+      const bar = document.createElement('div');
+      bar.style.flex = '1';
+      bar.style.background = hex;
+      bar.title = hex;
+      strip.appendChild(bar);
+
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'sample-chip';
+      chip.innerHTML = `<span style="background:${hex}"></span><small>${hex}</small>`;
+      chip.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(hex);
+          const sm = chip.querySelector('small');
+          if (sm) sm.textContent = 'Copied!';
+          setTimeout(() => { if (sm) sm.textContent = hex; }, 1000);
+        } catch {}
+      });
+      chips.appendChild(chip);
+    });
+
+    if (msg) msg.textContent = `Extracted ${extractedHexes.length} dominant tones.`;
+  }
+
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    if (previewImg && emptyState) {
+      previewImg.src = url;
+      previewImg.onload = () => {
+        emptyState.style.display = 'none';
+        previewImg.style.display = 'block';
+        extractColors();
+        URL.revokeObjectURL(url);
+      };
+    }
+  });
+
+  sizeSelect?.addEventListener('change', extractColors);
+
+  exportJsonBtn?.addEventListener('click', () => {
+    const list = extractedHexes.map((hex) => {
+      const rgb = parseHex(hex);
+      return rgb ? getColorResult(rgb) : { hex };
+    });
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'extracted-palette.json';
+    a.click();
+  });
+
+  exportCssBtn?.addEventListener('click', async () => {
+    const css = `:root {\n${extractedHexes.map((h, i) => `  --palette-color-${i + 1}: ${h};`).join('\n')}\n}`;
+    try {
+      await navigator.clipboard.writeText(css);
+      if (exportCssBtn) {
+        exportCssBtn.textContent = 'CSS Copied!';
+        setTimeout(() => { exportCssBtn.textContent = 'Export CSS'; }, 1200);
+      }
+    } catch {}
+  });
+
+  exportPngBtn?.addEventListener('click', () => {
+    const c = document.createElement('canvas');
+    c.width = 600;
+    c.height = 360;
+    const ctx = c.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, 600, 360);
+
+    const sliceW = 600 / extractedHexes.length;
+    extractedHexes.forEach((hex, i) => {
+      ctx.fillStyle = hex;
+      ctx.fillRect(i * sliceW, 0, sliceW, 260);
+
+      ctx.fillStyle = '#17152B';
+      ctx.font = 'bold 15px monospace';
+      ctx.fillText(hex, i * sliceW + 14, 305);
+    });
+
+    ctx.fillStyle = '#64748B';
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillText('ColorCode Identifier — Extracted Color Palette', 20, 340);
+
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png');
+    a.download = 'color-palette-card.png';
+    a.click();
+  });
+</script>

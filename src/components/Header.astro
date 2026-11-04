@@ -8,12 +8,29 @@ const current = Astro.url.pathname;
       <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
       <span>ColorCode<span class="brand-light"> Identifier</span></span>
     </a>
-    <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-nav"><span></span><span></span><span></span></button>
-    <nav id="primary-nav" class="primary-nav" aria-label="Main navigation">
-      {NAV.map((item) => <a href={item.href} class:list={[{ active: current === item.href || (item.href !== '/' && current.startsWith(item.href)) }]}>{item.label}</a>)}
-    </nav>
+    <div class="header-right">
+      <nav id="primary-nav" class="primary-nav" aria-label="Main navigation">
+        {NAV.map((item) => (
+          <a
+            href={item.href}
+            class:list={[{ active: current === item.href || (item.href !== '/' && current.startsWith(item.href)) }]}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+      <div class="theme-toggle-group" role="group" aria-label="Theme selection">
+        <button class="theme-btn" data-theme-val="light" aria-label="Switch to Light theme" title="Light theme" type="button">☀️</button>
+        <button class="theme-btn" data-theme-val="dark" aria-label="Switch to Dark theme" title="Dark theme" type="button">🌙</button>
+        <button class="theme-btn" data-theme-val="system" aria-label="Use System theme" title="System theme" type="button">💻</button>
+      </div>
+      <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
+
 <script>
   const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
   const nav = document.querySelector<HTMLElement>('#primary-nav');
@@ -21,5 +38,38 @@ const current = Astro.url.pathname;
     const expanded = toggle.getAttribute('aria-expanded') === 'true';
     toggle.setAttribute('aria-expanded', String(!expanded));
     nav?.classList.toggle('is-open', !expanded);
+  });
+
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.theme-btn');
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function applyTheme(pref: string) {
+    const prefersDark = mediaQuery.matches;
+    const resolved = pref === 'dark' || (pref === 'system' && prefersDark) ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', resolved);
+    document.documentElement.setAttribute('data-theme-pref', pref);
+    buttons.forEach((btn) => {
+      const isMatch = btn.getAttribute('data-theme-val') === pref;
+      btn.classList.toggle('active', isMatch);
+      btn.setAttribute('aria-pressed', String(isMatch));
+    });
+  }
+
+  const savedPref = localStorage.getItem('cci_theme') || 'system';
+  applyTheme(savedPref);
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const choice = btn.getAttribute('data-theme-val') || 'system';
+      localStorage.setItem('cci_theme', choice);
+      applyTheme(choice);
+    });
+  });
+
+  mediaQuery.addEventListener('change', () => {
+    const currentPref = localStorage.getItem('cci_theme') || 'system';
+    if (currentPref === 'system') {
+      applyTheme('system');
+    }
   });
 </script>

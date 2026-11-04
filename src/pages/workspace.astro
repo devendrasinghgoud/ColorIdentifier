@@ -1,0 +1,397 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Personal Color Workspace — ColorCode Identifier',
+  description: 'Manage your favorite colors, recent sampling history, saved palettes, and custom collections privately in your browser.'
+};
+---
+
+<BaseLayout
+  title="Personal Color Workspace — Favorites, History & Custom Palettes"
+  description="Manage your favorited colors, sampling history, and custom collections. Export palettes as JSON or CSS variables. 100% private in-browser storage."
+>
+  <JsonLd data={pageSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / Personal Workspace
+      </div>
+      <span class="eyebrow">Your Color Library</span>
+      <h1>Personal Color Workspace</h1>
+      <p>Save favorite shades, review recent sampling history, create custom collections, and export CSS tokens. Everything is saved locally and privately in your browser.</p>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:14px;">
+      <button class="button button-primary button-small tab-btn" data-tab="favorites" type="button">
+        ★ Favorites (<span id="count-favorites">0</span>)
+      </button>
+      <button class="button button-secondary button-small tab-btn" data-tab="history" type="button">
+        🕒 Recent History (<span id="count-history">0</span>)
+      </button>
+      <button class="button button-secondary button-small tab-btn" data-tab="collections" type="button">
+        📁 Custom Collections (<span id="count-collections">0</span>)
+      </button>
+      <span style="flex:1"></span>
+      <button id="clear-all-data" class="button button-quiet button-small" type="button" style="color:var(--danger)">
+        Clear all local data
+      </button>
+    </div>
+
+    <!-- Tab 1: Favorites -->
+    <div id="tab-favorites" class="tab-pane">
+      <div class="converter-card" style="max-width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:18px;margin:0 0 4px;color:var(--ink);">Favorite Colors</h2>
+            <p style="font-size:13px;color:var(--muted);margin:0;">Colors you marked as favorites from the scanner, database, or detail pages.</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="export-favs-json" class="button button-secondary button-small" type="button">Export JSON</button>
+            <button id="export-favs-css" class="button button-secondary button-small" type="button">Export CSS</button>
+          </div>
+        </div>
+
+        <div id="favorites-grid" class="color-reference-grid"></div>
+        <div id="favorites-empty" class="scanner-empty" style="display:none;">
+          <div class="empty-art"><span>★</span><i></i></div>
+          <strong>No favorites saved yet</strong>
+          <span>Click the "★ Save to favorites" button in the scanner or on any color page to bookmark colors here.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Recent History -->
+    <div id="tab-history" class="tab-pane" style="display:none;">
+      <div class="converter-card" style="max-width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:18px;margin:0 0 4px;color:var(--ink);">Recent Sampling History</h2>
+            <p style="font-size:13px;color:var(--muted);margin:0;">A running history of recent points sampled using the camera scanner or image picker.</p>
+          </div>
+          <button id="btn-clear-history" class="button button-quiet button-small" type="button" style="color:var(--danger)">
+            Clear History
+          </button>
+        </div>
+
+        <div id="history-grid" class="color-reference-grid"></div>
+        <div id="history-empty" class="scanner-empty" style="display:none;">
+          <div class="empty-art"><span>🕒</span><i></i></div>
+          <strong>No recent history</strong>
+          <span>Sample colors with the camera or upload an image to populate your recent history.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Custom Collections -->
+    <div id="tab-collections" class="tab-pane" style="display:none;">
+      <div class="converter-card" style="max-width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:18px;margin:0 0 4px;color:var(--ink);">Custom Color Collections</h2>
+            <p style="font-size:13px;color:var(--muted);margin:0;">Organize colors into project sets, themes, or design system tokens.</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input id="new-col-name" placeholder="Collection name (e.g. Autumn Brand)" style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border-strong);" />
+            <button id="btn-create-col" class="button button-primary button-small" type="button">+ New Collection</button>
+          </div>
+        </div>
+
+        <div id="collections-list" style="display:grid;gap:20px;"></div>
+        <div id="collections-empty" class="scanner-empty" style="display:none;">
+          <div class="empty-art"><span>📁</span><i></i></div>
+          <strong>No collections created yet</strong>
+          <span>Enter a name above and click "+ New Collection" to start organizing your color palettes.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import {
+    getFavorites,
+    removeFavorite,
+    getHistory,
+    clearHistory,
+    getCollections,
+    createCollection,
+    deleteCollection,
+    renameCollection,
+    addColorToCollection,
+    removeColorFromCollection,
+    clearAllWorkspaceData
+  } from '../lib/workspace';
+
+  const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
+  const tabPanes = document.querySelectorAll<HTMLElement>('.tab-pane');
+  const countFavs = document.querySelector<HTMLElement>('#count-favorites');
+  const countHist = document.querySelector<HTMLElement>('#count-history');
+  const countCols = document.querySelector<HTMLElement>('#count-collections');
+
+  const favGrid = document.querySelector<HTMLElement>('#favorites-grid');
+  const favEmpty = document.querySelector<HTMLElement>('#favorites-empty');
+  const histGrid = document.querySelector<HTMLElement>('#history-grid');
+  const histEmpty = document.querySelector<HTMLElement>('#history-empty');
+  const colsList = document.querySelector<HTMLElement>('#collections-list');
+  const colsEmpty = document.querySelector<HTMLElement>('#collections-empty');
+
+  const newColName = document.querySelector<HTMLInputElement>('#new-col-name');
+  const createColBtn = document.querySelector<HTMLButtonElement>('#btn-create-col');
+  const clearHistoryBtn = document.querySelector<HTMLButtonElement>('#btn-clear-history');
+  const clearAllBtn = document.querySelector<HTMLButtonElement>('#clear-all-data');
+
+  const exportFavsJson = document.querySelector<HTMLButtonElement>('#export-favs-json');
+  const exportFavsCss = document.querySelector<HTMLButtonElement>('#export-favs-css');
+
+  function renderAll() {
+    const favs = getFavorites();
+    const hist = getHistory();
+    const cols = getCollections();
+
+    if (countFavs) countFavs.textContent = String(favs.length);
+    if (countHist) countHist.textContent = String(hist.length);
+    if (countCols) countCols.textContent = String(cols.length);
+
+    // Render Favorites
+    if (favGrid && favEmpty) {
+      favGrid.innerHTML = '';
+      if (favs.length === 0) {
+        favEmpty.style.display = 'flex';
+      } else {
+        favEmpty.style.display = 'none';
+        favs.forEach((item) => {
+          const card = document.createElement('div');
+          card.className = 'color-reference';
+          card.innerHTML = `
+            <div class="color-reference-swatch" style="background:${item.hex};"></div>
+            <div class="color-reference-body">
+              <strong>${item.name}</strong>
+              <code>${item.hex}</code>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="button button-secondary button-small btn-copy" data-hex="${item.hex}" style="padding:3px 8px;font-size:11px;" type="button">Copy</button>
+                <button class="button button-quiet button-small btn-del-fav" data-hex="${item.hex}" style="padding:3px 8px;font-size:11px;color:var(--danger);" type="button">Delete</button>
+              </div>
+            </div>
+          `;
+          favGrid.appendChild(card);
+        });
+      }
+    }
+
+    // Render History
+    if (histGrid && histEmpty) {
+      histGrid.innerHTML = '';
+      if (hist.length === 0) {
+        histEmpty.style.display = 'flex';
+      } else {
+        histEmpty.style.display = 'none';
+        hist.forEach((item) => {
+          const card = document.createElement('div');
+          card.className = 'color-reference';
+          card.innerHTML = `
+            <div class="color-reference-swatch" style="background:${item.hex};"></div>
+            <div class="color-reference-body">
+              <strong>${item.name}</strong>
+              <code>${item.hex}</code>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="button button-secondary button-small btn-copy" data-hex="${item.hex}" style="padding:3px 8px;font-size:11px;" type="button">Copy</button>
+              </div>
+            </div>
+          `;
+          histGrid.appendChild(card);
+        });
+      }
+    }
+
+    // Render Collections
+    if (colsList && colsEmpty) {
+      colsList.innerHTML = '';
+      if (cols.length === 0) {
+        colsEmpty.style.display = 'flex';
+      } else {
+        colsEmpty.style.display = 'none';
+        cols.forEach((col) => {
+          const card = document.createElement('div');
+          card.className = 'tool-card';
+          card.style.padding = '18px';
+
+          const swatchStripHtml = col.colors.length > 0
+            ? `<div style="display:flex;height:45px;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin:12px 0;">
+                ${col.colors.map((c) => `<div style="flex:1;background:${c};" title="${c}"></div>`).join('')}
+              </div>`
+            : `<p class="muted" style="margin:10px 0;font-size:12px;">No colors in this collection yet.</p>`;
+
+          card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div>
+                <strong style="font-size:16px;color:var(--ink);">${col.name}</strong>
+                <span class="muted" style="font-size:12px;margin-left:8px;">(${col.colors.length} colors)</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="button button-secondary button-small btn-add-color" data-id="${col.id}" type="button">+ Add HEX</button>
+                <button class="button button-quiet button-small btn-rename-col" data-id="${col.id}" data-name="${col.name}" type="button">Rename</button>
+                <button class="button button-quiet button-small btn-del-col" data-id="${col.id}" style="color:var(--danger)" type="button">Delete</button>
+              </div>
+            </div>
+            ${swatchStripHtml}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${col.colors.map((c) => `
+                <div class="sample-chip" style="font-size:11px;">
+                  <span style="background:${c}"></span>
+                  <small>${c}</small>
+                  <button type="button" class="chip-remove btn-del-col-color" data-id="${col.id}" data-hex="${c}">×</button>
+                </div>
+              `).join('')}
+            </div>
+          `;
+          colsList.appendChild(card);
+        });
+      }
+    }
+  }
+
+  // Switch tabs
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-tab');
+      tabBtns.forEach((b) => {
+        const active = b === btn;
+        b.classList.toggle('button-primary', active);
+        b.classList.toggle('button-secondary', !active);
+      });
+      tabPanes.forEach((pane) => {
+        pane.style.display = pane.id === `tab-${target}` ? 'block' : 'none';
+      });
+    });
+  });
+
+  // Delegated click listeners
+  document.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement;
+
+    // Copy HEX
+    const copyBtn = target.closest<HTMLButtonElement>('.btn-copy');
+    if (copyBtn) {
+      const hex = copyBtn.getAttribute('data-hex');
+      if (hex) {
+        try {
+          await navigator.clipboard.writeText(hex);
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1000);
+        } catch {}
+      }
+      return;
+    }
+
+    // Delete Favorite
+    const delFavBtn = target.closest<HTMLButtonElement>('.btn-del-fav');
+    if (delFavBtn) {
+      const hex = delFavBtn.getAttribute('data-hex');
+      if (hex) {
+        removeFavorite(hex);
+        renderAll();
+      }
+      return;
+    }
+
+    // Delete Collection
+    const delColBtn = target.closest<HTMLButtonElement>('.btn-del-col');
+    if (delColBtn) {
+      const id = delColBtn.getAttribute('data-id');
+      if (id && confirm('Delete this collection?')) {
+        deleteCollection(id);
+        renderAll();
+      }
+      return;
+    }
+
+    // Rename Collection
+    const renameColBtn = target.closest<HTMLButtonElement>('.btn-rename-col');
+    if (renameColBtn) {
+      const id = renameColBtn.getAttribute('data-id');
+      const cur = renameColBtn.getAttribute('data-name');
+      const newName = prompt('Enter new name for collection:', cur || '');
+      if (id && newName && newName.trim()) {
+        renameCollection(id, newName);
+        renderAll();
+      }
+      return;
+    }
+
+    // Add Color to Collection
+    const addColorBtn = target.closest<HTMLButtonElement>('.btn-add-color');
+    if (addColorBtn) {
+      const id = addColorBtn.getAttribute('data-id');
+      const hexInput = prompt('Enter HEX color code (e.g. #6C5CE7):');
+      if (id && hexInput && /^#?[0-9a-fA-F]{3,6}$/.test(hexInput.trim())) {
+        const normHex = hexInput.startsWith('#') ? hexInput : '#' + hexInput;
+        addColorToCollection(id, normHex);
+        renderAll();
+      }
+      return;
+    }
+
+    // Remove color from collection
+    const delColColorBtn = target.closest<HTMLButtonElement>('.btn-del-col-color');
+    if (delColColorBtn) {
+      const id = delColColorBtn.getAttribute('data-id');
+      const hex = delColColorBtn.getAttribute('data-hex');
+      if (id && hex) {
+        removeColorFromCollection(id, hex);
+        renderAll();
+      }
+      return;
+    }
+  });
+
+  createColBtn?.addEventListener('click', () => {
+    const name = newColName?.value.trim();
+    if (!name) return;
+    createCollection(name);
+    if (newColName) newColName.value = '';
+    renderAll();
+  });
+
+  clearHistoryBtn?.addEventListener('click', () => {
+    if (confirm('Clear your entire recent sampling history?')) {
+      clearHistory();
+      renderAll();
+    }
+  });
+
+  clearAllBtn?.addEventListener('click', () => {
+    if (confirm('Clear all favorites, history, and custom collections? This action cannot be undone.')) {
+      clearAllWorkspaceData();
+      renderAll();
+    }
+  });
+
+  exportFavsJson?.addEventListener('click', () => {
+    const favs = getFavorites();
+    const blob = new Blob([JSON.stringify(favs, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'color-favorites.json';
+    a.click();
+  });
+
+  exportFavsCss?.addEventListener('click', async () => {
+    const favs = getFavorites();
+    const css = `:root {\n${favs.map((f, i) => `  --color-${f.name.toLowerCase().replaceAll(' ', '-') || i + 1}: ${f.hex};`).join('\n')}\n}`;
+    try {
+      await navigator.clipboard.writeText(css);
+      if (exportFavsCss) {
+        exportFavsCss.textContent = 'Copied!';
+        setTimeout(() => { exportFavsCss.textContent = 'Export CSS'; }, 1200);
+      }
+    } catch {}
+  });
+
+  window.addEventListener('cci-workspace-updated', renderAll);
+  renderAll();
+</script>

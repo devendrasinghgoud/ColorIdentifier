@@ -1,4 +1,258 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro'; import { NAMED_COLORS } from '../../data/colors';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { NAMED_COLORS, type ColorFamily } from '../../data/colors';
+import { relativeLuminance } from '../../lib/color';
+import JsonLd from '../../components/JsonLd.astro';
+
+const families: ('All' | ColorFamily)[] = [
+  'All',
+  'Red',
+  'Orange',
+  'Yellow',
+  'Green',
+  'Cyan',
+  'Blue',
+  'Purple and Violet',
+  'Pink',
+  'Brown',
+  'Gray',
+  'White',
+  'Black',
+  'Neutral',
+  'Metallic-inspired',
+  'Pastel',
+  'Earth tones'
+];
+
+const colorsWithMeta = NAMED_COLORS.map((c) => {
+  const lum = relativeLuminance(c.rgb);
+  return {
+    ...c,
+    rgbStr: `${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b}`,
+    luminance: lum,
+    isDark: lum < 0.25,
+    hue: c.hsl.h,
+    saturation: c.hsl.s,
+    lightness: c.hsl.l
+  };
+});
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Color Database 2.0 & Named Color Directory',
+  description: 'Search over 80+ curated colors across 16 families. Filter by name, HEX, RGB, temperature, lightness, and sort by hue or popularity.'
+};
 ---
-<BaseLayout title="Color Names — Browse Named Colors and HEX Codes" description="Browse color names with visual swatches, HEX values, descriptions and practical usage notes."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Color Names</div><span class="eyebrow">Color reference library</span><h1>Color Names and HEX Codes</h1><p>Explore named colors, their digital values and ideas for using them in a design.</p></div><div class="color-reference-grid section" style="padding-top:10px">{NAMED_COLORS.map(c=><a class="color-reference" href={`/colors/${c.name.toLowerCase().replaceAll(' ','-')}/`}><div class="color-reference-swatch" style={`background:${c.hex}`}></div><div class="color-reference-body"><strong>{c.name}</strong><code>{c.hex}</code></div></a>)}</div></div></BaseLayout>
+
+<BaseLayout
+  title="Color Database 2.0 — Search Named Colors, HEX, RGB & Families"
+  description="Explore our comprehensive searchable color database. Filter by color family, warm/cool tone, lightness, popularity, and sort by hue or luminance."
+>
+  <JsonLd data={pageSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / Color Database
+      </div>
+      <span class="eyebrow">Comprehensive Library</span>
+      <h1>Color Database 2.0 & Named Color Directory</h1>
+      <p>Search standardized CSS and curated editorial colors. Filter by family, warmth, tone, and explore exact HEX, RGB, HSL, HSV, and CMYK specifications.</p>
+    </div>
+
+    <div class="converter-card" style="max-width:100%;margin-bottom:28px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;align-items:end;">
+        <div class="field" style="grid-column: span 2;">
+          <label for="color-search">Search name, HEX code (#...) or RGB</label>
+          <input id="color-search" placeholder="e.g. Royal Blue, #4169E1, or 65, 105, 225" />
+        </div>
+        <div class="field">
+          <label for="family-filter">Color Family</label>
+          <select id="family-filter">
+            {families.map((f) => (
+              <option value={f}>{f === 'All' ? 'All Families (16)' : f}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label for="warmth-filter">Warmth / Temperature</label>
+          <select id="warmth-filter">
+            <option value="all">All Temperatures</option>
+            <option value="warm">Warm Tones (Red, Orange, Yellow)</option>
+            <option value="cool">Cool Tones (Blue, Green, Violet)</option>
+            <option value="neutral">Neutral Tones (White, Gray, Black)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tone-filter">Lightness / Tone</label>
+          <select id="tone-filter">
+            <option value="all">All Tones</option>
+            <option value="light">Light & Pastel Shades</option>
+            <option value="dark">Dark & Deep Shades</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="curation-filter">Curation</label>
+          <select id="curation-filter">
+            <option value="all">All Colors</option>
+            <option value="popular">Popular Favorites</option>
+            <option value="recent">Recently Added</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sort-select">Sort By</label>
+          <select id="sort-select">
+            <option value="name">Name (A – Z)</option>
+            <option value="hue">Hue Spectrum (Red → Violet)</option>
+            <option value="lightness-asc">Lightness (Dark → Light)</option>
+            <option value="lightness-desc">Lightness (Light → Dark)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;">
+        <span>Showing <strong id="match-count" style="color:var(--ink);">{NAMED_COLORS.length}</strong> colors</span>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <a href="/complementary-color-finder/" class="text-button" style="padding:0;">Harmonies Engine →</a>
+          <button id="reset-filters" class="text-button" type="button">Reset all filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-reference-grid" id="color-grid" style="padding-top:0">
+      {colorsWithMeta.map((c) => (
+        <a
+          class="color-reference color-item"
+          href={`/colors/${c.name.toLowerCase().replaceAll(' ', '-')}/`}
+          data-name={c.name.toLowerCase()}
+          data-hex={c.hex.toLowerCase()}
+          data-rgb={c.rgbStr}
+          data-family={c.family}
+          data-tone={c.isDark ? 'dark' : 'light'}
+          data-warmth={c.warmth}
+          data-popular={c.isPopular ? 'true' : 'false'}
+          data-recent={c.isRecent ? 'true' : 'false'}
+          data-hue={c.hue}
+          data-lightness={c.lightness}
+        >
+          <div class="color-reference-swatch" style={`background:${c.hex};`}></div>
+          <div class="color-reference-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <strong>{c.name}</strong>
+              {c.isPopular && <span style="font-size:10px;color:var(--brand-indigo);" title="Popular color">★</span>}
+            </div>
+            <code>{c.hex}</code>
+            <small style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">
+              {c.family} · {c.sourceType}
+            </small>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <div id="no-results" style="display:none;text-align:center;padding:48px 20px;color:var(--muted);">
+      <p style="font-size:16px;margin:0 0 8px;color:var(--ink);font-weight:700;">No matching colors found</p>
+      <p style="margin:0;">Try adjusting your search query, family filter, or reset filters above.</p>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const searchInput = document.querySelector<HTMLInputElement>('#color-search');
+  const familyFilter = document.querySelector<HTMLSelectElement>('#family-filter');
+  const warmthFilter = document.querySelector<HTMLSelectElement>('#warmth-filter');
+  const toneFilter = document.querySelector<HTMLSelectElement>('#tone-filter');
+  const curationFilter = document.querySelector<HTMLSelectElement>('#curation-filter');
+  const sortSelect = document.querySelector<HTMLSelectElement>('#sort-select');
+  const resetBtn = document.querySelector<HTMLButtonElement>('#reset-filters');
+  const countEl = document.querySelector<HTMLElement>('#match-count');
+  const noResults = document.querySelector<HTMLElement>('#no-results');
+  const grid = document.querySelector<HTMLElement>('#color-grid');
+  const items = Array.from(document.querySelectorAll<HTMLElement>('.color-item'));
+
+  function applyFiltersAndSort() {
+    const q = (searchInput?.value || '').trim().toLowerCase().replace('#', '');
+    const family = familyFilter?.value || 'All';
+    const warmth = warmthFilter?.value || 'all';
+    const tone = toneFilter?.value || 'all';
+    const curation = curationFilter?.value || 'all';
+    const sortBy = sortSelect?.value || 'name';
+
+    let visibleItems: HTMLElement[] = [];
+
+    items.forEach((item) => {
+      const name = item.getAttribute('data-name') || '';
+      const hex = (item.getAttribute('data-hex') || '').replace('#', '');
+      const rgb = item.getAttribute('data-rgb') || '';
+      const itemFamily = item.getAttribute('data-family') || '';
+      const itemTone = item.getAttribute('data-tone') || '';
+      const itemWarmth = item.getAttribute('data-warmth') || '';
+      const isPop = item.getAttribute('data-popular') === 'true';
+      const isRec = item.getAttribute('data-recent') === 'true';
+
+      const matchQ = !q || name.includes(q) || hex.includes(q) || rgb.includes(q);
+      const matchFam = family === 'All' || itemFamily === family;
+      const matchWarmth = warmth === 'all' || itemWarmth === warmth;
+      const matchTone = tone === 'all' || itemTone === tone;
+      const matchCuration =
+        curation === 'all' ||
+        (curation === 'popular' && isPop) ||
+        (curation === 'recent' && isRec);
+
+      if (matchQ && matchFam && matchWarmth && matchTone && matchCuration) {
+        item.style.display = '';
+        visibleItems.push(item);
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    // Sorting
+    visibleItems.sort((a, b) => {
+      if (sortBy === 'name') {
+        const na = a.getAttribute('data-name') || '';
+        const nb = b.getAttribute('data-name') || '';
+        return na.localeCompare(nb);
+      }
+      if (sortBy === 'hue') {
+        const ha = Number(a.getAttribute('data-hue') || 0);
+        const hb = Number(b.getAttribute('data-hue') || 0);
+        return ha - hb;
+      }
+      if (sortBy === 'lightness-asc') {
+        const la = Number(a.getAttribute('data-lightness') || 0);
+        const lb = Number(b.getAttribute('data-lightness') || 0);
+        return la - lb;
+      }
+      if (sortBy === 'lightness-desc') {
+        const la = Number(a.getAttribute('data-lightness') || 0);
+        const lb = Number(b.getAttribute('data-lightness') || 0);
+        return lb - la;
+      }
+      return 0;
+    });
+
+    if (grid) {
+      visibleItems.forEach((el) => grid.appendChild(el));
+    }
+
+    if (countEl) countEl.textContent = String(visibleItems.length);
+    if (noResults) noResults.style.display = visibleItems.length === 0 ? 'block' : 'none';
+  }
+
+  [searchInput, familyFilter, warmthFilter, toneFilter, curationFilter, sortSelect].forEach((el) => {
+    el?.addEventListener('input', applyFiltersAndSort);
+    el?.addEventListener('change', applyFiltersAndSort);
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    if (familyFilter) familyFilter.value = 'All';
+    if (warmthFilter) warmthFilter.value = 'all';
+    if (toneFilter) toneFilter.value = 'all';
+    if (curationFilter) curationFilter.value = 'all';
+    if (sortSelect) sortSelect.value = 'name';
+    applyFiltersAndSort();
+  });
+</script>

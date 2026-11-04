@@ -1,4 +1,123 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { VEHICLE_PAINTS } from '../data/vehiclePaints';
+import JsonLd from '../components/JsonLd.astro';
+
+const carPaints = VEHICLE_PAINTS.filter((p) => p.type === 'car');
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Car Paint Color Codes — How to Find and Verify Your OEM Paint Code',
+  description: 'Learn where car manufacturers stamp OEM paint codes, how to read compliance plates, and why photos cannot establish liquid paint recipes.',
+  author: { '@type': 'Organization', name: 'ColorCode Identifier Editorial Team' }
+};
+
+const manufacturerLocations = [
+  { make: 'Toyota / Lexus', location: 'Driver door jamb sticker, bottom-left row labeled "C/TR:" (e.g. 040/FB20).', format: '3 digits/letters (e.g. 040, 218, 1D6)' },
+  { make: 'Ford / Lincoln', location: 'Driver side B-pillar or door jamb safety certification label under "EXT PNT".', format: '2 uppercase characters (e.g. YZ, D4, J7)' },
+  { make: 'BMW / Mini', location: 'Underhood passenger-side strut tower, or driver door edge sticker.', format: '3 digits or alphanumeric (e.g. 300, 475, C10)' },
+  { make: 'Honda / Acura', location: 'Driver door jamb or door sill threshold near the latch striker.', format: 'Alphanumeric code with hyphen (e.g. NH-0, B-588P)' },
+  { make: 'General Motors (Chevy, GMC)', location: 'Service Parts Identification (SPID) label in glovebox, trunk floor, or spare wheel well.', format: 'Prefixed with "WA" or 2 digits (e.g. WA8555 / 41)' },
+  { make: 'Tesla', location: 'Driver door jamb vehicle identification sticker under exterior code.', format: '4-letter code starting with P (e.g. PPSW, PPSB)' },
+  { make: 'Mazda', location: 'Driver door jamb sticker or inside passenger door pillar.', format: '2 or 3 alphanumeric characters (e.g. 46V, 25D)' },
+  { make: 'Porsche', location: 'Front trunk hood underside sticker or driver door pillar sticker.', format: '3-4 characters or historical paint code (e.g. G1/84A)' }
+];
 ---
-<BaseLayout title="Car Paint Color Codes — How to Find Your OEM Paint Code" description="Learn how to locate a vehicle's factory paint code, why photo color sampling is not an OEM code, and what information to verify before repainting."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Car Paint Color Codes</div><span class="eyebrow">Automotive color reference</span><h1>How to Find a Car's Factory Paint Code</h1><p>A practical guide to locating and verifying an OEM vehicle paint code before ordering touch-up paint or arranging a repair.</p></div><article class="prose"><div class="notice">A HEX or RGB value sampled from a photograph is not an OEM paint code. Do not use a camera-derived value as a guaranteed paint-mixing formula.</div><h2>Where can a car paint code be located?</h2><p>The location varies by manufacturer, model, model year and market. Common places to check include the driver's door jamb, door pillar, under the hood, trunk area, spare-wheel well or vehicle information label. The code may be labelled Paint, Color, C/TR or appear among other production details. These locations are examples, not a universal rule.</p><h2>What information should you verify?</h2><ul><li>Vehicle manufacturer and exact model.</li><li>Model year and market/region.</li><li>VIN when a dealer or manufacturer lookup requires it.</li><li>The paint code printed on the vehicle label or confirmed by an authorized source.</li></ul><h2>Why does a photo look different from the factory paint?</h2><p>Camera white balance, lighting, reflections, metallic flakes, pearl effects, clear coat, aging and previous repairs can all change the appearance. A photo sampler measures pixels in the image; it does not reverse-engineer the original paint formula.</p><h2>Use ColorCode for visual references</h2><p>You can still use our <a href="/car-color-identifier/">car color identifier</a> to sample a visible digital color, compare areas of a panel and save HEX, RGB and HSL values. For an exact refinish, verify the factory code and consult a professional paint supplier.</p><h2>Related resources</h2><ul><li><a href="/bike-color-identifier/">Bike color identifier</a></li><li><a href="/color-identifier/">Color identifier from camera or photo</a></li><li><a href="/blog/how-to-identify-car-color-from-photo/">How to identify a car color from a photo</a></li></ul></article></div></BaseLayout>
+
+<BaseLayout
+  title="Car Paint Color Codes — Find & Verify Manufacturer OEM Codes"
+  description="Learn how to find your car's factory paint code on door jambs, engine bays, and gloveboxes. View manufacturer label locations and verified OEM code examples."
+>
+  <JsonLd data={pageSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Car Paint Code Guide
+      </div>
+      <span class="eyebrow">Automotive Reference Guide</span>
+      <h1>How to Find a Car's Factory OEM Paint Code</h1>
+      <p>A comprehensive guide to locating, reading, and verifying genuine vehicle refinish codes before purchasing touch-up paint or commissioning bodywork.</p>
+    </div>
+
+    <div class="callout" style="border-left-color:var(--warning);background:rgba(245, 158, 11, 0.08);">
+      <strong style="color:var(--ink);">Important Verification Notice:</strong>
+      <p style="margin:4px 0 0;font-size:13px;color:var(--ink);">
+        A digital HEX or RGB value extracted from a smartphone photo is an approximation of screen color, not a physical paint code. Never attempt to order automotive refinish paint based solely on a camera reading. Always locate your vehicle's physical stamped label.
+      </p>
+    </div>
+
+    <div class="content-layout" style="margin-top:28px;">
+      <article class="prose">
+        <h2>Manufacturer Paint Code Label Locations</h2>
+        <p>
+          Every passenger car built in the modern era includes a factory compliance sticker indicating the exact paint formulation chosen at assembly. Here is where to check by brand:
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Manufacturer</th>
+              <th>Physical Stamp Location</th>
+              <th>Typical Code Format</th>
+            </tr>
+          </thead>
+          <tbody>
+            {manufacturerLocations.map((item) => (
+              <tr>
+                <td><strong>{item.make}</strong></td>
+                <td>{item.location}</td>
+                <td><code>{item.format}</code></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h2>Why Photographs Differ from Factory Formulations</h2>
+        <p>
+          Smartphone cameras apply computational processing, auto white balance, dynamic tone mapping, and lens vignette correction. Furthermore, production automotive paint features complex optical layers:
+        </p>
+        <ul>
+          <li><strong>Flop Effect:</strong> Metallic paints contain aluminum flakes that appear lighter when viewed directly and significantly darker at acute viewing angles.</li>
+          <li><strong>Mica / Pearl Interferences:</strong> Pearl coatings reflect one hue while transmitting another through translucent ceramic flakes.</li>
+          <li><strong>Clear Coat Refraction:</strong> Surface micro-scratches, swirl marks, dust film, and sun reflection distort the hue recorded by a 2D sensor.</li>
+        </ul>
+
+        <h2>Verified OEM Automotive Paint Codes</h2>
+        <p>
+          Browse verified codes from our authoritative database below, or test a body panel using our <a href="/car-color-identifier/">Car Paint Identifier</a>:
+        </p>
+
+        <div class="color-reference-grid" style="margin:20px 0;">
+          {carPaints.map((paint) => (
+            <div class="color-reference">
+              <div class="color-reference-swatch" style={`background:${paint.hex};`}></div>
+              <div class="color-reference-body">
+                <span class="tag-badge" style="font-size:10px;margin-bottom:4px;">{paint.manufacturer}</span>
+                <strong>{paint.paintName}</strong>
+                <code style="color:var(--brand-indigo);font-weight:700;">OEM: {paint.oemCode}</code>
+                <small style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">Finish: {paint.finish}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <h2>What to Do if Your Sticker is Missing or Unreadable</h2>
+        <ol>
+          <li>Find your 17-character Vehicle Identification Number (VIN) on your vehicle registration document or through the lower driver's side windshield.</li>
+          <li>Call the parts department of an authorized dealership for your vehicle make.</li>
+          <li>Provide your VIN; dealership inventory computers can instantly pull the exact factory build sheet with original paint code and interior trim codes.</li>
+        </ol>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Vehicle Tools</h3>
+        <a href="/car-color-identifier/">Car Color Identifier Tool</a>
+        <a href="/bike-color-identifier/">Motorcycle Color Identifier</a>
+        <a href="/image-color-picker/">Image Color Picker</a>
+        <a href="/blog/understanding-automotive-paint-colors/">Understanding Paint Types</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

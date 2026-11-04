@@ -3,7 +3,9 @@
   "type": "module",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=20.18.0" },
+  "engines": {
+    "node": ">=20.18.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
@@ -13,7 +15,9 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/sitemap": "^3.2.1",
+    "@types/three": "^0.187.0",
     "astro": "^5.0.0",
+    "three": "^0.187.0",
     "typescript": "^5.7.2"
   }
 }

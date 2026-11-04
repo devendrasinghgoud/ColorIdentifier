@@ -1,7 +1,115 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro'; import { getCollection, render } from 'astro:content'; import JsonLd from '../../components/JsonLd.astro'; import { SITE } from '../../data/site';
-export async function getStaticPaths(){const posts=await getCollection('blog',({data})=>!data.draft);return posts.map(post=>({params:{slug:post.id},props:{post}}));}
-const {post}=Astro.props;const {Content}=await render(post);const url=`/blog/${post.id}/`;
-const articleSchema={'@context':'https://schema.org','@type':'Article','headline':post.data.title,'description':post.data.description,'datePublished':post.data.pubDate.toISOString(),'dateModified':(post.data.updatedDate||post.data.pubDate).toISOString(),'author':{'@type':'Organization','name':post.data.author},'mainEntityOfPage':new URL(url, SITE.url).toString()};
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+import JsonLd from '../../components/JsonLd.astro';
+import { SITE } from '../../data/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post }
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const url = `/blog/${post.id}/`;
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const relatedPosts = allPosts
+  .filter((p) => p.id !== post.id && (p.data.category === post.data.category || p.data.tags.some((t) => post.data.tags.includes(t))))
+  .slice(0, 3);
+
+const bodyText = post.body || '';
+const wordCount = bodyText.split(/\s+/).length;
+const readTime = Math.max(2, Math.round(wordCount / 200));
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.pubDate.toISOString(),
+  dateModified: (post.data.updatedDate || post.data.pubDate).toISOString(),
+  author: { '@type': 'Organization', name: post.data.author },
+  publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  mainEntityOfPage: new URL(url, SITE.url).toString()
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE.url}/blog/` },
+    { '@type': 'ListItem', position: 3, name: post.data.title, item: `${SITE.url}${url}` }
+  ]
+};
 ---
-<BaseLayout title={post.data.title} description={post.data.description} type="article"><JsonLd data={articleSchema}/><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / <a href="/blog/">Blog</a> / {post.data.category}</div><span class="eyebrow">{post.data.category}</span><h1>{post.data.title}</h1><p>{post.data.description}</p><div class="article-meta">By {post.data.author} · {post.data.pubDate.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div><article class="article-content prose"><Content/><div class="callout"><strong>Try it yourself:</strong> <a href="/color-identifier/">Use the ColorCode Identifier</a> to sample a color from your own photo.</div><h2>Related tools and guides</h2><ul><li><a href="/car-color-identifier/">Car color identifier</a></li><li><a href="/bike-color-identifier/">Bike color identifier</a></li><li><a href="/hex-to-rgb/">HEX to RGB converter</a></li><li><a href="/color-name-finder/">Color name finder</a></li></ul></article></div></BaseLayout>
+
+<BaseLayout title={post.data.title} description={post.data.description} type="article">
+  <JsonLd data={articleSchema} />
+  <JsonLd data={breadcrumbSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/blog/">Blog</a> / {post.data.category}
+      </div>
+      <span class="eyebrow">{post.data.category}</span>
+      <h1>{post.data.title}</h1>
+      <p>{post.data.description}</p>
+      <div class="article-meta" style="margin-top:12px;font-size:13px;">
+        <span>By {post.data.author}</span>
+        <span> · </span>
+        <span>Published {post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        {post.data.updatedDate && (
+          <span> (Updated {post.data.updatedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })})</span>
+        )}
+        <span> · </span>
+        <span>{readTime} min read</span>
+      </div>
+    </div>
+
+    <div class="content-layout">
+      <article class="article-content prose">
+        <Content />
+
+        <div class="callout" style="margin-top:36px;">
+          <strong>Put it into practice:</strong>
+          <p style="margin:4px 0 0;">
+            Use our interactive <a href="/color-identifier/">Live Color Scanner</a> or <a href="/image-color-picker/">Image Color Picker</a> to sample any pixel and inspect its exact HEX, RGB, HSL, HSV, and CMYK values.
+          </p>
+        </div>
+
+        {relatedPosts.length > 0 && (
+          <div style="margin-top:40px;border-top:1px solid var(--border);padding-top:24px;">
+            <h3 style="font-size:18px;margin-bottom:14px;color:var(--ink);">Related Guides</h3>
+            <div style="display:grid;gap:12px;">
+              {relatedPosts.map((rel) => (
+                <a class="tool-card" href={`/blog/${rel.id}/`} style="padding:14px;">
+                  <span class="article-tag">{rel.data.category}</span>
+                  <h4 style="font-size:15px;margin:4px 0;color:var(--ink);">{rel.data.title}</h4>
+                  <p style="font-size:12px;color:var(--muted);margin:0;">{rel.data.description}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Tools</h3>
+        <a href="/color-identifier/">Color Scanner</a>
+        <a href="/image-color-picker/">Image Color Picker</a>
+        <a href="/car-color-identifier/">Car Paint Identifier</a>
+        <a href="/bike-color-identifier/">Bike Paint Identifier</a>
+        <a href="/color-mixer/">Color Mixer</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+        <a href="/complementary-color-finder/">Color Harmonies</a>
+        <a href="/workspace/">Personal Workspace</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

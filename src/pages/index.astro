@@ -4,23 +4,251 @@ import ColorIdentifier from '../components/ColorIdentifier.astro';
 import { SITE } from '../data/site';
 import { getCollection } from 'astro:content';
 import JsonLd from '../components/JsonLd.astro';
-const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a,b) => b.data.pubDate.valueOf()-a.data.pubDate.valueOf()).slice(0,3);
-const appSchema = { '@context':'https://schema.org', '@type':'WebApplication', name:SITE.name, applicationCategory:'UtilitiesApplication', operatingSystem:'Any', browserRequirements:'Requires a modern browser; camera access requires HTTPS and permission.', description:SITE.description, offers:{'@type':'Offer',price:'0',priceCurrency:'USD'} };
-const tools = [
-  ['Car Color Identifier','Identify visible car paint colors from a photo or camera.','/car-color-identifier/','🚘'],
-  ['Bike Color Identifier','Sample motorcycle tanks, fairings and painted panels.','/bike-color-identifier/','🏍️'],
-  ['HEX to RGB Converter','Convert HEX values into RGB and HSL color formats.','/hex-to-rgb/','↔'],
-  ['Color Name Finder','Find the closest name in our curated color reference.','/color-name-finder/','✳'],
-  ['Color Palette Generator','Explore coordinated colors from a starting shade.','/color-palette-generator/','▦'],
-  ['Color Contrast Checker','Check text and background contrast against WCAG ratios.','/color-contrast-checker/','◐']
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const appSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: SITE.name,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any',
+  browserRequirements: 'Requires a modern web browser; live camera access requires HTTPS.',
+  description: SITE.description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const featuredTools = [
+  { name: 'Car Paint Identifier', desc: 'Identify visible car paint colors from photos and match verified OEM codes.', href: '/car-color-identifier/', icon: '🚘' },
+  { name: 'Motorcycle Paint Identifier', desc: 'Sample motorcycle fuel tanks, fairings, and custom painted panels.', href: '/bike-color-identifier/', icon: '🏍️' },
+  { name: 'Color Mixer & Blender', desc: 'Mix colors in custom proportions with live RGB, HSL, and CSS output.', href: '/color-mixer/', icon: '🧪' },
+  { name: 'Color Blindness Simulator', desc: 'Simulate Protanopia, Deuteranopia, Tritanopia, and Achromatopsia.', href: '/color-blindness-simulator/', icon: '👁️' },
+  { name: 'WCAG Contrast Checker', desc: 'Test text and background contrast compliance against WCAG AA and AAA.', href: '/color-contrast-checker/', icon: '◐' },
+  { name: 'Color Palette Extractor', desc: 'Extract coordinated dominant color palettes from any uploaded photo.', href: '/color-palette-extractor/', icon: '▦' },
+  { name: 'Complementary Color Finder', desc: 'Generate complementary, analogous, triadic, and split color harmonies.', href: '/complementary-color-finder/', icon: '🎨' },
+  { name: 'Color Temperature Analyzer', desc: 'Analyze warm vs cool color tones and Correlated Color Temperature (Kelvin).', href: '/color-temperature-analyzer/', icon: '🌡️' },
+  { name: 'Personal Color Workspace', desc: 'Manage your saved favorites, recent history, and custom collections.', href: '/workspace/', icon: '📁' }
+];
+
+const faqs = [
+  {
+    q: 'How do I identify a color from a photo?',
+    a: 'Upload any PNG, JPG, or WebP image into our tool above. Hover over the preview to activate the precision 9×9 pixel magnifier, and click or tap the exact pixel you want to sample. The tool instantly extracts the HEX, RGB, HSL, HSV, and CMYK values.'
+  },
+  {
+    q: 'Can I identify colors using my phone camera in real time?',
+    a: 'Yes. Tap "Start camera" on any HTTPS-enabled mobile browser. The tool activates your rear camera and displays a live scanning crosshair that continuously samples and computes color values in real time without recording your video.'
+  },
+  {
+    q: 'How accurate is camera-based color identification?',
+    a: 'Camera-based sampling measures the visible screen light reaching the camera sensor under current ambient conditions. It accurately identifies digital RGB and HEX coordinates, but ambient lighting, shadows, reflections, and phone post-processing will cause readings to differ from laboratory spectrophotometer measurements.'
+  },
+  {
+    q: 'Can this tool find my car’s original factory paint code?',
+    a: 'Our tool identifies visible digital color values and compares them with verified manufacturer OEM paint codes in our database. However, a photograph alone cannot establish a refinish formula because automotive paints incorporate metallic flakes and pearl mica layers. Always verify the code on your vehicle’s compliance plate.'
+  }
 ];
 ---
-<BaseLayout title="Identify Colors from Camera or Photo" description="Identify car, bike and everyday colors from a camera or uploaded photo. Sample pixels, view HEX, RGB and HSL values, and explore free color tools.">
+
+<BaseLayout
+  title="ColorCode Identifier — Identify Colors from Camera or Photo"
+  description="Identify colors from live camera or photos in real time. Precision pixel loupe, car and motorcycle paint matching, WCAG contrast checking, and 100% private in-browser tools."
+>
   <JsonLd data={appSchema} />
-  <section class="hero"><div class="container hero-grid"><div><span class="eyebrow">A practical color discovery toolkit</span><h1>Find the color.<br/><span class="gradient-text">Know the code.</span></h1><p class="hero-copy">Identify visible colors from a car, bike, product or everyday object. Use your camera or upload a photo to sample a color and explore its values.</p><div class="hero-actions"><a class="button button-primary" href="#color-scanner">Start identifying <span aria-hidden="true">↗</span></a><a class="button button-secondary" href="/car-color-identifier/">Explore car colors</a></div><p class="muted" style="margin-top:14px">Free to use · No account required · Image processing in your browser</p></div><div class="hero-visual" aria-label="Illustration of sampling a blue car paint color"><div class="visual-top"><span>COLOR SAMPLE PREVIEW</span><span class="live-pill">● SAMPLE READY</span></div><div class="visual-photo"><span class="visual-crosshair"></span></div><div class="visual-meta"><span class="visual-swatch"></span><div><strong>Deep metallic blue</strong><small>#315D91 · RGB 49, 93, 145</small></div></div></div></div></section>
-  <section class="section" id="color-scanner"><div class="container"><div class="section-heading"><div><span class="eyebrow">The main experience</span><h2>Identify a color from any photo</h2><p>Upload a picture or enable your device camera. Select a point on the image to read its visible color values.</p></div></div><ColorIdentifier /></div></section>
-  <section class="section"><div class="container"><div class="section-heading"><div><span class="eyebrow">Built around real use cases</span><h2>Start with what you're identifying</h2><p>Purpose-built guides for vehicle colors, with general-purpose color tools alongside them.</p></div></div><div class="tool-grid"><a class="tool-card" href="/car-color-identifier/"><div class="tool-icon">🚘</div><h3>Car color identifier</h3><p>Sample visible paint colors from car photos and explore close visual matches.</p><span class="tool-arrow">Explore car colors →</span></a><a class="tool-card" href="/bike-color-identifier/"><div class="tool-icon">🏍️</div><h3>Bike color identifier</h3><p>Identify colors from motorcycle tanks, panels and fairings.</p><span class="tool-arrow">Explore bike colors →</span></a><a class="tool-card" href="/image-color-picker/"><div class="tool-icon">▧</div><h3>Image color picker</h3><p>Sample a specific pixel from an uploaded image.</p><span class="tool-arrow">Pick a color →</span></a></div></div></section>
-  <section class="section"><div class="container"><div class="section-heading"><div><span class="eyebrow">More ways to explore</span><h2>Color tools for every project</h2><p>Convert values, compare shades and make more informed color choices.</p></div><a href="/tools/">View all tools →</a></div><div class="tool-grid">{tools.map(([name,desc,href,icon])=><a class="tool-card" href={href}><div class="tool-icon">{icon}</div><h3>{name}</h3><p>{desc}</p><span class="tool-arrow">Open tool →</span></a>)}</div></div></section>
-  <section class="section"><div class="container"><div class="soft-panel"><span class="eyebrow">A note about paint accuracy</span><h2>A sampled color is a visual reference, not a factory paint formula.</h2><p>Camera sensors, lighting, reflections, metallic flakes and display settings can change how a vehicle color appears in a photo. Use our HEX, RGB and HSL values as digital references. For a true automotive repaint, verify the manufacturer's paint code and consult a paint professional.</p><a class="button button-secondary" href="/car-paint-color-codes/">Learn about vehicle paint codes</a></div></div></section>
-  {posts.length > 0 && <section class="section"><div class="container"><div class="section-heading"><div><span class="eyebrow">Learn about color</span><h2>Latest color guides</h2><p>Practical explanations to help you identify, compare and use colors.</p></div><a href="/blog/">Visit the blog →</a></div><div class="article-grid">{posts.map(post=><a class="article-card" href={`/blog/${post.id}/`}><div class="article-card-body"><span class="article-tag">{post.data.category}</span><h3>{post.data.title}</h3><p>{post.data.description}</p><div class="article-meta" style="margin-top:13px">{post.data.pubDate.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</div></div></a>)}</div></div></section>}
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Professional Color Technology Platform</span>
+        <h1>Find the color.<br /><span class="gradient-text">Know the code.</span></h1>
+        <p class="hero-copy">
+          Identify visible colors from real-world objects, vehicles, and photos.
+          Use your live camera or upload an image to sample pixels, inspect color spaces, and extract palettes privately in your browser.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#color-scanner">Start identifying <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="/car-color-customizer/">Car customizer</a>
+          <a class="button button-secondary" href="/bike-color-customizer/">Bike customizer</a>
+          <a class="button button-quiet" href="/color-names/">Color database</a>
+        </div>
+        <p class="muted" style="margin-top:14px;font-size:12px;">
+          ✓ 100% free · No registration · Zero server uploads · Works on mobile & desktop
+        </p>
+      </div>
+
+      <div class="hero-visual" aria-label="Illustration of sampling an automotive metallic blue color">
+        <div class="visual-top">
+          <span>PRECISION COLOR SAMPLING</span>
+          <span class="live-pill">● SCANNER READY</span>
+        </div>
+        <div class="visual-photo">
+          <span class="visual-crosshair"></span>
+        </div>
+        <div class="visual-meta">
+          <span class="visual-swatch" style="background:#1E3A8A;"></span>
+          <div>
+            <strong>Royal Blue Shade</strong>
+            <small>#1E3A8A · RGB: 30, 58, 138 · HSL: 224°, 64%, 33%</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="color-scanner">
+    <div class="container">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Main Application</span>
+          <h2>Live Camera Scanner & Image Color Picker</h2>
+          <p>Point your device camera at any physical surface or upload a high-resolution photo to inspect exact pixel values.</p>
+        </div>
+      </div>
+      <ColorIdentifier />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Vehicles & Automotive</span>
+          <h2>Automotive & Motorcycle Paint Matchers</h2>
+          <p>Dedicated tools designed for car owners, detailers, and riders looking to identify body colors and locate verified OEM codes.</p>
+        </div>
+      </div>
+
+      <div class="tool-grid">
+        <a class="tool-card" href="/car-color-customizer/">
+          <div class="tool-icon">🎨</div>
+          <h3>Car Color Customizer</h3>
+          <p>Preview any color or vinyl wrap on 6 car body styles or upload your own car photo with live finish simulations.</p>
+          <span class="tool-arrow">Customize car color →</span>
+        </a>
+        <a class="tool-card" href="/bike-color-customizer/">
+          <div class="tool-icon">🏍️</div>
+          <h3>Motorcycle Color Customizer</h3>
+          <p>Visualize colors on supersport, cruiser, and adventure bikes or upload your fuel tank photo.</p>
+          <span class="tool-arrow">Customize bike color →</span>
+        </a>
+        <a class="tool-card" href="/car-color-identifier/">
+          <div class="tool-icon">🚘</div>
+          <h3>Car Paint Identifier</h3>
+          <p>Sample body panels to read digital values and find matching verified manufacturer OEM codes for Toyota, Ford, BMW, and more.</p>
+          <span class="tool-arrow">Identify car paint →</span>
+        </a>
+        <a class="tool-card" href="/bike-color-identifier/">
+          <div class="tool-icon">🏁</div>
+          <h3>Motorcycle Paint Identifier</h3>
+          <p>Identify colors on tanks and fairings with factory codes from Yamaha, Kawasaki, Ducati, Honda, and Harley-Davidson.</p>
+          <span class="tool-arrow">Identify bike paint →</span>
+        </a>
+        <a class="tool-card" href="/car-paint-color-preview/">
+          <div class="tool-icon">✨</div>
+          <h3>Car Paint Preview & Sprayouts</h3>
+          <p>Compare metallic flake flop, pearl mica refraction, matte sheen, and glossy clear coats.</p>
+          <span class="tool-arrow">Preview sprayouts →</span>
+        </a>
+        <a class="tool-card" href="/car-paint-color-codes/">
+          <div class="tool-icon">🏷️</div>
+          <h3>Vehicle Paint Code Guide</h3>
+          <p>Learn where to find the physical stamped paint code label on door jambs, firewalls, and glove compartments.</p>
+          <span class="tool-arrow">Read label guide →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Color Intelligence Suite</span>
+          <h2>Professional Color Utilities</h2>
+          <p>From accessibility contrast compliance to color blindness simulations and harmonious palette generators.</p>
+        </div>
+        <a href="/tools/">View all 14 tools →</a>
+      </div>
+
+      <div class="tool-grid">
+        {featuredTools.map((tool) => (
+          <a class="tool-card" href={tool.href}>
+            <div class="tool-icon">{tool.icon}</div>
+            <h3>{tool.name}</h3>
+            <p>{tool.desc}</p>
+            <span class="tool-arrow">Open tool →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="soft-panel">
+        <span class="eyebrow">Scientific Accuracy & Methodology</span>
+        <h2>A sampled color is a digital screen reference, not a factory paint formula.</h2>
+        <p>
+          Camera sensors, automatic white balance, direct sun, reflections, and metallic flakes shift how colors appear in photographs.
+          Our tools provide accurate sRGB coordinates of the visible pixels. For body repair or physical painting, always cross-reference verified manufacturer OEM codes.
+        </p>
+        <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;">
+          <a class="button button-secondary" href="/car-paint-color-codes/">Explore automotive paint codes</a>
+          <a class="button button-quiet" href="/color-names/">Browse color database</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Direct Answers & FAQs</span>
+          <h2>Frequently Asked Questions About Color Identification</h2>
+          <p>Direct explanations of how digital color sampling, camera scanning, and color formats work.</p>
+        </div>
+      </div>
+
+      <div class="faq-list">
+        {faqs.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {posts.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Educational Guides</span>
+            <h2>Latest Color & Paint Articles</h2>
+            <p>Practical guides written to help you identify, compare, and design with confidence.</p>
+          </div>
+          <a href="/blog/">Browse all guides →</a>
+        </div>
+        <div class="article-grid">
+          {posts.map((post) => (
+            <a class="article-card" href={`/blog/${post.id}/`}>
+              <div class="article-card-body">
+                <span class="article-tag">{post.data.category}</span>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <div class="article-meta">
+                  {post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
 </BaseLayout>

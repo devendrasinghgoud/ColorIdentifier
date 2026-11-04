@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import VehicleColorCustomizer from '../components/VehicleColorCustomizer.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Motorcycle Color Customizer & Bike Paint Visualizer',
+  applicationCategory: 'DesignApplication',
+  operatingSystem: 'Any',
+  description: 'Customize and preview motorcycle colors online. Select sport bikes, cruisers, naked bikes, or upload your own motorcycle photo to visualize paint and wraps.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'Can I preview colors on my own motorcycle fuel tank or fairings?',
+    a: 'Yes. Click "Upload Your Vehicle Photo" to load an image of your bike. Use the brush to highlight your fuel tank, fender, or fairings. The tool recolors only your selected areas while preserving engines, exhausts, chrome, and wheels.'
+  },
+  {
+    q: 'What motorcycle styles are included in the customizer?',
+    a: 'We provide pre-masked templates for five popular motorcycle categories: Supersport (1000cc full-fairing track bike), V-Twin Cruiser (low-slung teardrop tank and deep fenders), Streetfighter Naked (exposed frame and aggressive tank), Adventure Tourer (tall windshield and beak), and Urban Commuter.'
+  },
+  {
+    q: 'Can I simulate candy and metallic motorcycle paints?',
+    a: 'Yes. You can toggle between Glossy, Metallic (sparkling aluminum flakes), Matte (flat tactical sheen), and Satin (subtle luster) to evaluate how different coatings accentuate your bike’s fuel tank contours.'
+  }
+];
+---
+
+<BaseLayout
+  title="Motorcycle Color Customizer — Preview Bike Paint & Wraps Online"
+  description="Visualize any color on motorcycles online. Choose sportbikes, cruisers, naked bikes, or upload your own bike photo. Test glossy, metallic, matte, and satin finishes."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Motorcycle Color Customizer
+      </div>
+      <span class="eyebrow">Motorcycle Paint & Livery Visualizer</span>
+      <h1>Motorcycle Color Customizer & Paint Visualizer</h1>
+      <p>
+        Preview any color on your motorcycle before repainting, powder-coating, or wrapping. Test five distinctive motorcycle styles or upload your own bike photo to visualize custom shades.
+      </p>
+    </div>
+
+    <VehicleColorCustomizer
+      initialType="bike"
+      title="Motorcycle Paint & Wrap Customizer"
+      subtitle="Select a motorcycle category or upload your bike photo. Pick any color to preview glossy, metallic, matte, and satin motorcycle finishes."
+    />
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Customize Your Motorcycle’s Paint</h2>
+        <ol>
+          <li><strong>Select a Template or Upload:</strong> Choose a supersport, cruiser, naked, adventure, or commuter silhouette, or click <strong>Upload Your Vehicle Photo</strong> to use a picture of your personal ride.</li>
+          <li><strong>Mark Your Painted Surfaces (Uploaded Photos):</strong> Paint over the fuel tank, fairings, and rear cowl with the selection brush. The engine casing, chrome exhausts, tires, and brake discs are preserved.</li>
+          <li><strong>Select Any Color Code:</strong> Enter any HEX or RGB code, or choose classic motorcycle presets like Kawasaki Lime Green, Ducati Red, or Yamaha Racing Blue.</li>
+          <li><strong>Simulate Paint Finishes:</strong> Toggle between high-gloss clear coats, metallic sparkle, tactical matte finishes, and silky satin sheens.</li>
+          <li><strong>Download Your Concept:</strong> Export a full-resolution PNG image to show your painter, wrap installer, or riding group.</li>
+        </ol>
+
+        <h2>Motorcycle Painting vs Vinyl Wraps</h2>
+        <p>
+          Customizing a motorcycle body is popular both for aesthetic enhancement and accident repair. Fuel tanks require careful planning:
+        </p>
+        <ul>
+          <li><strong>Fuel Resistance:</strong> Traditional automotive clear coats must be thoroughly cured (2K urethane with isocyanate hardener) to resist fuel splash damage during refueling. Vinyl wraps require edge-sealing tape near filler caps.</li>
+          <li><strong>Compound Curves:</strong> Motorcycle tanks have deep indents for knee grips that challenge vinyl stretching limits. High-quality cast wrapping films or professional multi-stage liquid paint ensure longevity without lifting.</li>
+        </ul>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Motorcycle Tools</h3>
+        <a href="/bike-color-identifier/">Motorcycle Paint Identifier</a>
+        <a href="/motorcycle-paint-color-preview/">Bike Paint Sprayout Guide</a>
+        <a href="/car-color-customizer/">Car Color Customizer</a>
+        <a href="/car-paint-color-codes/">Automotive Paint Codes</a>
+        <a href="/color-mixer/">Color Mixer</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

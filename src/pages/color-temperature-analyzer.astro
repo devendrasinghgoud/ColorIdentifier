@@ -1,0 +1,190 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Color Temperature Analyzer',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Analyze the warm or cool characteristics and approximate correlated color temperature (Kelvin) of digital colors.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'Can digital RGB values directly represent physical color temperature?',
+    a: 'No. Digital RGB values describe screen pixel emissions, not a physical incandescent blackbody radiator. Correlated Color Temperature (CCT) is a mathematical projection onto the Planckian locus, which is only meaningful for near-white or illumination tones.'
+  },
+  {
+    q: 'What Kelvin values correspond to warm and cool light?',
+    a: 'Values below 3500K are considered warm (candlelight, incandescent bulbs, golden hour). Values between 4000K and 5500K represent neutral white, and values above 6500K represent cool daylight and deep blue sky.'
+  }
+];
+---
+
+<BaseLayout
+  title="Color Temperature Analyzer — Warm vs Cool Colors & Kelvin Estimation"
+  description="Analyze the warmth, coolness, and approximate correlated color temperature (Kelvin) of any digital color. Learn how lighting shifts color perception."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Color Temperature Analyzer
+      </div>
+      <span class="eyebrow">Lighting & Theory Utility</span>
+      <h1>Color Temperature Analyzer</h1>
+      <p>Analyze whether a color leans warm, neutral, or cool, and explore its approximate Correlated Color Temperature (CCT).</p>
+    </div>
+
+    <div class="converter-card" style="max-width:800px;">
+      <div class="field">
+        <label for="temp-color">Choose or enter a HEX color:</label>
+        <div style="display:flex;gap:10px;">
+          <input id="temp-picker" type="color" value="#FFB347" style="width:52px;height:45px;padding:2px;border-radius:8px;" />
+          <input id="temp-color" value="#FFB347" placeholder="#FFB347" />
+        </div>
+      </div>
+
+      <div id="temp-preview" style="height:110px;border-radius:14px;background:#FFB347;border:1px solid var(--border);margin:18px 0;display:flex;align-items:flex-end;padding:14px;">
+        <span id="temp-badge" style="background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(4px);padding:5px 12px;border-radius:8px;font-family:monospace;font-size:13px;font-weight:700;">#FFB347</span>
+      </div>
+
+      <div class="value-grid">
+        <div>
+          <span>Estimated CCT</span>
+          <strong id="kelvin-val">~2800 K</strong>
+        </div>
+        <div>
+          <span>Warmth Category</span>
+          <strong id="warmth-val">Warm (Amber / Sunset)</strong>
+        </div>
+        <div>
+          <span>Psychological Balance</span>
+          <strong id="balance-val">Active / Inviting</strong>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:20px;">
+        <strong>Scientific Limitation Notice:</strong>
+        <p style="margin:4px 0 0;font-size:12px;">
+          Digital RGB coordinates simulate screen emissions, not a physical glowing blackbody radiator. CCT approximations are intended for design mood evaluation and lighting reference, not physical pyrometry.
+        </p>
+      </div>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>Warm vs Cool Color Temperatures in Design</h2>
+        <p>
+          In color theory, the color wheel is divided into warm and cool hemispheres:
+        </p>
+        <ul>
+          <li><strong>Warm Colors (Reds, Oranges, Yellows):</strong> Evoke warmth, energy, fire, and sunlight. In interfaces, warm colors advance toward the viewer and are frequently used for primary calls to action, notifications, and appetizing food photography.</li>
+          <li><strong>Cool Colors (Blues, Cyans, Blue-Greens):</strong> Evoke water, sky, ice, and calm composure. Cool tones recede visually, making them ideal for structural backgrounds, navigation chrome, and healthcare or enterprise technology brands.</li>
+        </ul>
+
+        <h2>Understanding the Kelvin Scale</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Color Temperature (Kelvin)</th>
+              <th>Light Source Reference</th>
+              <th>Perceived Color Quality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1800K – 2400K</td>
+              <td>Candle flame, sunset</td>
+              <td>Deep warm amber-orange</td>
+            </tr>
+            <tr>
+              <td>2700K – 3000K</td>
+              <td>Warm domestic incandescent bulbs</td>
+              <td>Soft golden white</td>
+            </tr>
+            <tr>
+              <td>4000K – 4500K</td>
+              <td>Direct morning/late afternoon sun</td>
+              <td>Neutral white</td>
+            </tr>
+            <tr>
+              <td>5000K – 6500K</td>
+              <td>Overcast midday sky (standard D65)</td>
+              <td>Cool crisp daylight</td>
+            </tr>
+            <tr>
+              <td>8000K – 12000K</td>
+              <td>Deep blue sky, high altitude shade</td>
+              <td>Distinct cool blue</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Color Tools</h3>
+        <a href="/color-mixer/">Color Mixer</a>
+        <a href="/complementary-color-finder/">Color Harmonies</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+        <a href="/color-identifier/">Identify Color from Photo</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { parseHex, estimateColorTemperature } from '../lib/color';
+
+  const input = document.querySelector<HTMLInputElement>('#temp-color');
+  const picker = document.querySelector<HTMLInputElement>('#temp-picker');
+  const preview = document.querySelector<HTMLElement>('#temp-preview');
+  const badge = document.querySelector<HTMLElement>('#temp-badge');
+  const kelvinEl = document.querySelector<HTMLElement>('#kelvin-val');
+  const warmthEl = document.querySelector<HTMLElement>('#warmth-val');
+  const balanceEl = document.querySelector<HTMLElement>('#balance-val');
+
+  function update() {
+    const val = input?.value || '#FFB347';
+    const rgb = parseHex(val);
+    if (!rgb) return;
+
+    const info = estimateColorTemperature(rgb);
+    if (preview) preview.style.background = val;
+    if (badge) badge.textContent = val.toUpperCase();
+    if (kelvinEl) kelvinEl.textContent = `~${info.kelvin} K`;
+    if (warmthEl) warmthEl.textContent = info.label;
+
+    let bal = 'Neutral / Composed';
+    if (info.warmth === 'warm') bal = 'Warm / Stimulating / Energetic';
+    if (info.warmth === 'cool') bal = 'Cool / Tranquil / Distant';
+    if (balanceEl) balanceEl.textContent = bal;
+  }
+
+  input?.addEventListener('input', () => {
+    const p = parseHex(input.value);
+    if (p && picker) picker.value = input.value;
+    update();
+  });
+
+  picker?.addEventListener('input', () => {
+    if (input) input.value = picker.value;
+    update();
+  });
+
+  update();
+</script>

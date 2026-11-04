@@ -1,0 +1,212 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Complementary Color Finder & Harmony Generator',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Generate complementary, analogous, triadic, tetradic, split complementary, and monochromatic color schemes from any starting color.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'What is a complementary color?',
+    a: 'Complementary colors sit directly opposite each other on the 360° color wheel (180° apart). When placed side by side, they create maximum simultaneous contrast and visual vibrancy.'
+  },
+  {
+    q: 'What is a split-complementary color scheme?',
+    a: 'Instead of using the direct opposite hue, split complementary uses the two colors adjacent to it (150° and 210°). This provides high visual tension without the vibrating harshness of a pure complementary pair.'
+  }
+];
+---
+
+<BaseLayout
+  title="Complementary Color Finder — Color Harmonies, Triads & Schemes"
+  description="Find complementary, analogous, triadic, tetradic, and split-complementary color harmonies. Preview palettes, copy HEX codes, and create balanced color schemes."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Complementary Color Finder
+      </div>
+      <span class="eyebrow">Color Harmony Engine</span>
+      <h1>Complementary Color Finder & Harmonies</h1>
+      <p>Enter any starting color to calculate exact mathematical harmonies across the 360° chromatic circle.</p>
+    </div>
+
+    <div class="converter-card" style="max-width:100%;margin-bottom:28px;">
+      <div class="field" style="max-width:320px;">
+        <label for="base-color">Enter base HEX color:</label>
+        <div style="display:flex;gap:10px;">
+          <input id="base-picker" type="color" value="#6C5CE7" style="width:52px;height:45px;padding:2px;border-radius:8px;" />
+          <input id="base-color" value="#6C5CE7" placeholder="#6C5CE7" />
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:18px;margin-top:24px;">
+        <div class="tool-card">
+          <span class="eyebrow">Complementary (180°)</span>
+          <h3>Direct Opposite</h3>
+          <div id="harm-comp" style="display:flex;height:65px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0;"></div>
+          <p id="comp-hexes" style="font-size:12px;font-family:monospace;margin:0;"></p>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Split Complementary (150° & 210°)</span>
+          <h3>Nuanced Contrast</h3>
+          <div id="harm-split" style="display:flex;height:65px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0;"></div>
+          <p id="split-hexes" style="font-size:12px;font-family:monospace;margin:0;"></p>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Analogous (±30°)</span>
+          <h3>Adjacent Harmonies</h3>
+          <div id="harm-analogous" style="display:flex;height:65px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0;"></div>
+          <p id="analogous-hexes" style="font-size:12px;font-family:monospace;margin:0;"></p>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Triadic (120° & 240°)</span>
+          <h3>Balanced Equilateral</h3>
+          <div id="harm-triadic" style="display:flex;height:65px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0;"></div>
+          <p id="triadic-hexes" style="font-size:12px;font-family:monospace;margin:0;"></p>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Tetradic (90°, 180°, 270°)</span>
+          <h3>Four-Color Square</h3>
+          <div id="harm-tetradic" style="display:flex;height:65px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0;"></div>
+          <p id="tetradic-hexes" style="font-size:12px;font-family:monospace;margin:0;"></p>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Monochromatic</span>
+          <h3>Tonal Lightness Scale</h3>
+          <div id="harm-mono" style="display:flex;height:65px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:10px 0;"></div>
+          <p id="mono-hexes" style="font-size:12px;font-family:monospace;margin:0;"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>Classical Color Harmonies Explained</h2>
+        <p>
+          Classical color harmony is built on the geometric division of the color wheel:
+        </p>
+        <ul>
+          <li><strong>Complementary:</strong> Two hues situated 180° apart. High chromatic opposition makes individual elements stand out with maximum energy.</li>
+          <li><strong>Split-Complementary:</strong> A base hue paired with the two tones directly flanking its complement. Offers vibrant contrast while maintaining palette harmony.</li>
+          <li><strong>Analogous:</strong> Three neighboring hues within 30° to 45° of each other. Produces calm, serene palettes frequently observed in natural environments.</li>
+          <li><strong>Triadic:</strong> Three hues spaced evenly at 120° intervals. Provides vibrant visual diversity while maintaining chromatic equilibrium.</li>
+          <li><strong>Tetradic (Rectangle or Square):</strong> Four hues grouped in two complementary pairs, delivering rich decorative palettes when one color dominates.</li>
+        </ul>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Utilities</h3>
+        <a href="/color-palette-generator/">Color Palette Generator</a>
+        <a href="/color-shades-generator/">Tonal Shades Generator</a>
+        <a href="/color-contrast-checker/">Contrast Checker</a>
+        <a href="/color-mixer/">Color Mixer</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import {
+    parseHex,
+    rgbToHsl,
+    hslToRgb,
+    rgbToHex,
+    getComplementary,
+    getSplitComplementary,
+    getAnalogous,
+    getTriadic,
+    getTetradic,
+    getMonochromatic
+  } from '../lib/color';
+
+  const input = document.querySelector<HTMLInputElement>('#base-color');
+  const picker = document.querySelector<HTMLInputElement>('#base-picker');
+
+  function renderRow(containerId: string, labelId: string, hexes: string[]) {
+    const el = document.querySelector<HTMLElement>(`#${containerId}`);
+    const lbl = document.querySelector<HTMLElement>(`#${labelId}`);
+    if (!el || !lbl) return;
+
+    el.innerHTML = '';
+    lbl.textContent = hexes.join(' · ');
+
+    hexes.forEach((hex) => {
+      const box = document.createElement('div');
+      box.style.flex = '1';
+      box.style.background = hex;
+      box.style.cursor = 'pointer';
+      box.title = `Click to copy ${hex}`;
+      box.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(hex);
+          lbl.textContent = `Copied ${hex}!`;
+          setTimeout(() => { lbl.textContent = hexes.join(' · '); }, 1000);
+        } catch {}
+      });
+      el.appendChild(box);
+    });
+  }
+
+  function update() {
+    const rgb = parseHex(input?.value || '#6C5CE7');
+    if (!rgb) return;
+    const hsl = rgbToHsl(rgb);
+    const baseHex = rgbToHex(rgb);
+
+    const compHex = rgbToHex(hslToRgb(getComplementary(hsl)));
+    renderRow('harm-comp', 'comp-hexes', [baseHex, compHex]);
+
+    const split = getSplitComplementary(hsl).map((h) => rgbToHex(hslToRgb(h)));
+    renderRow('harm-split', 'split-hexes', [baseHex, split[0], split[1]]);
+
+    const analogous = getAnalogous(hsl, 30).map((h) => rgbToHex(hslToRgb(h)));
+    renderRow('harm-analogous', 'analogous-hexes', [analogous[0], baseHex, analogous[1]]);
+
+    const triadic = getTriadic(hsl).map((h) => rgbToHex(hslToRgb(h)));
+    renderRow('harm-triadic', 'triadic-hexes', [baseHex, triadic[0], triadic[1]]);
+
+    const tetradic = getTetradic(hsl).map((h) => rgbToHex(hslToRgb(h)));
+    renderRow('harm-tetradic', 'tetradic-hexes', [baseHex, tetradic[0], tetradic[1], tetradic[2]]);
+
+    const mono = getMonochromatic(hsl, 5).map((h) => rgbToHex(hslToRgb(h)));
+    renderRow('harm-mono', 'mono-hexes', mono);
+  }
+
+  input?.addEventListener('input', () => {
+    const p = parseHex(input.value);
+    if (p && picker) picker.value = input.value;
+    update();
+  });
+
+  picker?.addEventListener('input', () => {
+    if (input) input.value = picker.value;
+    update();
+  });
+
+  update();
+</script>

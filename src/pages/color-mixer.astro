@@ -1,0 +1,221 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Color Mixer & Blender',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Mix two or more colors with adjustable blend ratios. View live HEX, RGB and HSL results, and copy CSS values.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'How does digital color mixing work?',
+    a: 'In digital sRGB space, colors are mixed by interpolating their red, green, and blue light components according to a percentage ratio. For example, a 50/50 mix averages the linear or gamma-corrected channel intensities of both colors.'
+  },
+  {
+    q: 'Why does digital mixing differ from mixing physical paint?',
+    a: 'Screens use additive color mixing (combining red, green, and blue light toward white), whereas physical artists’ pigments use subtractive mixing (pigments absorb light wavelengths toward dark gray or black). A digital mix blends screen pixel values.'
+  }
+];
+---
+
+<BaseLayout
+  title="Color Mixer — Blend Colors with Custom Ratios & HEX Preview"
+  description="Mix two colors with precision percentage sliders. View real-time color blending, live HEX, RGB, and HSL outputs, and copy CSS values."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Color Mixer
+      </div>
+      <span class="eyebrow">Creative Color Utility</span>
+      <h1>Color Mixer & Blender</h1>
+      <p>Combine two colors in customizable proportions to produce smooth intermediate shades and gradients.</p>
+    </div>
+
+    <div class="converter-card" style="max-width:840px;">
+      <div class="form-row">
+        <div class="field">
+          <label for="color-a">Color A (Start)</label>
+          <div style="display:flex;gap:8px;">
+            <input id="color-a-picker" type="color" value="#6C5CE7" style="width:50px;height:45px;padding:2px;border-radius:8px;cursor:pointer;" />
+            <input id="color-a" value="#6C5CE7" placeholder="#6C5CE7" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="color-b">Color B (End)</label>
+          <div style="display:flex;gap:8px;">
+            <input id="color-b-picker" type="color" value="#22D3EE" style="width:50px;height:45px;padding:2px;border-radius:8px;cursor:pointer;" />
+            <input id="color-b" value="#22D3EE" placeholder="#22D3EE" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:16px;">
+        <label for="mix-ratio" style="display:flex;justify-content:space-between;">
+          <span>Mix Ratio:</span>
+          <output id="ratio-label">50% A / 50% B</output>
+        </label>
+        <input id="mix-ratio" type="range" min="0" max="100" value="50" style="accent-color:var(--brand-indigo);" />
+      </div>
+
+      <div id="mix-preview" style="height:120px;border-radius:14px;margin:20px 0;background:#4798EB;border:1px solid var(--border);display:flex;align-items:flex-end;padding:12px;">
+        <span id="mix-hex-badge" style="background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(4px);padding:5px 12px;border-radius:8px;font-family:monospace;font-size:13px;font-weight:700;">#4798EB</span>
+      </div>
+
+      <div class="value-grid">
+        <div id="box-hex">
+          <span>Blended HEX</span>
+          <strong id="mix-hex">#4798EB</strong>
+        </div>
+        <div id="box-rgb">
+          <span>RGB</span>
+          <strong id="mix-rgb">71, 152, 235</strong>
+        </div>
+        <div id="box-hsl">
+          <span>HSL</span>
+          <strong id="mix-hsl">210°, 81%, 60%</strong>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="copy-blend" class="button button-primary" type="button">Copy Blended HEX</button>
+        <button id="swap-colors" class="button button-secondary" type="button">Swap Colors</button>
+      </div>
+      <p id="mix-error" class="scanner-message" role="status"></p>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Mix Two Colors</h2>
+        <ol>
+          <li>Input your starting color using either the HEX input field or the color picker swatch.</li>
+          <li>Input your second color.</li>
+          <li>Drag the proportion slider left or right to increase the weighting of either shade.</li>
+          <li>Inspect the resulting HEX, RGB, and HSL values in real time and copy the result.</li>
+        </ol>
+
+        <h2>Additive vs Subtractive Color Blending</h2>
+        <p>
+          Digital screens blend light additively using red, green, and blue subpixels. When you combine complementary light frequencies, the luminance increases.
+          Physical paint mixing, by contrast, relies on pigment particles that absorb specific wavelengths of light.
+          Our digital color blender computes exact interpolation in sRGB space.
+        </p>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Tools</h3>
+        <a href="/gradient-generator/">CSS Gradient Generator</a>
+        <a href="/complementary-color-finder/">Color Harmonies</a>
+        <a href="/color-shades-generator/">Tonal Shades Generator</a>
+        <a href="/color-identifier/">Identify Color from Photo</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { parseHex, mixColors, getColorResult } from '../lib/color';
+
+  const inputA = document.querySelector<HTMLInputElement>('#color-a');
+  const pickerA = document.querySelector<HTMLInputElement>('#color-a-picker');
+  const inputB = document.querySelector<HTMLInputElement>('#color-b');
+  const pickerB = document.querySelector<HTMLInputElement>('#color-b-picker');
+  const slider = document.querySelector<HTMLInputElement>('#mix-ratio');
+  const ratioLabel = document.querySelector<HTMLOutputElement>('#ratio-label');
+  const preview = document.querySelector<HTMLElement>('#mix-preview');
+  const hexBadge = document.querySelector<HTMLElement>('#mix-hex-badge');
+  const hexVal = document.querySelector<HTMLElement>('#mix-hex');
+  const rgbVal = document.querySelector<HTMLElement>('#mix-rgb');
+  const hslVal = document.querySelector<HTMLElement>('#mix-hsl');
+  const copyBtn = document.querySelector<HTMLButtonElement>('#copy-blend');
+  const swapBtn = document.querySelector<HTMLButtonElement>('#swap-colors');
+  const errorEl = document.querySelector<HTMLElement>('#mix-error');
+
+  let currentBlendedHex = '#4798EB';
+
+  function updateMix() {
+    const valA = inputA?.value.trim() || '';
+    const valB = inputB?.value.trim() || '';
+    const rgbA = parseHex(valA);
+    const rgbB = parseHex(valB);
+
+    if (!rgbA || !rgbB) {
+      if (errorEl) errorEl.textContent = 'Please enter valid 3-digit or 6-digit HEX colors for both inputs.';
+      return;
+    }
+    if (errorEl) errorEl.textContent = '';
+
+    const ratio = Number(slider?.value || 50) / 100;
+    if (ratioLabel) ratioLabel.textContent = `${Math.round((1 - ratio) * 100)}% A / ${Math.round(ratio * 100)}% B`;
+
+    const blended = mixColors(rgbA, rgbB, ratio);
+    const result = getColorResult(blended);
+    currentBlendedHex = result.hex;
+
+    if (preview) preview.style.background = result.hex;
+    if (hexBadge) hexBadge.textContent = result.hex;
+    if (hexVal) hexVal.textContent = result.hex;
+    if (rgbVal) rgbVal.textContent = `${result.rgb.r}, ${result.rgb.g}, ${result.rgb.b}`;
+    if (hslVal) hslVal.textContent = `${result.hsl.h}°, ${result.hsl.s}%, ${result.hsl.l}%`;
+  }
+
+  inputA?.addEventListener('input', () => {
+    const parsed = parseHex(inputA.value);
+    if (parsed && pickerA) pickerA.value = inputA.value;
+    updateMix();
+  });
+  pickerA?.addEventListener('input', () => {
+    if (inputA) inputA.value = pickerA.value;
+    updateMix();
+  });
+
+  inputB?.addEventListener('input', () => {
+    const parsed = parseHex(inputB.value);
+    if (parsed && pickerB) pickerB.value = inputB.value;
+    updateMix();
+  });
+  pickerB?.addEventListener('input', () => {
+    if (inputB) inputB.value = pickerB.value;
+    updateMix();
+  });
+
+  slider?.addEventListener('input', updateMix);
+
+  swapBtn?.addEventListener('click', () => {
+    if (!inputA || !inputB || !pickerA || !pickerB) return;
+    const temp = inputA.value;
+    inputA.value = inputB.value;
+    inputB.value = temp;
+    pickerA.value = inputA.value;
+    pickerB.value = inputB.value;
+    updateMix();
+  });
+
+  copyBtn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(currentBlendedHex);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => { copyBtn.textContent = 'Copy Blended HEX'; }, 1200);
+    } catch {}
+  });
+
+  updateMix();
+</script>

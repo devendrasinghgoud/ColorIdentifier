@@ -1,123 +1,878 @@
+---
+interface Props {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  defaultCategory?: string;
+}
+
+const {
+  eyebrow = 'START IDENTIFYING',
+  title = 'Live Camera Scanner & Image Color Picker',
+  subtitle = 'Sample any pixel with precision zoom or point your camera in real time to identify exact color codes.'
+} = Astro.props;
+---
+
 <section class="scanner-card" aria-labelledby="scanner-title">
-  <div class="scanner-heading"><div><span class="eyebrow">START IDENTIFYING</span><h2 id="scanner-title">Choose a photo or use your camera</h2><p>Sample a point on the image to read its visible screen color.</p></div><span class="scanner-icon" aria-hidden="true">✳</span></div>
-  <div class="scanner-actions"><label class="button button-primary upload-button" for="color-image"><span aria-hidden="true">↑</span> Upload image</label><input id="color-image" type="file" accept="image/*" hidden /><button class="button button-secondary" id="start-camera" type="button">◎ Use camera</button><button class="button button-quiet" id="stop-camera" type="button" disabled>Stop camera</button></div>
-  <p class="privacy-hint">Your image is processed in this browser. It is not uploaded to a server by this tool.</p>
-  <div class="scanner-stage" id="scanner-stage"><div class="scanner-empty" id="scanner-empty"><div class="empty-art"><span>▧</span><i></i></div><strong>Your image will appear here</strong><span>Upload a photo or enable your camera to begin.</span></div><video id="camera-video" playsinline muted hidden></video><canvas id="sample-canvas" aria-label="Image color sampling area" hidden></canvas></div>
-  <div class="scanner-controls"><label for="zoom-range">Image zoom</label><input id="zoom-range" type="range" min="1" max="4" step="0.1" value="1" disabled /><output id="zoom-value">1.0×</output><button id="reset-image" class="text-button" type="button" disabled>Reset view</button></div>
-  <div class="result-panel" aria-live="polite"><div class="result-swatch" id="result-swatch"><span>?</span></div><div class="result-values"><div class="result-title-row"><div><span class="eyebrow">SELECTED COLOR</span><h3 id="color-name">No color selected</h3></div><button class="button button-primary button-small" id="copy-hex" type="button" disabled>Copy HEX</button></div><div class="value-grid"><div><span>HEX</span><strong id="hex-value">—</strong></div><div><span>RGB</span><strong id="rgb-value">—</strong></div><div><span>HSL</span><strong id="hsl-value">—</strong></div></div></div></div>
-  <div class="palette-result"><div class="palette-head"><div><h3>Sampled colors</h3><p>Click a swatch to select it again.</p></div><button id="extract-palette" class="text-button" type="button" disabled>Extract dominant colors</button></div><div id="sampled-swatches" class="sampled-swatches"><span class="muted">Your sampled colors will appear here.</span></div></div>
+  <div class="scanner-heading">
+    <div>
+      <span class="eyebrow">{eyebrow}</span>
+      <h2 id="scanner-title">{title}</h2>
+      <p>{subtitle}</p>
+    </div>
+    <span class="scanner-icon" aria-hidden="true">✳</span>
+  </div>
+
+  <div class="scanner-actions">
+    <label class="button button-primary upload-button" for="color-image">
+      <span aria-hidden="true">📁</span> Upload image
+    </label>
+    <input id="color-image" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" hidden />
+
+    <button class="button button-secondary" id="start-camera" type="button">
+      <span aria-hidden="true">📷</span> Start camera
+    </button>
+    <button class="button button-secondary" id="flip-camera" type="button" disabled title="Switch front/rear camera">
+      <span aria-hidden="true">🔄</span> Switch camera
+    </button>
+    <button class="button button-quiet" id="stop-camera" type="button" disabled>
+      Stop camera
+    </button>
+  </div>
+
+  <div class="privacy-hint">
+    <span>🔒</span>
+    <span>100% private. All camera frames and uploaded photos are processed entirely inside your browser.</span>
+  </div>
+
+  <div class="scanner-stage" id="scanner-stage">
+    <div class="scanner-empty" id="scanner-empty">
+      <div class="empty-art"><span>▧</span><i></i></div>
+      <strong>No image or camera active</strong>
+      <span>Upload a PNG, JPG, or WebP photo, or click "Start camera" to identify colors live.</span>
+    </div>
+
+    <div class="camera-wrapper" id="camera-wrapper" hidden>
+      <div class="live-camera-indicator">
+        <span class="live-dot"></span>
+        <span>LIVE SCANNING</span>
+      </div>
+      <video id="camera-video" playsinline muted autoplay hidden></video>
+    </div>
+
+    <canvas id="sample-canvas" aria-label="Interactive color sampling canvas" hidden></canvas>
+    <div class="scanner-target-crosshair" id="scanner-crosshair" hidden></div>
+
+    <div class="magnifier-loupe" id="magnifier-loupe">
+      <canvas id="magnifier-canvas" class="magnifier-canvas" width="100" height="100"></canvas>
+      <div class="magnifier-center"></div>
+    </div>
+  </div>
+
+  <div class="scanner-controls">
+    <label for="zoom-range">Magnification:</label>
+    <input id="zoom-range" type="range" min="1" max="4" step="0.2" value="1" disabled />
+    <output id="zoom-value">1.0×</output>
+    <button id="freeze-sample" class="text-button" type="button" disabled>Lock color</button>
+    <button id="reset-image" class="text-button" type="button" disabled>Reset view</button>
+    <span style="flex:1"></span>
+    <span class="muted" id="coord-display">Pointer: —</span>
+  </div>
+
+  <div class="result-panel" aria-live="polite">
+    <div class="result-swatch" id="result-swatch" title="Active color preview">
+      <span>?</span>
+    </div>
+
+    <div class="result-values">
+      <div class="result-title-row">
+        <div>
+          <span class="eyebrow" id="color-match-badge">APPROXIMATE MATCH</span>
+          <h3 id="color-name">No color selected</h3>
+        </div>
+        <div class="result-actions-top">
+          <button class="button button-secondary button-small" id="fav-btn" type="button" disabled>
+            ★ Save to favorites
+          </button>
+          <button class="button button-primary button-small" id="copy-hex" type="button" disabled>
+            Copy HEX
+          </button>
+          <button class="button button-secondary button-small" id="copy-all" type="button" disabled>
+            Copy all
+          </button>
+          <button class="button button-quiet button-small" id="share-color" type="button" disabled title="Share color">
+            Share
+          </button>
+          <button class="button button-quiet button-small" id="download-swatch" type="button" disabled title="Download swatch card">
+            Download PNG
+          </button>
+        </div>
+      </div>
+
+      <div class="value-grid">
+        <div id="box-hex" title="Click to copy HEX">
+          <span>HEX</span>
+          <strong id="hex-value">—</strong>
+        </div>
+        <div id="box-rgb" title="Click to copy RGB">
+          <span>RGB</span>
+          <strong id="rgb-value">—</strong>
+        </div>
+        <div id="box-rgba" title="Click to copy RGBA">
+          <span>RGBA</span>
+          <strong id="rgba-value">—</strong>
+        </div>
+        <div id="box-hsl" title="Click to copy HSL">
+          <span>HSL</span>
+          <strong id="hsl-value">—</strong>
+        </div>
+        <div id="box-hsv" title="Click to copy HSV">
+          <span>HSV / HSB</span>
+          <strong id="hsv-value">—</strong>
+        </div>
+        <div id="box-cmyk" title="Click to copy CMYK">
+          <span>CMYK</span>
+          <strong id="cmyk-value">—</strong>
+        </div>
+      </div>
+
+      <div id="similar-suggestions" style="margin-top:12px;font-size:12px;display:none;">
+        <span class="muted">Closest matching named colors:</span>
+        <div id="similar-chips" style="display:inline-flex;gap:6px;margin-left:6px;vertical-align:middle;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="palette-result">
+    <div class="palette-head">
+      <div>
+        <h3>Sampled Swatches (<span id="sample-count">0</span>)</h3>
+        <p>Click any swatch to re-select, or export your sampled palette.</p>
+      </div>
+      <div class="palette-actions">
+        <button id="extract-palette" class="text-button" type="button" disabled>
+          Auto-extract dominant
+        </button>
+        <button id="export-json" class="text-button" type="button" disabled>
+          Export JSON
+        </button>
+        <button id="export-css" class="text-button" type="button" disabled>
+          Export CSS
+        </button>
+        <button id="clear-samples" class="text-button" type="button" disabled style="color:var(--danger)">
+          Clear all
+        </button>
+      </div>
+    </div>
+    <div id="sampled-swatches" class="sampled-swatches">
+      <span class="muted">Your sampled colors will appear here as you tap or click points.</span>
+    </div>
+  </div>
+
+  <div id="compare-panel" style="margin-top:18px;display:none;background:var(--surface-soft);border:1px solid var(--border);border-radius:14px;padding:14px 18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <strong style="font-size:13px;color:var(--ink);">Swatch Comparison (Last 2 Colors)</strong>
+      <button id="close-compare" class="text-button" type="button" style="padding:2px 6px;">Close</button>
+    </div>
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="cmp-swatch-1" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);"></div>
+        <span id="cmp-hex-1" style="font-size:12px;font-weight:700;">#000000</span>
+      </div>
+      <span style="color:var(--muted);font-size:12px;">vs</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="cmp-swatch-2" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);"></div>
+        <span id="cmp-hex-2" style="font-size:12px;font-weight:700;">#FFFFFF</span>
+      </div>
+      <div style="font-size:12px;margin-left:auto;display:flex;gap:16px;">
+        <span>Contrast: <strong id="cmp-contrast">1.00:1</strong></span>
+        <span>Perceptual Dist: <strong id="cmp-dist">0</strong></span>
+      </div>
+    </div>
+  </div>
+
   <p class="scanner-message" id="scanner-message" role="status"></p>
 </section>
+
 <script>
-  import { getColorResult, nearestNamedColor } from '../lib/color';
+  import {
+    getColorResult,
+    parseHex,
+    rgbDistance,
+    contrastRatio,
+    toCssRgb,
+    toCssRgba,
+    toCssHsl,
+    toCssHsv,
+    toCssCmyk,
+    type RGB
+  } from '../lib/color';
   import { NAMED_COLORS } from '../data/colors';
+  import { toggleFavorite, isFavorite, addToHistory } from '../lib/workspace';
+
   const fileInput = document.querySelector<HTMLInputElement>('#color-image');
   const video = document.querySelector<HTMLVideoElement>('#camera-video');
   const canvas = document.querySelector<HTMLCanvasElement>('#sample-canvas');
   const ctx = canvas?.getContext('2d', { willReadFrequently: true });
   const empty = document.querySelector<HTMLElement>('#scanner-empty');
   const stage = document.querySelector<HTMLElement>('#scanner-stage');
+  const cameraWrapper = document.querySelector<HTMLElement>('#camera-wrapper');
+  const crosshair = document.querySelector<HTMLElement>('#scanner-crosshair');
+  const magnifier = document.querySelector<HTMLElement>('#magnifier-loupe');
+  const magCanvas = document.querySelector<HTMLCanvasElement>('#magnifier-canvas');
+  const magCtx = magCanvas?.getContext('2d');
+
   const startButton = document.querySelector<HTMLButtonElement>('#start-camera');
+  const flipButton = document.querySelector<HTMLButtonElement>('#flip-camera');
   const stopButton = document.querySelector<HTMLButtonElement>('#stop-camera');
   const resetButton = document.querySelector<HTMLButtonElement>('#reset-image');
+  const freezeButton = document.querySelector<HTMLButtonElement>('#freeze-sample');
   const zoom = document.querySelector<HTMLInputElement>('#zoom-range');
   const zoomValue = document.querySelector<HTMLOutputElement>('#zoom-value');
+  const coordDisplay = document.querySelector<HTMLElement>('#coord-display');
   const message = document.querySelector<HTMLElement>('#scanner-message');
   const sampled = document.querySelector<HTMLElement>('#sampled-swatches');
+  const sampleCount = document.querySelector<HTMLElement>('#sample-count');
+
   const copyButton = document.querySelector<HTMLButtonElement>('#copy-hex');
+  const copyAllButton = document.querySelector<HTMLButtonElement>('#copy-all');
+  const favButton = document.querySelector<HTMLButtonElement>('#fav-btn');
+  const shareButton = document.querySelector<HTMLButtonElement>('#share-color');
+  const downloadButton = document.querySelector<HTMLButtonElement>('#download-swatch');
   const extractButton = document.querySelector<HTMLButtonElement>('#extract-palette');
+  const exportJsonBtn = document.querySelector<HTMLButtonElement>('#export-json');
+  const exportCssBtn = document.querySelector<HTMLButtonElement>('#export-css');
+  const clearSamplesBtn = document.querySelector<HTMLButtonElement>('#clear-samples');
+
   const swatch = document.querySelector<HTMLElement>('#result-swatch');
+  const colorNameEl = document.querySelector<HTMLElement>('#color-name');
+  const hexEl = document.querySelector<HTMLElement>('#hex-value');
+  const rgbEl = document.querySelector<HTMLElement>('#rgb-value');
+  const rgbaEl = document.querySelector<HTMLElement>('#rgba-value');
+  const hslEl = document.querySelector<HTMLElement>('#hsl-value');
+  const hsvEl = document.querySelector<HTMLElement>('#hsv-value');
+  const cmykEl = document.querySelector<HTMLElement>('#cmyk-value');
+  const similarContainer = document.querySelector<HTMLElement>('#similar-suggestions');
+  const similarChips = document.querySelector<HTMLElement>('#similar-chips');
+
+  const comparePanel = document.querySelector<HTMLElement>('#compare-panel');
+  const cmpSwatch1 = document.querySelector<HTMLElement>('#cmp-swatch-1');
+  const cmpSwatch2 = document.querySelector<HTMLElement>('#cmp-swatch-2');
+  const cmpHex1 = document.querySelector<HTMLElement>('#cmp-hex-1');
+  const cmpHex2 = document.querySelector<HTMLElement>('#cmp-hex-2');
+  const cmpContrast = document.querySelector<HTMLElement>('#cmp-contrast');
+  const cmpDist = document.querySelector<HTMLElement>('#cmp-dist');
+  const closeCompare = document.querySelector<HTMLElement>('#close-compare');
+
   let stream: MediaStream | null = null;
   let mode: 'image' | 'camera' | null = null;
+  let currentFacing: 'environment' | 'user' = 'environment';
   let currentHex = '';
+  let currentRgb: RGB = { r: 0, g: 0, b: 0 };
+  let currentName = '';
   let zoomFactor = 1;
   let samples: string[] = [];
-  let sourceWidth = 0, sourceHeight = 0;
+  let sourceWidth = 0;
+  let sourceHeight = 0;
+  let isFrozen = false;
+  let cameraTimer = 0;
 
-  function say(text: string) { if (message) message.textContent = text; }
-  function showStage() { if (empty) empty.hidden = true; if (canvas) canvas.hidden = false; if (zoom) zoom.disabled = false; if (resetButton) resetButton.disabled = false; if (extractButton) extractButton.disabled = false; }
+  function say(text: string) {
+    if (message) message.textContent = text;
+  }
+
+  function showActiveStage() {
+    if (empty) empty.hidden = true;
+    if (canvas) canvas.hidden = false;
+    if (zoom) zoom.disabled = false;
+    if (resetButton) resetButton.disabled = false;
+    if (freezeButton) freezeButton.disabled = false;
+    if (extractButton) extractButton.disabled = false;
+    if (clearSamplesBtn) clearSamplesBtn.disabled = samples.length === 0;
+    if (exportJsonBtn) exportJsonBtn.disabled = samples.length === 0;
+    if (exportCssBtn) exportCssBtn.disabled = samples.length === 0;
+    stage?.classList.add('has-content');
+  }
+
+  function updateFavoriteButton() {
+    if (!favButton || !currentHex) return;
+    const fav = isFavorite(currentHex);
+    favButton.textContent = fav ? '★ Favorited' : '★ Save to favorites';
+    favButton.classList.toggle('button-primary', fav);
+    favButton.classList.toggle('button-secondary', !fav);
+  }
+
   function drawSource() {
     if (!canvas || !ctx) return;
-    const source = mode === 'camera' ? video : null;
+    const isCam = mode === 'camera';
+    const source = isCam ? video : null;
     if (source && source.readyState < 2) return;
+
     const w = source ? source.videoWidth : sourceWidth;
     const h = source ? source.videoHeight : sourceHeight;
     if (!w || !h) return;
-    const max = 1100;
-    const scale = Math.min(1, max / Math.max(w, h));
-    const baseW = Math.round(w * scale), baseH = Math.round(h * scale);
-    canvas.width = baseW; canvas.height = baseH;
+
+    const maxWidth = 1200;
+    const scale = Math.min(1, maxWidth / Math.max(w, h));
+    const baseW = Math.round(w * scale);
+    const baseH = Math.round(h * scale);
+
+    if (canvas.width !== baseW || canvas.height !== baseH) {
+      canvas.width = baseW;
+      canvas.height = baseH;
+    }
+
     ctx.clearRect(0, 0, baseW, baseH);
-    if (source) ctx.drawImage(source, 0, 0, baseW, baseH);
-    else {
+    if (source) {
+      ctx.drawImage(source, 0, 0, baseW, baseH);
+    } else {
       const img = (window as Window & { __colorImage?: HTMLImageElement }).__colorImage;
       if (img) ctx.drawImage(img, 0, 0, baseW, baseH);
     }
+
     canvas.style.transform = `scale(${zoomFactor})`;
     canvas.style.transformOrigin = 'center center';
+
+    // In live camera mode, sample the center crosshair pixel if not frozen
+    if (mode === 'camera' && !isFrozen) {
+      sampleCenterPixel();
+    }
   }
-  function selectRgb(r: number, g: number, b: number) {
-    const result = getColorResult({ r, g, b }); currentHex = result.hex;
-    const name = nearestNamedColor(result.rgb, NAMED_COLORS);
-    document.querySelector<HTMLElement>('#color-name')!.textContent = name;
-    document.querySelector<HTMLElement>('#hex-value')!.textContent = result.hex;
-    document.querySelector<HTMLElement>('#rgb-value')!.textContent = `${result.rgb.r}, ${result.rgb.g}, ${result.rgb.b}`;
-    document.querySelector<HTMLElement>('#hsl-value')!.textContent = `${result.hsl.h}°, ${result.hsl.s}%, ${result.hsl.l}%`;
-    if (swatch) { swatch.style.background = result.hex; swatch.innerHTML = ''; }
-    if (copyButton) copyButton.disabled = false;
-    if (!samples.includes(result.hex)) samples.unshift(result.hex);
-    samples = samples.slice(0, 12); renderSamples();
+
+  function sampleCenterPixel() {
+    if (!canvas || !ctx) return;
+    const cx = Math.floor(canvas.width / 2);
+    const cy = Math.floor(canvas.height / 2);
+    const px = ctx.getImageData(cx, cy, 1, 1).data;
+    selectRgb(px[0], px[1], px[2], false);
+
+    if (crosshair) {
+      crosshair.hidden = false;
+      crosshair.style.left = '50%';
+      crosshair.style.top = '50%';
+    }
   }
-  function renderSamples() {
-    if (!sampled) return;
-    sampled.innerHTML = '';
-    samples.forEach((hex) => {
-      const button = document.createElement('button'); button.type = 'button'; button.className = 'sample-chip'; button.title = `Select ${hex}`;
-      const color = document.createElement('span'); color.style.background = hex; const label = document.createElement('small'); label.textContent = hex;
-      button.append(color, label); button.addEventListener('click', () => { const rgb = getColorResultFromHex(hex); if (rgb) selectRgb(rgb.r, rgb.g, rgb.b); }); sampled.append(button);
+
+  function findSimilarColors(rgb: RGB, limit = 3) {
+    const list = NAMED_COLORS.map((c) => {
+      const candidate = parseHex(c.hex);
+      const dist = candidate ? rgbDistance(rgb, candidate) : Infinity;
+      return { ...c, dist };
     });
+    list.sort((a, b) => a.dist - b.dist);
+    return list.slice(0, limit);
   }
-  function getColorResultFromHex(hex: string) { const n = Number.parseInt(hex.slice(1), 16); return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }; }
-  function pointFromEvent(event: PointerEvent) {
+
+  function selectRgb(r: number, g: number, b: number, addSample = true) {
+    const res = getColorResult({ r, g, b });
+    currentRgb = res.rgb;
+    currentHex = res.hex;
+
+    const sim = findSimilarColors(res.rgb, 3);
+    currentName = sim[0]?.name || 'Approximate Color';
+
+    if (colorNameEl) colorNameEl.textContent = `~ ${currentName}`;
+    if (hexEl) hexEl.textContent = res.hex;
+    if (rgbEl) rgbEl.textContent = `${res.rgb.r}, ${res.rgb.g}, ${res.rgb.b}`;
+    if (rgbaEl) rgbaEl.textContent = `${res.rgb.r}, ${res.rgb.g}, ${res.rgb.b}, 1.0`;
+    if (hslEl) hslEl.textContent = `${res.hsl.h}°, ${res.hsl.s}%, ${res.hsl.l}%`;
+    if (hsvEl) hsvEl.textContent = `${res.hsv.h}°, ${res.hsv.s}%, ${res.hsv.v}%`;
+    if (cmykEl) cmykEl.textContent = `${res.cmyk.c}%, ${res.cmyk.m}%, ${res.cmyk.y}%, ${res.cmyk.k}%`;
+
+    if (swatch) {
+      swatch.style.background = res.hex;
+      swatch.innerHTML = '';
+    }
+
+    if (copyButton) copyButton.disabled = false;
+    if (copyAllButton) copyAllButton.disabled = false;
+    if (favButton) favButton.disabled = false;
+    if (shareButton) shareButton.disabled = false;
+    if (downloadButton) downloadButton.disabled = false;
+    updateFavoriteButton();
+
+    if (similarContainer && similarChips) {
+      similarContainer.style.display = 'block';
+      similarChips.innerHTML = '';
+      sim.forEach((item) => {
+        const link = document.createElement('a');
+        const slug = item.name.toLowerCase().replaceAll(' ', '-');
+        link.href = `/colors/${slug}/`;
+        link.className = 'tag-badge';
+        link.textContent = `${item.name} (${item.hex})`;
+        similarChips.appendChild(link);
+      });
+    }
+
+    if (addSample) {
+      addToHistory(res.hex, currentName);
+      if (!samples.includes(res.hex)) {
+        samples.unshift(res.hex);
+        samples = samples.slice(0, 24);
+        renderSamples();
+      }
+    }
+  }
+
+  function renderSamples() {
+    if (!sampled || !sampleCount) return;
+    sampleCount.textContent = String(samples.length);
+    sampled.innerHTML = '';
+
+    if (clearSamplesBtn) clearSamplesBtn.disabled = samples.length === 0;
+    if (exportJsonBtn) exportJsonBtn.disabled = samples.length === 0;
+    if (exportCssBtn) exportCssBtn.disabled = samples.length === 0;
+
+    if (samples.length === 0) {
+      const emptyNote = document.createElement('span');
+      emptyNote.className = 'muted';
+      emptyNote.textContent = 'Your sampled colors will appear here as you tap or click points.';
+      sampled.appendChild(emptyNote);
+      if (comparePanel) comparePanel.style.display = 'none';
+      return;
+    }
+
+    samples.forEach((hex, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'sample-chip';
+
+      const colorBox = document.createElement('span');
+      colorBox.style.background = hex;
+      colorBox.title = `Click to re-select ${hex}`;
+      colorBox.style.cursor = 'pointer';
+      colorBox.addEventListener('click', () => {
+        const rgb = parseHex(hex);
+        if (rgb) selectRgb(rgb.r, rgb.g, rgb.b, false);
+      });
+
+      const label = document.createElement('small');
+      label.textContent = hex;
+      label.style.cursor = 'pointer';
+      label.addEventListener('click', () => {
+        const rgb = parseHex(hex);
+        if (rgb) selectRgb(rgb.r, rgb.g, rgb.b, false);
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'chip-remove';
+      removeBtn.innerHTML = '×';
+      removeBtn.title = 'Remove sample';
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        samples.splice(idx, 1);
+        renderSamples();
+      });
+
+      chip.append(colorBox, label, removeBtn);
+      sampled.appendChild(chip);
+    });
+
+    if (samples.length >= 2) {
+      updateComparison(samples[0], samples[1]);
+    } else if (comparePanel) {
+      comparePanel.style.display = 'none';
+    }
+  }
+
+  function updateComparison(hexA: string, hexB: string) {
+    if (!comparePanel || !cmpSwatch1 || !cmpSwatch2 || !cmpHex1 || !cmpHex2 || !cmpContrast || !cmpDist) return;
+    const rgbA = parseHex(hexA);
+    const rgbB = parseHex(hexB);
+    if (!rgbA || !rgbB) return;
+
+    cmpSwatch1.style.background = hexA;
+    cmpHex1.textContent = hexA;
+    cmpSwatch2.style.background = hexB;
+    cmpHex2.textContent = hexB;
+
+    const ratio = contrastRatio(rgbA, rgbB);
+    cmpContrast.textContent = `${ratio.toFixed(2)}:1`;
+    const dist = Math.round(rgbDistance(rgbA, rgbB));
+    cmpDist.textContent = `${dist} (weighted sRGB)`;
+    comparePanel.style.display = 'block';
+  }
+
+  closeCompare?.addEventListener('click', () => {
+    if (comparePanel) comparePanel.style.display = 'none';
+  });
+
+  function updateMagnifier(clientX: number, clientY: number) {
+    if (!canvas || !ctx || !magnifier || !magCtx || !magCanvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
+      magnifier.style.display = 'none';
+      return;
+    }
+
+    const x = Math.round(((clientX - rect.left) / rect.width) * canvas.width);
+    const y = Math.round(((clientY - rect.top) / rect.height) * canvas.height);
+    const clampedX = Math.max(0, Math.min(canvas.width - 1, x));
+    const clampedY = Math.max(0, Math.min(canvas.height - 1, y));
+
+    if (coordDisplay) {
+      coordDisplay.textContent = `X: ${clampedX}, Y: ${clampedY}`;
+    }
+
+    // Render 9x9 pixels magnified onto 100x100 magnifier canvas
+    const sampleSize = 9;
+    const half = Math.floor(sampleSize / 2);
+    const startX = Math.max(0, clampedX - half);
+    const startY = Math.max(0, clampedY - half);
+
+    magCtx.imageSmoothingEnabled = false;
+    magCtx.clearRect(0, 0, 100, 100);
+    magCtx.drawImage(canvas, startX, startY, sampleSize, sampleSize, 0, 0, 100, 100);
+
+    const stageRect = stage?.getBoundingClientRect();
+    if (stageRect) {
+      magnifier.style.display = 'block';
+      magnifier.style.left = `${clientX - stageRect.left}px`;
+      magnifier.style.top = `${clientY - stageRect.top}px`;
+    }
+  }
+
+  function pointFromEvent(clientX: number, clientY: number) {
     if (!canvas || !ctx) return;
     const rect = canvas.getBoundingClientRect();
-    // Canvas display may be zoomed; normalize to its untransformed visual dimensions.
-    const x = Math.round(((event.clientX - rect.left) / rect.width) * canvas.width);
-    const y = Math.round(((event.clientY - rect.top) / rect.height) * canvas.height);
-    const px = ctx.getImageData(Math.max(0, Math.min(canvas.width - 1, x)), Math.max(0, Math.min(canvas.height - 1, y)), 1, 1).data;
-    selectRgb(px[0], px[1], px[2]);
+    const x = Math.round(((clientX - rect.left) / rect.width) * canvas.width);
+    const y = Math.round(((clientY - rect.top) / rect.height) * canvas.height);
+    const clampedX = Math.max(0, Math.min(canvas.width - 1, x));
+    const clampedY = Math.max(0, Math.min(canvas.height - 1, y));
+
+    const px = ctx.getImageData(clampedX, clampedY, 1, 1).data;
+    selectRgb(px[0], px[1], px[2], true);
+
+    if (crosshair) {
+      const stageRect = stage?.getBoundingClientRect();
+      if (stageRect) {
+        crosshair.hidden = false;
+        crosshair.style.left = `${clientX - stageRect.left}px`;
+        crosshair.style.top = `${clientY - stageRect.top}px`;
+      }
+    }
   }
-  function stopCamera() { stream?.getTracks().forEach((track) => track.stop()); stream = null; if (video) { video.pause(); video.srcObject = null; video.hidden = true; } if (stopButton) stopButton.disabled = true; if (startButton) startButton.disabled = false; }
-  fileInput?.addEventListener('change', () => {
-    const file = fileInput.files?.[0]; if (!file) return;
-    if (!file.type.startsWith('image/')) { say('Please choose a valid image file.'); return; }
-    if (file.size > 15 * 1024 * 1024) { say('Please choose an image smaller than 15 MB.'); return; }
-    stopCamera(); mode = 'image'; zoomFactor = 1; if (zoom) zoom.value = '1';
-    const url = URL.createObjectURL(file); const img = new Image();
-    img.onload = () => { sourceWidth = img.naturalWidth; sourceHeight = img.naturalHeight; (window as Window & { __colorImage?: HTMLImageElement }).__colorImage = img; drawSource(); showStage(); say('Image ready. Tap the exact area whose color you want to identify.'); URL.revokeObjectURL(url); };
-    img.onerror = () => say('This image could not be opened. Try another image.'); img.src = url;
-  });
-  startButton?.addEventListener('click', async () => {
-    if (!navigator.mediaDevices?.getUserMedia) { say('Camera access is unavailable. Use image upload instead.'); return; }
+
+  function stopCameraTracks() {
+    if (cameraTimer) {
+      window.clearInterval(cameraTimer);
+      cameraTimer = 0;
+    }
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      stream = null;
+    }
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+      video.hidden = true;
+    }
+    if (cameraWrapper) cameraWrapper.hidden = true;
+    if (stopButton) stopButton.disabled = true;
+    if (flipButton) flipButton.disabled = true;
+    if (startButton) startButton.disabled = false;
+  }
+
+  async function startCameraStream(facing: 'environment' | 'user') {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      say('Camera access is not supported by your browser or requires HTTPS. Use image upload instead.');
+      return;
+    }
     try {
-      stopCamera(); stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-      mode = 'camera'; if (video) { video.srcObject = stream; video.hidden = false; await video.play(); }
-      if (canvas) canvas.hidden = false; showStage(); if (startButton) startButton.disabled = true; if (stopButton) stopButton.disabled = false;
-      drawSource(); const timer = window.setInterval(() => { if (mode !== 'camera' || !stream) { window.clearInterval(timer); return; } drawSource(); }, 120);
-      say('Camera is active. Tap the preview to sample a color.');
-    } catch (error) { say(error instanceof Error && error.name === 'NotAllowedError' ? 'Camera permission was denied. Allow camera access or upload a photo.' : 'Could not start the camera. Check browser permissions or upload a photo.'); }
+      stopCameraTracks();
+      say('Requesting camera permission...');
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facing },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      mode = 'camera';
+      currentFacing = facing;
+      if (video) {
+        video.srcObject = stream;
+        video.hidden = false;
+        await video.play();
+      }
+      if (cameraWrapper) cameraWrapper.hidden = false;
+      showActiveStage();
+      if (startButton) startButton.disabled = true;
+      if (stopButton) stopButton.disabled = false;
+      if (flipButton) flipButton.disabled = false;
+
+      drawSource();
+      cameraTimer = window.setInterval(() => {
+        if (mode !== 'camera' || !stream) {
+          window.clearInterval(cameraTimer);
+          return;
+        }
+        drawSource();
+      }, 90);
+
+      say('Camera active. Tap or click anywhere on the feed to freeze or sample a pixel.');
+    } catch (err: unknown) {
+      const isDenied = err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
+      say(isDenied ? 'Camera permission was denied. Please allow camera permissions in your browser or upload an image.' : 'Camera hardware is unavailable or in use by another application. Try uploading a photo.');
+    }
+  }
+
+  fileInput?.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/i)) {
+      say('Please choose a valid PNG, JPG, or WebP image file.');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      say('File size exceeds 25 MB limit. Please select a smaller photo.');
+      return;
+    }
+
+    stopCameraTracks();
+    mode = 'image';
+    zoomFactor = 1;
+    if (zoom) zoom.value = '1';
+    if (zoomValue) zoomValue.value = '1.0×';
+    if (crosshair) crosshair.hidden = true;
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      sourceWidth = img.naturalWidth;
+      sourceHeight = img.naturalHeight;
+      (window as Window & { __colorImage?: HTMLImageElement }).__colorImage = img;
+      drawSource();
+      showActiveStage();
+      say(`Image loaded (${sourceWidth}×${sourceHeight}px). Tap or click any pixel to sample.`);
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      say('Corrupt or unreadable image file. Please try another image.');
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
   });
-  stopButton?.addEventListener('click', () => { stopCamera(); mode = null; say('Camera stopped. You can upload an image or start the camera again.'); });
-  canvas?.addEventListener('click', (event) => pointFromEvent(event));
-  zoom?.addEventListener('input', () => { zoomFactor = Number(zoom.value); if (zoomValue) zoomValue.value = `${zoomFactor.toFixed(1)}×`; drawSource(); });
-  resetButton?.addEventListener('click', () => { zoomFactor = 1; if (zoom) zoom.value = '1'; if (zoomValue) zoomValue.value = '1.0×'; drawSource(); });
-  copyButton?.addEventListener('click', async () => { if (!currentHex) return; try { await navigator.clipboard.writeText(currentHex); copyButton.textContent = 'Copied!'; window.setTimeout(() => { if (copyButton) copyButton.textContent = 'Copy HEX'; }, 1400); } catch { say('Clipboard access is unavailable. Select and copy the HEX value manually.'); } });
+
+  startButton?.addEventListener('click', () => startCameraStream(currentFacing));
+  flipButton?.addEventListener('click', () => {
+    const nextFacing = currentFacing === 'environment' ? 'user' : 'environment';
+    startCameraStream(nextFacing);
+  });
+  stopButton?.addEventListener('click', () => {
+    stopCameraTracks();
+    mode = null;
+    say('Camera stopped. Ready to upload a photo or start again.');
+  });
+
+  freezeButton?.addEventListener('click', () => {
+    isFrozen = !isFrozen;
+    freezeButton.textContent = isFrozen ? 'Unlock color' : 'Lock color';
+    say(isFrozen ? 'Sampling locked. Color values will hold steady.' : 'Sampling unlocked.');
+  });
+
+  resetButton?.addEventListener('click', () => {
+    zoomFactor = 1;
+    if (zoom) zoom.value = '1';
+    if (zoomValue) zoomValue.value = '1.0×';
+    drawSource();
+  });
+
+  zoom?.addEventListener('input', () => {
+    zoomFactor = Number(zoom.value);
+    if (zoomValue) zoomValue.value = `${zoomFactor.toFixed(1)}×`;
+    drawSource();
+  });
+
+  canvas?.addEventListener('click', (e) => {
+    pointFromEvent(e.clientX, e.clientY);
+  });
+
+  canvas?.addEventListener('mousemove', (e) => {
+    updateMagnifier(e.clientX, e.clientY);
+  });
+
+  canvas?.addEventListener('mouseleave', () => {
+    if (magnifier) magnifier.style.display = 'none';
+  });
+
+  canvas?.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    if (t) {
+      updateMagnifier(t.clientX, t.clientY);
+      pointFromEvent(t.clientX, t.clientY);
+    }
+  }, { passive: true });
+
+  canvas?.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (t) updateMagnifier(t.clientX, t.clientY);
+  }, { passive: true });
+
+  canvas?.addEventListener('touchend', () => {
+    if (magnifier) magnifier.style.display = 'none';
+  });
+
+  favButton?.addEventListener('click', () => {
+    if (!currentHex) return;
+    toggleFavorite(currentHex, currentName);
+    updateFavoriteButton();
+  });
+
+  async function copyText(text: string, btn: HTMLElement, successText = 'Copied!') {
+    const original = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = successText;
+      window.setTimeout(() => {
+        btn.textContent = original;
+      }, 1200);
+    } catch {
+      say('Clipboard write permission unavailable.');
+    }
+  }
+
+  copyButton?.addEventListener('click', () => {
+    if (currentHex) copyText(currentHex, copyButton);
+  });
+
+  copyAllButton?.addEventListener('click', () => {
+    if (!currentHex) return;
+    const text = [
+      `Name: ${currentName}`,
+      `HEX: ${currentHex}`,
+      `RGB: ${toCssRgb(currentRgb)}`,
+      `RGBA: ${toCssRgba(currentRgb, 1)}`,
+      `HSL: ${toCssHsl(getColorResult(currentRgb).hsl)}`,
+      `HSV: ${toCssHsv(getColorResult(currentRgb).hsv)}`,
+      `CMYK: ${toCssCmyk(getColorResult(currentRgb).cmyk)}`
+    ].join('\n');
+    copyText(text, copyAllButton);
+  });
+
+  shareButton?.addEventListener('click', async () => {
+    if (!currentHex) return;
+    const shareData = {
+      title: `Color: ${currentName} (${currentHex})`,
+      text: `Identified color ${currentName} (${currentHex}) on ColorCode Identifier.`,
+      url: window.location.href
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {}
+    } else {
+      copyText(window.location.href, shareButton, 'Link Copied!');
+    }
+  });
+
+  downloadButton?.addEventListener('click', () => {
+    if (!currentHex) return;
+    const swatchCanvas = document.createElement('canvas');
+    swatchCanvas.width = 400;
+    swatchCanvas.height = 420;
+    const sCtx = swatchCanvas.getContext('2d');
+    if (!sCtx) return;
+
+    // Draw card background
+    sCtx.fillStyle = '#FFFFFF';
+    sCtx.fillRect(0, 0, 400, 420);
+
+    // Draw main color swatch
+    sCtx.fillStyle = currentHex;
+    sCtx.fillRect(20, 20, 360, 240);
+
+    // Draw border around swatch
+    sCtx.strokeStyle = 'rgba(0,0,0,0.1)';
+    sCtx.lineWidth = 1;
+    sCtx.strokeRect(20, 20, 360, 240);
+
+    // Draw labels
+    sCtx.fillStyle = '#17152B';
+    sCtx.font = 'bold 22px Inter, sans-serif';
+    sCtx.fillText(currentName, 24, 295);
+
+    sCtx.fillStyle = '#6C5CE7';
+    sCtx.font = 'bold 16px monospace';
+    sCtx.fillText(currentHex, 24, 325);
+
+    sCtx.fillStyle = '#64748B';
+    sCtx.font = '13px Inter, sans-serif';
+    sCtx.fillText(`RGB: ${currentRgb.r}, ${currentRgb.g}, ${currentRgb.b}`, 24, 350);
+    sCtx.fillText('ColorCode Identifier — colorcode.id', 24, 390);
+
+    const a = document.createElement('a');
+    a.download = `color-${currentHex.replace('#', '')}.png`;
+    a.href = swatchCanvas.toDataURL('image/png');
+    a.click();
+  });
+
   extractButton?.addEventListener('click', () => {
-    if (!canvas || !ctx) return; const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; const buckets = new Map<string, number>();
-    // Sample a grid and quantize channels to 4-bit buckets for a lightweight dominant-color estimate.
-    const step = Math.max(1, Math.floor(Math.sqrt((canvas.width * canvas.height) / 1800)));
-    for (let y = 0; y < canvas.height; y += step * 3) for (let x = 0; x < canvas.width; x += step * 3) { const i = (y * canvas.width + x) * 4; if (data[i + 3] < 180) continue; const r = Math.round(data[i] / 16) * 16, g = Math.round(data[i + 1] / 16) * 16, b = Math.round(data[i + 2] / 16) * 16; const hex = getColorResult({ r, g, b }).hex; buckets.set(hex, (buckets.get(hex) || 0) + 1); }
-    const top = [...buckets.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([hex]) => hex); top.forEach((hex) => { if (!samples.includes(hex)) samples.push(hex); }); samples = samples.slice(0, 12); renderSamples(); say('Dominant colors estimated from sampled image pixels. Results can vary with lighting and image compression.');
+    if (!canvas || !ctx) return;
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const buckets = new Map<string, number>();
+    const step = Math.max(1, Math.floor(Math.sqrt((canvas.width * canvas.height) / 2000)));
+
+    for (let y = 0; y < canvas.height; y += step * 3) {
+      for (let x = 0; x < canvas.width; x += step * 3) {
+        const i = (y * canvas.width + x) * 4;
+        if (data[i + 3] < 180) continue;
+        const r = Math.round(data[i] / 16) * 16;
+        const g = Math.round(data[i + 1] / 16) * 16;
+        const b = Math.round(data[i + 2] / 16) * 16;
+        const hex = getColorResult({ r, g, b }).hex;
+        buckets.set(hex, (buckets.get(hex) || 0) + 1);
+      }
+    }
+
+    const top = [...buckets.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([hex]) => hex);
+
+    top.forEach((hex) => {
+      if (!samples.includes(hex)) samples.push(hex);
+    });
+    samples = samples.slice(0, 24);
+    renderSamples();
+    say('Extracted dominant colors from the image.');
   });
-  window.addEventListener('beforeunload', stopCamera);
+
+  exportJsonBtn?.addEventListener('click', () => {
+    const list = samples.map((hex) => {
+      const rgb = parseHex(hex);
+      return rgb ? getColorResult(rgb) : { hex };
+    });
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'color-palette.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  exportCssBtn?.addEventListener('click', () => {
+    const lines = samples.map((hex, i) => `  --color-${i + 1}: ${hex};`).join('\n');
+    const css = `:root {\n${lines}\n}`;
+    copyText(css, exportCssBtn, 'CSS Copied!');
+  });
+
+  clearSamplesBtn?.addEventListener('click', () => {
+    samples = [];
+    renderSamples();
+    say('Cleared all sampled swatches.');
+  });
+
+  ['hex', 'rgb', 'rgba', 'hsl', 'hsv', 'cmyk'].forEach((key) => {
+    const el = document.querySelector<HTMLElement>(`#box-${key}`);
+    el?.addEventListener('click', () => {
+      const val = el.querySelector('strong')?.textContent;
+      if (val && val !== '—') copyText(val, el, 'COPIED');
+    });
+  });
+
+  window.addEventListener('beforeunload', stopCameraTracks);
 </script>

@@ -1,0 +1,1017 @@
+---
+import { VEHICLE_TEMPLATES } from '../data/vehicleTemplates';
+
+interface Props {
+  initialType?: 'car' | 'bike';
+  title?: string;
+  subtitle?: string;
+}
+
+const {
+  initialType = 'car',
+  title = 'Vehicle Color Customizer & Paint Visualizer',
+  subtitle = 'Choose a car or motorcycle template or upload your own vehicle photo. Preview any color with glossy, metallic, matte, or satin finishes.'
+} = Astro.props;
+
+const presetColors = [
+  { name: 'Racing Blue', hex: '#0E3A75' },
+  { name: 'Soul Red', hex: '#8D0B1C' },
+  { name: 'Alpine White', hex: '#F7F8F9' },
+  { name: 'Sapphire Black', hex: '#16181D' },
+  { name: 'Lime Green', hex: '#6CB33F' },
+  { name: 'Guards Red', hex: '#CC1122' },
+  { name: 'Electric Cyan', hex: '#22D3EE' },
+  { name: 'Brand Indigo', hex: '#6C5CE7' },
+  { name: 'Sunflower Yellow', hex: '#FFD700' },
+  { name: 'Titanium Gray', hex: '#878681' },
+  { name: 'Brushed Copper', hex: '#B87333' },
+  { name: 'Baby Blue', hex: '#89CFF0' }
+];
+---
+
+<section class="scanner-card" aria-labelledby="customizer-title" style="margin: 20px 0;">
+  <div class="scanner-heading">
+    <div>
+      <span class="eyebrow">INTERACTIVE VEHICLE COLORIZER</span>
+      <h2 id="customizer-title">{title}</h2>
+      <p>{subtitle}</p>
+    </div>
+    <span class="scanner-icon" aria-hidden="true">🎨</span>
+  </div>
+
+  <!-- Step 1: Vehicle Type & Template Selection -->
+  <div style="margin: 18px 0 14px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+      <div style="display:inline-flex;gap:4px;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px;padding:4px;">
+        <button
+          class="button button-small vtype-btn"
+          id="btn-type-car"
+          data-type="car"
+          type="button"
+          class:list={[{ 'button-primary': initialType === 'car', 'button-secondary': initialType !== 'car' }]}
+        >
+          🚘 Cars (6 Styles)
+        </button>
+        <button
+          class="button button-small vtype-btn"
+          id="btn-type-bike"
+          data-type="bike"
+          type="button"
+          class:list={[{ 'button-primary': initialType === 'bike', 'button-secondary': initialType !== 'bike' }]}
+        >
+          🏍️ Motorcycles (5 Styles)
+        </button>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <label class="button button-secondary button-small upload-button" for="vehicle-photo-upload">
+          📁 Upload Your Vehicle Photo
+        </label>
+        <input id="vehicle-photo-upload" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" hidden />
+        <button id="btn-use-template" class="button button-quiet button-small" type="button" style="display:none;">
+          ← Back to templates
+        </button>
+      </div>
+    </div>
+
+    <!-- Template Pills -->
+    <div id="template-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;">
+      {VEHICLE_TEMPLATES.map((tmpl) => (
+        <button
+          class="button button-small button-secondary tmpl-btn"
+          data-id={tmpl.id}
+          data-type={tmpl.type}
+          data-color={tmpl.defaultColor}
+          type="button"
+          style={tmpl.type === initialType ? '' : 'display:none;'}
+        >
+          {tmpl.name}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Main Viewport / Stage -->
+  <div class="scanner-stage" id="customizer-stage" style="min-height:360px;padding:16px;background:var(--surface-soft);border-radius:18px;position:relative;overflow:hidden;">
+    <!-- SVG Template Renderer -->
+    <div id="template-viewport" style="width:100%;max-width:880px;margin:auto;display:flex;justify-content:center;align-items:center;position:relative;">
+      <svg
+        id="vehicle-svg"
+        viewBox="0 0 900 360"
+        style="width:100%;height:auto;max-height:360px;filter:drop-shadow(0 15px 25px rgba(0,0,0,0.15));"
+      >
+        <defs>
+          <clipPath id="split-clip-left">
+            <rect id="clip-rect-left" x="0" y="0" width="900" height="360" />
+          </clipPath>
+          <clipPath id="split-clip-right">
+            <rect id="clip-rect-right" x="0" y="0" width="900" height="360" />
+          </clipPath>
+          <radialGradient id="tire-grad" cx="50%" cy="50%" r="50%">
+            <stop offset="60%" stop-color="#1F242D" />
+            <stop offset="90%" stop-color="#11141A" />
+            <stop offset="100%" stop-color="#090B0E" />
+          </radialGradient>
+          <linearGradient id="rim-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#E2E8F0" />
+            <stop offset="50%" stop-color="#94A3B8" />
+            <stop offset="100%" stop-color="#475569" />
+          </linearGradient>
+          <linearGradient id="glass-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(219, 234, 254, 0.85)" />
+            <stop offset="50%" stop-color="rgba(147, 197, 253, 0.65)" />
+            <stop offset="100%" stop-color="rgba(30, 58, 138, 0.75)" />
+          </linearGradient>
+          <linearGradient id="metallic-flake" x1="0%" y1="0%" x2="100%" y2="50%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.3)" />
+            <stop offset="25%" stop-color="rgba(255,255,255,0)" />
+            <stop offset="50%" stop-color="rgba(255,255,255,0.4)" />
+            <stop offset="75%" stop-color="rgba(255,255,255,0)" />
+            <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
+          </linearGradient>
+          <linearGradient id="body-highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.35)" />
+            <stop offset="45%" stop-color="rgba(255,255,255,0.05)" />
+            <stop offset="85%" stop-color="rgba(0,0,0,0.25)" />
+            <stop offset="100%" stop-color="rgba(0,0,0,0.55)" />
+          </linearGradient>
+        </defs>
+
+        <g id="svg-shadow-layer"></g>
+        <!-- Original base body layer for split comparison -->
+        <g id="svg-body-layer-orig" clip-path="url(#split-clip-left)"></g>
+        <!-- Recolored body layer for split comparison -->
+        <g id="svg-body-layer" clip-path="url(#split-clip-right)"></g>
+        <g id="svg-finish-overlay" style="mix-blend-mode:overlay;pointer-events:none;"></g>
+        <g id="svg-highlight-layer" style="mix-blend-mode:screen;pointer-events:none;"></g>
+        <g id="svg-glass-layer"></g>
+        <g id="svg-wheel-layer"></g>
+        <g id="svg-trim-layer"></g>
+        <!-- Split line indicator -->
+        <line id="svg-split-line" x1="900" y1="0" x2="900" y2="360" stroke="#22D3EE" stroke-width="2" stroke-dasharray="4" style="display:none;" />
+      </svg>
+    </div>
+
+    <!-- User Upload Canvas Renderer -->
+    <div id="upload-viewport" style="display:none;width:100%;max-width:880px;position:relative;margin:auto;overflow:hidden;border-radius:12px;">
+      <canvas id="photo-canvas" style="display:block;width:100%;height:auto;cursor:crosshair;box-shadow:0 8px 24px rgba(0,0,0,0.15);touch-action:none;"></canvas>
+      <div id="brush-cursor" style="position:absolute;pointer-events:none;border:1.5px solid var(--brand-cyan);border-radius:50%;display:none;transform:translate(-50%,-50%);box-shadow:0 0 6px rgba(0,0,0,0.4);z-index:25;"></div>
+    </div>
+  </div>
+
+  <!-- Interactive Before / After Split Slider & Zoom Controls -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin:14px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:260px;">
+      <span style="font-size:12px;font-weight:700;white-space:nowrap;">Before / After Split:</span>
+      <input id="split-slider" type="range" min="0" max="100" value="100" style="flex:1;accent-color:var(--brand-cyan);" />
+      <span id="split-label" style="font-size:11px;color:var(--muted);min-width:70px;">100% Recolor</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="btn-peek-original" class="button button-small button-quiet" type="button" title="Hold down to preview original vehicle color">
+        👁️ Hold for Original
+      </button>
+      <button id="btn-zoom-in" class="button button-small button-secondary" type="button" title="Zoom in">+ Zoom</button>
+      <button id="btn-zoom-out" class="button button-small button-secondary" type="button" title="Zoom out">- Zoom</button>
+    </div>
+  </div>
+
+  <!-- Manual Brush Tools (Shown only for uploaded photos) -->
+  <div id="brush-controls" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;">Selection:</span>
+        <button id="tool-brush" class="button button-small button-primary" type="button">🖌️ Paint Panels</button>
+        <button id="tool-eraser" class="button button-small button-secondary" type="button">🧹 Erase Mask</button>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-left:4px;cursor:pointer;">
+          <input type="checkbox" id="chk-show-mask" checked />
+          <span>Show Mask Highlight</span>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <label for="brush-size" style="font-size:12px;font-weight:700;">Brush Size:</label>
+        <input id="brush-size" type="range" min="5" max="70" value="25" style="accent-color:var(--brand-indigo);" />
+        <span id="brush-size-val" style="font-size:12px;color:var(--muted);min-width:32px;">25px</span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button id="btn-undo" class="button button-small button-quiet" type="button" title="Undo stroke">↶ Undo</button>
+        <button id="btn-redo" class="button button-small button-quiet" type="button" title="Redo stroke">↷ Redo</button>
+        <button id="btn-clear-mask" class="button button-small button-quiet" type="button" style="color:var(--danger)">Clear Mask</button>
+      </div>
+    </div>
+    <p class="privacy-hint" style="margin:8px 0 0;">
+      Manual Brush: Paint over vehicle body panels. Windows, tires, and headlights remain unpainted. Toggle "Show Mask Highlight" to inspect your boundaries.
+    </p>
+  </div>
+
+  <!-- Step 3 & 4: Color Picker & Finish Controls -->
+  <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:20px;">
+      <!-- Color Picker -->
+      <div>
+        <label for="custom-hex-input" style="display:block;font-size:12px;font-weight:700;margin-bottom:8px;">
+          Choose Color (HEX / Native Picker):
+        </label>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+          <input id="custom-color-picker" type="color" value="#0E3A75" style="width:54px;height:45px;padding:2px;border-radius:10px;cursor:pointer;" />
+          <input id="custom-hex-input" value="#0E3A75" placeholder="#0E3A75" style="font-family:monospace;font-weight:700;" />
+          <button id="btn-copy-color" class="button button-secondary button-small" type="button">Copy HEX</button>
+        </div>
+
+        <span style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">PRESET POPULAR AUTOMOTIVE SHADES</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          {presetColors.map((p) => (
+            <button
+              class="preset-color-btn"
+              data-hex={p.hex}
+              title={`${p.name} (${p.hex})`}
+              type="button"
+              style={`width:30px;height:30px;border-radius:8px;background:${p.hex};border:1px solid var(--border);cursor:pointer;`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <!-- Finish & Tuning Sliders -->
+      <div>
+        <span style="display:block;font-size:12px;font-weight:700;margin-bottom:8px;">Paint Finish Simulation:</span>
+        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;margin-bottom:14px;">
+          <button class="button button-small button-primary finish-btn" data-finish="glossy" type="button">Glossy</button>
+          <button class="button button-small button-secondary finish-btn" data-finish="metallic" type="button">Metallic</button>
+          <button class="button button-small button-secondary finish-btn" data-finish="matte" type="button">Matte</button>
+          <button class="button button-small button-secondary finish-btn" data-finish="satin" type="button">Satin</button>
+        </div>
+
+        <div style="display:grid;gap:10px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:2px;">
+              <span>Color Saturation (Intensity)</span>
+              <span id="intensity-val">100%</span>
+            </div>
+            <input id="slider-intensity" type="range" min="30" max="170" value="100" style="width:100%;accent-color:var(--brand-indigo);" />
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:2px;">
+              <span>Panel Brightness Offset</span>
+              <span id="brightness-val">0%</span>
+            </div>
+            <input id="slider-brightness" type="range" min="-40" max="40" value="0" style="width:100%;accent-color:var(--brand-indigo);" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions & Download -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:20px;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button id="btn-reset-all" class="button button-quiet button-small" type="button">Reset Default</button>
+        <button id="btn-share-custom" class="button button-secondary button-small" type="button">Share Build</button>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button id="btn-download-png" class="button button-primary" type="button">
+          📥 Download Vehicle Image (PNG)
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { VEHICLE_TEMPLATES } from '../data/vehicleTemplates';
+  import { parseHex, rgbToHsl, hslToRgb, rgbToHex } from '../lib/color';
+
+  let currentType: 'car' | 'bike' = 'car';
+  let currentTemplate: VehicleTemplate = VEHICLE_TEMPLATES[0];
+  let currentColor = '#0E3A75';
+  let currentFinish = 'glossy';
+  let intensity = 1.0;
+  let brightness = 0;
+  let isCustomPhoto = false;
+  let splitPercent = 100;
+  let zoomLevel = 1.0;
+  let showMaskOverlay = true;
+
+  // DOM Elements
+  const typeCarBtn = document.querySelector<HTMLButtonElement>('#btn-type-car');
+  const typeBikeBtn = document.querySelector<HTMLButtonElement>('#btn-type-bike');
+  const templateBtns = document.querySelectorAll<HTMLButtonElement>('.tmpl-btn');
+  const backToTemplateBtn = document.querySelector<HTMLButtonElement>('#btn-use-template');
+  const photoUpload = document.querySelector<HTMLInputElement>('#vehicle-photo-upload');
+
+  const templateViewport = document.querySelector<HTMLElement>('#template-viewport');
+  const uploadViewport = document.querySelector<HTMLElement>('#upload-viewport');
+  const brushControls = document.querySelector<HTMLElement>('#brush-controls');
+
+  const svg = document.querySelector<SVGElement>('#vehicle-svg');
+  const shadowLayer = document.querySelector<SVGGElement>('#svg-shadow-layer');
+  const bodyLayer = document.querySelector<SVGGElement>('#svg-body-layer');
+  const bodyLayerOrig = document.querySelector<SVGGElement>('#svg-body-layer-orig');
+  const clipRectLeft = document.querySelector<SVGRectElement>('#clip-rect-left');
+  const clipRectRight = document.querySelector<SVGRectElement>('#clip-rect-right');
+  const svgSplitLine = document.querySelector<SVGLineElement>('#svg-split-line');
+
+  const finishOverlay = document.querySelector<SVGGElement>('#svg-finish-overlay');
+  const highlightLayer = document.querySelector<SVGGElement>('#svg-highlight-layer');
+  const glassLayer = document.querySelector<SVGGElement>('#svg-glass-layer');
+  const wheelLayer = document.querySelector<SVGGElement>('#svg-wheel-layer');
+  const trimLayer = document.querySelector<SVGGElement>('#svg-trim-layer');
+
+  const splitSlider = document.querySelector<HTMLInputElement>('#split-slider');
+  const splitLabel = document.querySelector<HTMLElement>('#split-label');
+  const btnPeek = document.querySelector<HTMLButtonElement>('#btn-peek-original');
+  const btnZoomIn = document.querySelector<HTMLButtonElement>('#btn-zoom-in');
+  const btnZoomOut = document.querySelector<HTMLButtonElement>('#btn-zoom-out');
+
+  const colorPicker = document.querySelector<HTMLInputElement>('#custom-color-picker');
+  const hexInput = document.querySelector<HTMLInputElement>('#custom-hex-input');
+  const copyColorBtn = document.querySelector<HTMLButtonElement>('#btn-copy-color');
+  const finishBtns = document.querySelectorAll<HTMLButtonElement>('.finish-btn');
+  const presetBtns = document.querySelectorAll<HTMLButtonElement>('.preset-color-btn');
+
+  const sliderIntensity = document.querySelector<HTMLInputElement>('#slider-intensity');
+  const sliderBrightness = document.querySelector<HTMLInputElement>('#slider-brightness');
+  const intensityVal = document.querySelector<HTMLElement>('#intensity-val');
+  const brightnessVal = document.querySelector<HTMLElement>('#brightness-val');
+
+  const btnReset = document.querySelector<HTMLButtonElement>('#btn-reset-all');
+  const btnShare = document.querySelector<HTMLButtonElement>('#btn-share-custom');
+  const btnDownload = document.querySelector<HTMLButtonElement>('#btn-download-png');
+
+  // Canvas & Brush Elements
+  const canvas = document.querySelector<HTMLCanvasElement>('#photo-canvas');
+  const ctx = canvas?.getContext('2d', { willReadFrequently: true });
+  const brushSizeSlider = document.querySelector<HTMLInputElement>('#brush-size');
+  const brushSizeVal = document.querySelector<HTMLElement>('#brush-size-val');
+  const toolBrushBtn = document.querySelector<HTMLButtonElement>('#tool-brush');
+  const toolEraserBtn = document.querySelector<HTMLButtonElement>('#tool-eraser');
+  const chkShowMask = document.querySelector<HTMLInputElement>('#chk-show-mask');
+  const btnUndo = document.querySelector<HTMLButtonElement>('#btn-undo');
+  const btnRedo = document.querySelector<HTMLButtonElement>('#btn-redo');
+  const btnClearMask = document.querySelector<HTMLButtonElement>('#btn-clear-mask');
+  const brushCursor = document.querySelector<HTMLElement>('#brush-cursor');
+
+  let uploadedImg: HTMLImageElement | null = null;
+  let maskCanvas: HTMLCanvasElement | null = null;
+  let maskCtx: CanvasRenderingContext2D | null = null;
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+  let brushMode: 'paint' | 'erase' = 'paint';
+  let brushRadius = 25;
+  let undoStack: ImageData[] = [];
+  let redoStack: ImageData[] = [];
+
+  // Check URL query parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramColor = urlParams.get('color');
+  const paramType = urlParams.get('type');
+  if (paramColor && /^#?[0-9a-fA-F]{6}$/.test(paramColor)) {
+    currentColor = paramColor.startsWith('#') ? paramColor : '#' + paramColor;
+    if (colorPicker) colorPicker.value = currentColor;
+    if (hexInput) hexInput.value = currentColor;
+  }
+  if (paramType === 'bike' || paramType === 'car') {
+    currentType = paramType;
+  }
+
+  function setVehicleType(type: 'car' | 'bike') {
+    currentType = type;
+    if (typeCarBtn && typeBikeBtn) {
+      typeCarBtn.classList.toggle('button-primary', type === 'car');
+      typeCarBtn.classList.toggle('button-secondary', type !== 'car');
+      typeBikeBtn.classList.toggle('button-primary', type === 'bike');
+      typeBikeBtn.classList.toggle('button-secondary', type !== 'bike');
+    }
+
+    templateBtns.forEach((btn) => {
+      const bType = btn.getAttribute('data-type');
+      btn.style.display = bType === type ? '' : 'none';
+    });
+
+    const first = VEHICLE_TEMPLATES.find((t) => t.type === type);
+    if (first) selectTemplate(first);
+  }
+
+  function selectTemplate(tmpl: VehicleTemplate) {
+    currentTemplate = tmpl;
+    isCustomPhoto = false;
+    if (templateViewport) templateViewport.style.display = 'flex';
+    if (uploadViewport) uploadViewport.style.display = 'none';
+    if (brushControls) brushControls.style.display = 'none';
+    if (backToTemplateBtn) backToTemplateBtn.style.display = 'none';
+
+    templateBtns.forEach((btn) => {
+      const match = btn.getAttribute('data-id') === tmpl.id;
+      btn.classList.toggle('button-primary', match);
+      btn.classList.toggle('button-secondary', !match);
+    });
+
+    renderTemplate();
+  }
+
+  function getCalculatedColor(): string {
+    const rgb = parseHex(currentColor);
+    if (!rgb) return currentColor;
+    const hsl = rgbToHsl(rgb);
+    const adjS = Math.max(0, Math.min(100, hsl.s * intensity));
+    const adjL = Math.max(5, Math.min(95, hsl.l + brightness));
+    return rgbToHex(hslToRgb({ h: hsl.h, s: adjS, l: adjL }));
+  }
+
+  function renderTemplate() {
+    if (!svg || !bodyLayer || !shadowLayer || !glassLayer || !wheelLayer || !trimLayer) return;
+    svg.setAttribute('viewBox', currentTemplate.viewBox);
+
+    const activeColor = getCalculatedColor();
+    const origColor = currentTemplate.defaultColor;
+
+    // Split comparison clip path calculations
+    const vbMatch = currentTemplate.viewBox.split(' ');
+    const vbWidth = Number(vbMatch[2]) || 900;
+    const splitX = Math.round((splitPercent / 100) * vbWidth);
+
+    if (clipRectLeft && clipRectRight) {
+      clipRectLeft.setAttribute('width', String(vbWidth - splitX));
+      clipRectRight.setAttribute('x', String(vbWidth - splitX));
+      clipRectRight.setAttribute('width', String(splitX));
+    }
+
+    if (svgSplitLine) {
+      if (splitPercent > 0 && splitPercent < 100) {
+        svgSplitLine.style.display = '';
+        svgSplitLine.setAttribute('x1', String(vbWidth - splitX));
+        svgSplitLine.setAttribute('x2', String(vbWidth - splitX));
+      } else {
+        svgSplitLine.style.display = 'none';
+      }
+    }
+
+    // Original body layer (left side of split)
+    if (bodyLayerOrig) {
+      bodyLayerOrig.innerHTML = currentTemplate.bodyPaths
+        .map((d) => `<path d="${d}" fill="${origColor}" stroke="rgba(0,0,0,0.18)" stroke-width="2" />`)
+        .join('');
+    }
+
+    // Recolored body layer (right side of split)
+    bodyLayer.innerHTML = currentTemplate.bodyPaths
+      .map((d) => `<path d="${d}" fill="${activeColor}" stroke="rgba(0,0,0,0.18)" stroke-width="2" />`)
+      .join('');
+
+    // Finish Overlay Simulation
+    if (finishOverlay) {
+      if (currentFinish === 'metallic') {
+        finishOverlay.innerHTML = currentTemplate.bodyPaths
+          .map((d) => `<path d="${d}" fill="url(#metallic-flake)" opacity="0.75" />`)
+          .join('');
+      } else if (currentFinish === 'satin') {
+        finishOverlay.innerHTML = currentTemplate.bodyPaths
+          .map((d) => `<path d="${d}" fill="#FFFFFF" opacity="0.15" />`)
+          .join('');
+      } else if (currentFinish === 'matte') {
+        finishOverlay.innerHTML = currentTemplate.bodyPaths
+          .map((d) => `<path d="${d}" fill="#000000" opacity="0.22" style="mix-blend-mode:multiply;" />`)
+          .join('');
+      } else {
+        finishOverlay.innerHTML = '';
+      }
+    }
+
+    // Body highlights & shadows
+    if (highlightLayer) {
+      const opacity = currentFinish === 'matte' ? '0.2' : currentFinish === 'satin' ? '0.4' : '0.65';
+      highlightLayer.innerHTML = currentTemplate.bodyPaths
+        .map((d) => `<path d="${d}" fill="url(#body-highlight)" opacity="${opacity}" />`)
+        .join('');
+    }
+
+    // Ground Shadow
+    shadowLayer.innerHTML = currentTemplate.shadowPaths
+      .map((d) => `<path d="${d}" fill="#000000" opacity="0.45" />`)
+      .join('');
+
+    // Glass & Windows
+    glassLayer.innerHTML = currentTemplate.glassPaths
+      .map((d) => `<path d="${d}" fill="url(#glass-grad)" stroke="#334155" stroke-width="2" />`)
+      .join('');
+
+    // Wheels & Tires
+    wheelLayer.innerHTML = currentTemplate.wheelPaths
+      .map(
+        (d) =>
+          `<path d="${d}" fill="url(#tire-grad)" stroke="#090B0E" stroke-width="3" />` +
+          `<circle cx="${d.match(/M\s*([\d.]+)/)?.[1] || 0}" cy="275" r="24" fill="url(#rim-grad)" stroke="#1E293B" stroke-width="2" />`
+      )
+      .join('');
+
+    // Chrome & Trim
+    trimLayer.innerHTML = currentTemplate.trimPaths
+      .map((d) => `<path d="${d}" fill="#CBD5E1" stroke="#64748B" stroke-width="1.5" />`)
+      .join('');
+  }
+
+  // User Photo Upload and Manual Masking
+  photoUpload?.addEventListener('change', () => {
+    const file = photoUpload.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      isCustomPhoto = true;
+      uploadedImg = img;
+      if (templateViewport) templateViewport.style.display = 'none';
+      if (uploadViewport) uploadViewport.style.display = 'block';
+      if (brushControls) brushControls.style.display = 'block';
+      if (backToTemplateBtn) backToTemplateBtn.style.display = 'inline-flex';
+
+      setupPhotoCanvas();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  });
+
+  backToTemplateBtn?.addEventListener('click', () => {
+    selectTemplate(currentTemplate);
+  });
+
+  function setupPhotoCanvas() {
+    if (!canvas || !ctx || !uploadedImg) return;
+    const maxW = 900;
+    const scale = Math.min(1, maxW / uploadedImg.naturalWidth);
+    canvas.width = Math.round(uploadedImg.naturalWidth * scale);
+    canvas.height = Math.round(uploadedImg.naturalHeight * scale);
+
+    maskCanvas = document.createElement('canvas');
+    maskCanvas.width = canvas.width;
+    maskCanvas.height = canvas.height;
+    maskCtx = maskCanvas.getContext('2d');
+
+    undoStack = [];
+    redoStack = [];
+    saveMaskState();
+    renderUserPhoto();
+  }
+
+  function saveMaskState() {
+    if (!maskCtx || !maskCanvas) return;
+    const data = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+    undoStack.push(data);
+    if (undoStack.length > 20) undoStack.shift();
+    redoStack = [];
+  }
+
+  function renderUserPhoto() {
+    if (!canvas || !ctx || !uploadedImg || !maskCanvas || !maskCtx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(uploadedImg, 0, 0, canvas.width, canvas.height);
+
+    const activeColor = getCalculatedColor();
+    const tintRgb = parseHex(activeColor);
+    if (!tintRgb) return;
+
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const maskData = maskCtx.getImageData(0, 0, canvas.width, canvas.height);
+    const p = imgData.data;
+    const m = maskData.data;
+
+    const targetHsl = rgbToHsl(tintRgb);
+    const splitX = Math.round((splitPercent / 100) * canvas.width);
+
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const i = (y * canvas.width + x) * 4;
+
+        // Apply recolor only on right side of split line
+        if (x < canvas.width - splitX) {
+          continue;
+        }
+
+        const alpha = m[i + 3];
+        if (alpha > 20) {
+          const lum = (0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]) / 255;
+
+          // Preserve specular highlights by tapering saturation above 85% luminance
+          let sat = targetHsl.s;
+          if (lum > 0.85) {
+            sat = Math.round(sat * (1 - (lum - 0.85) * 5));
+          }
+
+          // Finish adjustments
+          let lVal = Math.round(lum * 100);
+          if (currentFinish === 'matte') {
+            lVal = Math.round(lVal * 0.9 + 5);
+          } else if (currentFinish === 'metallic') {
+            const flake = ((x * 13 + y * 17) % 7) - 3;
+            lVal = Math.max(0, Math.min(100, lVal + flake));
+          }
+
+          const blended = hslToRgb({
+            h: targetHsl.h,
+            s: Math.max(0, Math.min(100, sat)),
+            l: lVal
+          });
+
+          const factor = alpha / 255;
+          p[i] = Math.round(p[i] * (1 - factor) + blended.r * factor);
+          p[i + 1] = Math.round(p[i + 1] * (1 - factor) + blended.g * factor);
+          p[i + 2] = Math.round(p[i + 2] * (1 - factor) + blended.b * factor);
+        }
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    // If split line is active, draw divider indicator
+    if (splitPercent > 0 && splitPercent < 100) {
+      const divX = canvas.width - splitX;
+      ctx.strokeStyle = '#22D3EE';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(divX, 0);
+      ctx.lineTo(divX, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw active mask overlay if enabled or while drawing
+    if ((isDrawing || showMaskOverlay) && maskCtx && brushControls?.style.display !== 'none') {
+      ctx.drawImage(maskCanvas, 0, 0);
+    }
+  }
+
+  function paintBrushStroke(fromX: number, fromY: number, toX: number, toY: number) {
+    if (!maskCtx || !maskCanvas) return;
+    maskCtx.save();
+    maskCtx.lineWidth = brushRadius * 2;
+    maskCtx.lineCap = 'round';
+    maskCtx.lineJoin = 'round';
+
+    if (brushMode === 'paint') {
+      maskCtx.globalCompositeOperation = 'source-over';
+      maskCtx.strokeStyle = 'rgba(34, 211, 238, 0.45)';
+      maskCtx.beginPath();
+      maskCtx.moveTo(fromX, fromY);
+      maskCtx.lineTo(toX, toY);
+      maskCtx.stroke();
+    } else {
+      maskCtx.globalCompositeOperation = 'destination-out';
+      maskCtx.beginPath();
+      maskCtx.moveTo(fromX, fromY);
+      maskCtx.lineTo(toX, toY);
+      maskCtx.stroke();
+    }
+    maskCtx.restore();
+    renderUserPhoto();
+  }
+
+  function getCanvasCoords(clientX: number, clientY: number) {
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((clientY - rect.top) / rect.height) * canvas.height;
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+
+  canvas?.addEventListener('mousedown', (e) => {
+    isDrawing = true;
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    lastX = x;
+    lastY = y;
+    paintBrushStroke(x, y, x, y);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDrawing) {
+      isDrawing = false;
+      saveMaskState();
+      renderUserPhoto();
+    }
+  });
+
+  canvas?.addEventListener('mousemove', (e) => {
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+
+    if (brushCursor && canvas) {
+      const rect = canvas.getBoundingClientRect();
+      brushCursor.style.display = 'block';
+      brushCursor.style.left = `${e.clientX}px`;
+      brushCursor.style.top = `${e.clientY}px`;
+      const screenRadius = brushRadius * (rect.width / canvas.width);
+      brushCursor.style.width = `${screenRadius * 2}px`;
+      brushCursor.style.height = `${screenRadius * 2}px`;
+    }
+
+    if (isDrawing) {
+      paintBrushStroke(lastX, lastY, x, y);
+      lastX = x;
+      lastY = y;
+    }
+  });
+
+  canvas?.addEventListener('mouseleave', () => {
+    if (brushCursor) brushCursor.style.display = 'none';
+  });
+
+  // Touchscreen drawing with preventDefault to stop scrolling while painting
+  canvas?.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    if (!t) return;
+    e.preventDefault();
+    isDrawing = true;
+    const { x, y } = getCanvasCoords(t.clientX, t.clientY);
+    lastX = x;
+    lastY = y;
+    paintBrushStroke(x, y, x, y);
+  }, { passive: false });
+
+  canvas?.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (!t || !isDrawing) return;
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(t.clientX, t.clientY);
+    paintBrushStroke(lastX, lastY, x, y);
+    lastX = x;
+    lastY = y;
+  }, { passive: false });
+
+  canvas?.addEventListener('touchend', (e) => {
+    if (isDrawing) {
+      e.preventDefault();
+      isDrawing = false;
+      saveMaskState();
+      renderUserPhoto();
+    }
+  });
+
+  toolBrushBtn?.addEventListener('click', () => {
+    brushMode = 'paint';
+    toolBrushBtn.classList.add('button-primary');
+    toolBrushBtn.classList.remove('button-secondary');
+    toolEraserBtn?.classList.add('button-secondary');
+    toolEraserBtn?.classList.remove('button-primary');
+  });
+
+  toolEraserBtn?.addEventListener('click', () => {
+    brushMode = 'erase';
+    toolEraserBtn.classList.add('button-primary');
+    toolEraserBtn.classList.remove('button-secondary');
+    toolBrushBtn?.classList.add('button-secondary');
+    toolBrushBtn?.classList.remove('button-primary');
+  });
+
+  chkShowMask?.addEventListener('change', () => {
+    showMaskOverlay = chkShowMask.checked;
+    renderUserPhoto();
+  });
+
+  brushSizeSlider?.addEventListener('input', () => {
+    brushRadius = Number(brushSizeSlider.value);
+    if (brushSizeVal) brushSizeVal.textContent = `${brushRadius}px`;
+  });
+
+  btnUndo?.addEventListener('click', () => {
+    if (undoStack.length > 1 && maskCtx) {
+      const cur = undoStack.pop()!;
+      redoStack.push(cur);
+      const prev = undoStack[undoStack.length - 1];
+      if (prev) maskCtx.putImageData(prev, 0, 0);
+      renderUserPhoto();
+    }
+  });
+
+  btnRedo?.addEventListener('click', () => {
+    if (redoStack.length > 0 && maskCtx) {
+      const nxt = redoStack.pop()!;
+      undoStack.push(nxt);
+      maskCtx.putImageData(nxt, 0, 0);
+      renderUserPhoto();
+    }
+  });
+
+  btnClearMask?.addEventListener('click', () => {
+    if (!maskCtx || !maskCanvas) return;
+    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+    saveMaskState();
+    renderUserPhoto();
+  });
+
+  // Split comparison slider
+  splitSlider?.addEventListener('input', () => {
+    splitPercent = Number(splitSlider.value);
+    if (splitLabel) {
+      splitLabel.textContent = splitPercent === 100 ? '100% Recolor' : splitPercent === 0 ? '100% Original' : `${100 - splitPercent}% Orig / ${splitPercent}% New`;
+    }
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  });
+
+  // Peek original button (hold down to view original)
+  let prevSplit = 100;
+  btnPeek?.addEventListener('mousedown', () => {
+    prevSplit = splitPercent;
+    splitPercent = 0;
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  });
+  window.addEventListener('mouseup', () => {
+    if (splitPercent === 0 && prevSplit !== 0) {
+      splitPercent = prevSplit;
+      if (isCustomPhoto) renderUserPhoto();
+      else renderTemplate();
+    }
+  });
+  btnPeek?.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    prevSplit = splitPercent;
+    splitPercent = 0;
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  }, { passive: false });
+  btnPeek?.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    splitPercent = prevSplit;
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  });
+
+  // Zoom controls
+  btnZoomIn?.addEventListener('click', () => {
+    zoomLevel = Math.min(2.5, zoomLevel + 0.25);
+    applyZoom();
+  });
+  btnZoomOut?.addEventListener('click', () => {
+    zoomLevel = Math.max(1.0, zoomLevel - 0.25);
+    applyZoom();
+  });
+  function applyZoom() {
+    const target = isCustomPhoto ? canvas : svg;
+    if (target) {
+      target.style.transform = `scale(${zoomLevel})`;
+      target.style.transformOrigin = 'center center';
+      target.style.transition = 'transform 0.15s ease-out';
+    }
+  }
+
+  // Event Listeners for Controls
+  typeCarBtn?.addEventListener('click', () => setVehicleType('car'));
+  typeBikeBtn?.addEventListener('click', () => setVehicleType('bike'));
+
+  templateBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const tmpl = VEHICLE_TEMPLATES.find((t) => t.id === id);
+      if (tmpl) selectTemplate(tmpl);
+    });
+  });
+
+  function updateColor(hex: string) {
+    currentColor = hex;
+    if (colorPicker) colorPicker.value = hex;
+    if (hexInput) hexInput.value = hex;
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  }
+
+  colorPicker?.addEventListener('input', () => updateColor(colorPicker.value));
+  hexInput?.addEventListener('input', () => {
+    const p = parseHex(hexInput.value);
+    if (p) updateColor(hexInput.value.toUpperCase());
+  });
+
+  presetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const hx = btn.getAttribute('data-hex');
+      if (hx) updateColor(hx);
+    });
+  });
+
+  finishBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentFinish = btn.getAttribute('data-finish') || 'glossy';
+      finishBtns.forEach((b) => {
+        const active = b === btn;
+        b.classList.toggle('button-primary', active);
+        b.classList.toggle('button-secondary', !active);
+      });
+      if (isCustomPhoto) renderUserPhoto();
+      else renderTemplate();
+    });
+  });
+
+  sliderIntensity?.addEventListener('input', () => {
+    intensity = Number(sliderIntensity.value) / 100;
+    if (intensityVal) intensityVal.textContent = `${Math.round(intensity * 100)}%`;
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  });
+
+  sliderBrightness?.addEventListener('input', () => {
+    brightness = Number(sliderBrightness.value);
+    if (brightnessVal) brightnessVal.textContent = `${brightness > 0 ? '+' : ''}${brightness}%`;
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  });
+
+  copyColorBtn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(currentColor);
+      copyColorBtn.textContent = 'Copied!';
+      setTimeout(() => { copyColorBtn.textContent = 'Copy HEX'; }, 1200);
+    } catch {}
+  });
+
+  btnReset?.addEventListener('click', () => {
+    currentColor = currentTemplate.defaultColor;
+    currentFinish = 'glossy';
+    intensity = 1.0;
+    brightness = 0;
+    splitPercent = 100;
+    zoomLevel = 1.0;
+    applyZoom();
+    if (splitSlider) splitSlider.value = '100';
+    if (splitLabel) splitLabel.textContent = '100% Recolor';
+    if (colorPicker) colorPicker.value = currentColor;
+    if (hexInput) hexInput.value = currentColor;
+    if (sliderIntensity) sliderIntensity.value = '100';
+    if (sliderBrightness) sliderBrightness.value = '0';
+    if (intensityVal) intensityVal.textContent = '100%';
+    if (brightnessVal) brightnessVal.textContent = '0%';
+    finishBtns.forEach((b) => {
+      const isGloss = b.getAttribute('data-finish') === 'glossy';
+      b.classList.toggle('button-primary', isGloss);
+      b.classList.toggle('button-secondary', !isGloss);
+    });
+    if (isCustomPhoto) renderUserPhoto();
+    else renderTemplate();
+  });
+
+  btnShare?.addEventListener('click', async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('color', currentColor);
+    url.searchParams.set('type', currentType);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${currentTemplate.name} in ${currentColor}`,
+          text: `Check out this custom ${currentTemplate.name} in ${currentColor} on ColorCode Identifier.`,
+          url: url.toString()
+        });
+      } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url.toString());
+        btnShare.textContent = 'Link Copied!';
+        setTimeout(() => { btnShare.textContent = 'Share Build'; }, 1200);
+      } catch {}
+    }
+  });
+
+  btnDownload?.addEventListener('click', () => {
+    if (isCustomPhoto && canvas) {
+      const a = document.createElement('a');
+      a.download = `customized-${currentType}-${currentColor.replace('#', '')}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      return;
+    }
+
+    if (svg) {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const URLObj = window.URL || window.webkitURL || window;
+      const blobURL = URLObj.createObjectURL(svgBlob);
+
+      const downloadCanvas = document.createElement('canvas');
+      downloadCanvas.width = 1200;
+      downloadCanvas.height = 480;
+      const dCtx = downloadCanvas.getContext('2d');
+      if (!dCtx) return;
+
+      const img = new Image();
+      img.onload = () => {
+        dCtx.fillStyle = '#FFFFFF';
+        dCtx.fillRect(0, 0, 1200, 480);
+        dCtx.drawImage(img, 50, 40, 1100, 400);
+
+        dCtx.fillStyle = '#17152B';
+        dCtx.font = 'bold 20px Inter, sans-serif';
+        dCtx.fillText(`${currentTemplate.name} — ${currentColor}`, 60, 450);
+
+        dCtx.fillStyle = '#64748B';
+        dCtx.font = '14px Inter, sans-serif';
+        dCtx.fillText(`ColorCode Identifier · Finish: ${currentFinish.toUpperCase()}`, 750, 450);
+
+        const a = document.createElement('a');
+        a.download = `${currentTemplate.id}-${currentColor.replace('#', '')}.png`;
+        a.href = downloadCanvas.toDataURL('image/png');
+        a.click();
+        URLObj.revokeObjectURL(blobURL);
+      };
+      img.src = blobURL;
+    }
+  });
+
+  // Initial load
+  setVehicleType(currentType);
+  if (paramColor) updateColor(paramColor);
+</script>

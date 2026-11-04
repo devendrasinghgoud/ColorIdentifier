@@ -1,6 +1,129 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'; import ColorIdentifier from '../components/ColorIdentifier.astro'; import JsonLd from '../components/JsonLd.astro';
-const faq=[{q:'How do I identify a color from a photo?',a:'Upload an image, wait for it to appear, then select the point you want to sample. The tool reads that pixel and displays HEX, RGB and HSL values.'},{q:'Can I use my phone camera?',a:'Yes. Open this page over HTTPS in a supported browser, grant camera permission and use the live preview. You can also upload a photo instead.'},{q:'Will this tell me the exact factory paint code?',a:'No. It measures the visible color in the image. Factory paint codes are manufacturer-specific and should be verified using vehicle documentation or a trusted paint-code reference.'}];
-const schema={'@context':'https://schema.org','@type':'SoftwareApplication',name:'ColorCode Identifier Color Scanner',applicationCategory:'MultimediaApplication',operatingSystem:'Any',description:'Sample a color from a camera or uploaded image and view HEX, RGB and HSL values.',offers:{'@type':'Offer',price:'0',priceCurrency:'USD'}};
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ColorIdentifier from '../components/ColorIdentifier.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const faq = [
+  {
+    q: 'How do I identify a color from a photo?',
+    a: 'Upload an image, wait for it to appear in the stage, then select the point you want to sample. The tool reads that pixel and displays exact HEX, RGB, RGBA, HSL, HSV, and CMYK values.'
+  },
+  {
+    q: 'Can I use my phone camera as a live color detector?',
+    a: 'Yes. Open this page over HTTPS in any modern mobile browser, tap "Start camera", and grant browser permission. The real-time crosshair samples pixels as you point your phone.'
+  },
+  {
+    q: 'Will this tell me the exact factory car paint code?',
+    a: 'No. It measures the visible screen color in the image. Automotive factory refinish codes are manufacturer-specific formulas and should be verified using our vehicle paint database or the stamped VIN plate.'
+  },
+  {
+    q: 'How can I save or export my sampled colors?',
+    a: 'Each point you sample is saved in your swatches list below. You can copy individual codes, export the palette as JSON or CSS variables, download a swatch card as PNG, or save directly to your browser-private Personal Workspace.'
+  }
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'ColorCode Identifier Real-Time Color Scanner',
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Any',
+  description: 'Sample colors from a live camera feed or uploaded photo and view HEX, RGB, HSL, HSV, and CMYK values with 100% private in-browser processing.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
 ---
-<BaseLayout title="Color Identifier — Find a Color from Camera or Photo" description="Identify any visible color from a camera or uploaded image. Select a pixel to find its HEX, RGB, HSL values and closest color name."><JsonLd data={schema}/><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Color Identifier</div><span class="eyebrow">Free online color tool</span><h1>Color Identifier from Camera or Photo</h1><p>Upload an image or use your camera, select the exact area you want to inspect, and discover its digital color values.</p></div><ColorIdentifier/><div class="content-layout"><article class="prose"><h2>How to identify a color</h2><ol><li>Choose <strong>Upload image</strong> or <strong>Use camera</strong>.</li><li>For camera use, allow browser permission when prompted.</li><li>Tap or click the area of the image you want to sample.</li><li>Read the HEX, RGB and HSL values shown in the result panel.</li><li>Copy the HEX value or collect additional samples in the swatch list.</li></ol><h2>What color formats do you get?</h2><p><strong>HEX</strong> is a six-digit hexadecimal notation commonly used in CSS and digital design. <strong>RGB</strong> represents red, green and blue channel values from 0 to 255. <strong>HSL</strong> describes hue, saturation and lightness in a more human-readable way.</p><h2>Can a camera identify the exact paint color?</h2><p>The tool can sample the visible pixel color in an image, but it cannot reliably determine a vehicle's original paint formula. Lighting, reflections, metallic finishes, camera processing and image compression affect the sampled result. Use an OEM paint code or a professional paint scanner when exact refinish matching is required.</p><h2>Related color tools</h2><ul><li><a href="/car-color-identifier/">Car color identifier</a></li><li><a href="/bike-color-identifier/">Bike color identifier</a></li><li><a href="/hex-to-rgb/">HEX to RGB converter</a></li><li><a href="/color-name-finder/">Color name finder</a></li><li><a href="/image-color-picker/">Image color picker</a></li></ul><h2>Frequently asked questions</h2><div class="faq-list">{faq.map(item=><details><summary>{item.q}</summary><p>{item.a}</p></details>)}</div></article><aside class="sidebar-card"><h3>Explore more</h3><a href="/car-color-identifier/">Car color identifier</a><a href="/bike-color-identifier/">Bike color identifier</a><a href="/color-palette-generator/">Palette generator</a><a href="/color-contrast-checker/">Contrast checker</a><a href="/blog/">Color guides</a></aside></div></div></BaseLayout>
+
+<BaseLayout
+  title="Live Camera Color Identifier & Photo Scanner — HEX, RGB, HSL"
+  description="Identify any visible color in real time using your camera or uploaded photo. Tap pixels to read HEX, RGB, HSL, HSV, and CMYK values. Free and 100% private."
+>
+  <JsonLd data={schema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Color Identifier
+      </div>
+      <span class="eyebrow">Real-Time Optical Scanner</span>
+      <h1>Color Identifier from Camera or Photo</h1>
+      <p>Upload a picture or enable your device camera, target any pixel with precision, and extract comprehensive digital color codes.</p>
+    </div>
+
+    <ColorIdentifier
+      eyebrow="REAL-TIME SCANNER"
+      title="Identify Any Visible Color"
+      subtitle="Point your live camera or upload an image to sample colors in real time. All processing happens entirely in your browser."
+    />
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>How to Identify a Color Step-by-Step</h2>
+        <ol>
+          <li>Choose <strong>Upload image</strong> or <strong>Start camera</strong>.</li>
+          <li>For camera scanning, allow browser permission when prompted.</li>
+          <li>Point the target crosshair or tap the area you want to sample.</li>
+          <li>Read the HEX, RGB, RGBA, HSL, HSV, and CMYK values in the results panel.</li>
+          <li>Click any format to copy its value, bookmark it in your <strong>Personal Workspace</strong>, or download a swatch card as PNG.</li>
+        </ol>
+
+        <h2>Comprehensive Color Formats Supported</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th>Example Value</th>
+              <th>Typical Use Case</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>HEX</strong></td>
+              <td><code>#6C5CE7</code></td>
+              <td>Web development, CSS stylesheets, UI design tokens.</td>
+            </tr>
+            <tr>
+              <td><strong>RGB</strong></td>
+              <td><code>rgb(108, 92, 231)</code></td>
+              <td>Screen rendering, digital illustration, image editing.</td>
+            </tr>
+            <tr>
+              <td><strong>HSL</strong></td>
+              <td><code>hsl(248, 74%, 63%)</code></td>
+              <td>Human-friendly hue and brightness adjustments.</td>
+            </tr>
+            <tr>
+              <td><strong>HSV</strong></td>
+              <td><code>hsv(248, 60%, 91%)</code></td>
+              <td>Software color pickers and computer vision.</td>
+            </tr>
+            <tr>
+              <td><strong>CMYK</strong></td>
+              <td><code>cmyk(53%, 60%, 0%, 9%)</code></td>
+              <td>Four-color commercial offset and digital printing.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Tools</h3>
+        <a href="/image-color-picker/">Image Color Picker</a>
+        <a href="/car-color-identifier/">Car Paint Identifier</a>
+        <a href="/bike-color-identifier/">Bike Paint Identifier</a>
+        <a href="/color-mixer/">Color Mixer</a>
+        <a href="/color-palette-extractor/">Palette Extractor</a>
+        <a href="/workspace/">Personal Workspace</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

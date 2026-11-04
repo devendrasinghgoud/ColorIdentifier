@@ -1,5 +1,96 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-const tools=[['Color Identifier','Sample colors from a camera or photo.','/color-identifier/'],['Car Color Identifier','Identify visible car paint colors.','/car-color-identifier/'],['Bike Color Identifier','Sample motorcycle body colors.','/bike-color-identifier/'],['Image Color Picker','Pick a pixel from an uploaded image.','/image-color-picker/'],['HEX to RGB','Convert HEX to RGB and HSL.','/hex-to-rgb/'],['RGB to HEX','Convert RGB channels to HEX.','/rgb-to-hex/'],['Color Name Finder','Find the nearest name in a color list.','/color-name-finder/'],['Color Palette Generator','Generate a simple coordinated palette.','/color-palette-generator/'],['Color Contrast Checker','Check WCAG contrast ratios.','/color-contrast-checker/'],['Color Shades Generator','Create lighter and darker color variations.','/color-shades-generator/'],['Gradient Generator','Create and copy CSS linear gradients.','/gradient-generator/'],['HTML Color Codes','Browse common named colors.','/html-color-codes/']];
+import JsonLd from '../../components/JsonLd.astro';
+
+const tools = [
+  {
+    category: 'Vehicle Customizers & Paint Visualizers',
+    items: [
+      { title: 'Car Color Customizer', desc: 'Preview any color on sedans, SUVs, trucks, or upload your own car photo.', href: '/car-color-customizer/', icon: '🚘' },
+      { title: 'Motorcycle Color Customizer', desc: 'Visualize colors on sport bikes, cruisers, naked bikes, or uploaded photos.', href: '/bike-color-customizer/', icon: '🏍️' },
+      { title: 'Car Paint Preview & Sprayouts', desc: 'Compare virtual sprayout finishes: metallic flake, pearl, matte, and gloss.', href: '/car-paint-color-preview/', icon: '✨' },
+      { title: 'Motorcycle Paint & Wrap Preview', desc: 'Preview multi-stage candy glazes, tank wraps, and racing liveries.', href: '/motorcycle-paint-color-preview/', icon: '🏁' }
+    ]
+  },
+  {
+    category: 'Identification & Scanners',
+    items: [
+      { title: 'Color Scanner & Identifier', desc: 'Sample colors in real time with your camera or from photos.', href: '/color-identifier/', icon: '📷' },
+      { title: 'Image Color Picker', desc: 'Precision pixel loupe magnifier to sample any point on an image.', href: '/image-color-picker/', icon: '🔍' },
+      { title: 'Car Paint Color Identifier', desc: 'Identify visible car paint colors and match verified OEM codes.', href: '/car-color-identifier/', icon: '🚗' },
+      { title: 'Motorcycle Paint Identifier', desc: 'Sample fuel tanks and fairings with motorcycle factory paint codes.', href: '/bike-color-identifier/', icon: '🏍️' },
+      { title: 'Vehicle Paint Code Guide', desc: 'Find paint code label locations across car manufacturers.', href: '/car-paint-color-codes/', icon: '🏷️' }
+    ]
+  },
+  {
+    category: 'Analysis & Accessibility',
+    items: [
+      { title: 'WCAG Contrast Checker', desc: 'Check text and background contrast against WCAG AA & AAA ratios.', href: '/color-contrast-checker/', icon: '◐' },
+      { title: 'Color Blindness Simulator', desc: 'Simulate Protanopia, Deuteranopia, Tritanopia, and Achromatopsia.', href: '/color-blindness-simulator/', icon: '👁️' },
+      { title: 'Color Temperature Analyzer', desc: 'Analyze warm vs cool color tones and Correlated Color Temperature (Kelvin).', href: '/color-temperature-analyzer/', icon: '🌡️' }
+    ]
+  },
+  {
+    category: 'Palette Generation & Harmonies',
+    items: [
+      { title: 'Complementary Color Finder', desc: 'Calculate complementary, split, analogous, and triadic schemes.', href: '/complementary-color-finder/', icon: '🎨' },
+      { title: 'Color Palette Extractor', desc: 'Extract dominant cohesive palettes directly from photos.', href: '/color-palette-extractor/', icon: '▦' },
+      { title: 'Color Palette Generator', desc: 'Generate coordinated palettes and visual harmonies from a starting shade.', href: '/color-palette-generator/', icon: '✨' },
+      { title: 'Color Shades Generator', desc: 'Generate a stepped tonal range of lighter and darker variations.', href: '/color-shades-generator/', icon: '📶' },
+      { title: 'Color Mixer & Blender', desc: 'Blend two colors with customized percentage ratios and CSS output.', href: '/color-mixer/', icon: '🧪' },
+      { title: 'CSS Gradient Generator', desc: 'Design smooth multi-color linear gradients and copy CSS code.', href: '/gradient-generator/', icon: '🌈' }
+    ]
+  },
+  {
+    category: 'Format Conversion & Reference',
+    items: [
+      { title: 'Color Database 2.0', desc: 'Search 80+ named colors with family, temperature, and tone filters.', href: '/color-names/', icon: '📚' },
+      { title: 'HEX to RGB Converter', desc: 'Convert HEX color codes into RGB and HSL formats.', href: '/hex-to-rgb/', icon: '↔' },
+      { title: 'RGB to HEX Converter', desc: 'Convert red, green, and blue channel numbers to HEX codes.', href: '/rgb-to-hex/', icon: '🔀' },
+      { title: 'Color Name Finder', desc: 'Find the closest curated name and family for any HEX value.', href: '/color-name-finder/', icon: '✳' },
+      { title: 'HTML Color Codes Reference', desc: 'Browse standard CSS and HTML color names with live swatches.', href: '/html-color-codes/', icon: '📋' }
+    ]
+  }
+];
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Free Online Color Tools — ColorCode Identifier',
+  description: 'Comprehensive suite of free color tools: vehicle customizers, camera scanners, vehicle paint matchers, WCAG contrast checkers, and format converters.'
+};
 ---
-<BaseLayout title="Free Color Tools — Color Identifier, Converters and More" description="Explore free color tools for identifying, sampling, converting and comparing colors. Use the camera, upload an image or work with HEX and RGB values."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Tools</div><span class="eyebrow">Color utility toolkit</span><h1>All Color Tools</h1><p>Choose a tool to identify, sample, convert and explore digital colors.</p></div><div class="tool-grid section" style="padding-top:15px">{tools.map(([title,desc,href])=><a class="tool-card" href={href}><div class="tool-icon">✳</div><h3>{title}</h3><p>{desc}</p><span class="tool-arrow">Open tool →</span></a>)}</div></div></BaseLayout>
+
+<BaseLayout
+  title="Free Color Tools Directory — Scanners, Customizers & Converters"
+  description="Explore our full collection of free color tools: car and bike color customizers, camera color scanner, WCAG contrast checker, palette extractor, and converters."
+>
+  <JsonLd data={pageSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / All Tools
+      </div>
+      <span class="eyebrow">Comprehensive Color Toolkit</span>
+      <h1>All Free Color Tools & Utilities</h1>
+      <p>Discover professional browser-native tools to customize vehicles, identify real-world pixels, convert formats, and analyze color harmony.</p>
+    </div>
+
+    {tools.map((section) => (
+      <section class="section" style="padding-top:24px;padding-bottom:12px;">
+        <h2 style="font-size:22px;letter-spacing:-0.03em;color:var(--ink);margin-bottom:16px;">{section.category}</h2>
+        <div class="tool-grid">
+          {section.items.map((tool) => (
+            <a class="tool-card" href={tool.href}>
+              <div class="tool-icon">{tool.icon}</div>
+              <h3>{tool.title}</h3>
+              <p>{tool.desc}</p>
+              <span class="tool-arrow">Open tool →</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

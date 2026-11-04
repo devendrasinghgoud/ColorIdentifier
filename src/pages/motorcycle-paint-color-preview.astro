@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { VEHICLE_PAINTS } from '../data/vehiclePaints';
+import JsonLd from '../components/JsonLd.astro';
+
+const bikePaints = VEHICLE_PAINTS.filter((p) => p.type === 'motorcycle');
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Motorcycle Paint Color Preview & Wrap Visualizer',
+  description: 'Preview motorcycle fuel tanks, fairings, and racing liveries online. Compare candy coats, factory pearl finishes, and vinyl wraps.',
+  author: { '@type': 'Organization', name: 'ColorCode Identifier Editorial Team' }
+};
+---
+
+<BaseLayout
+  title="Motorcycle Paint Color Preview — Visualizer for Tanks, Fairings & Wraps"
+  description="Preview motorcycle paint colors and finishes online. Compare multi-stage candy coats, factory racing pearls, and vinyl wraps for fuel tanks and fairings."
+>
+  <JsonLd data={pageSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Motorcycle Paint Preview
+      </div>
+      <span class="eyebrow">Motorcycle Visualizer</span>
+      <h1>Motorcycle Paint Color Preview & Finish Guide</h1>
+      <p>
+        Explore how multi-layer candy glazes, racing pearls, and vinyl wraps transform motorcycle fuel tanks and aerodynamic fairings.
+      </p>
+    </div>
+
+    <!-- CTA to launch interactive customizer -->
+    <div class="soft-panel" style="margin-bottom:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;">
+        <div>
+          <span class="eyebrow">Interactive Visualizer</span>
+          <h2 style="font-size:24px;margin:6px 0;">Test any color directly on a motorcycle model</h2>
+          <p style="margin:0;font-size:14px;max-width:540px;">
+            Open our interactive Motorcycle Color Customizer to test supersport, cruiser, naked, and adventure bikes with real-time glossy, metallic, and matte simulation.
+          </p>
+        </div>
+        <a class="button button-primary" href="/bike-color-customizer/">
+          Open Bike Color Customizer →
+        </a>
+      </div>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>Why Motorcycle Tanks Require Multi-Stage Paint</h2>
+        <p>
+          Unlike production automobiles that rely primarily on two-stage base/clear systems, high-end production motorcycles and custom streetfighters frequently utilize <strong>three-stage candy and tri-coat finishes</strong>:
+        </p>
+        <ol>
+          <li><strong>Metallic Ground Coat:</strong> A reflective silver, gold, or coarse aluminum base that acts as an optical mirror beneath the color.</li>
+          <li><strong>Translucent Candy Mid-Coat:</strong> A transparent dye or pearl glaze that selectively filters light wavelengths, delivering intense color depth and glowing highlights around tank contours.</li>
+          <li><strong>UV Hard Clear Coat:</strong> Multi-layer 2K urethane clear coats that protect the delicate dyes from fading under outdoor sunlight and withstand gasoline drips.</li>
+        </ol>
+
+        <h2>Verified Motorcycle Factory Colors</h2>
+        <p>
+          Select an iconic factory motorcycle color to launch it directly inside our customizer:
+        </p>
+
+        <div class="color-reference-grid" style="margin:20px 0;">
+          {bikePaints.map((p) => (
+            <a class="color-reference" href={`/bike-color-customizer/?color=${encodeURIComponent(p.hex)}&type=bike`}>
+              <div class="color-reference-swatch" style={`background:${p.hex};`}></div>
+              <div class="color-reference-body">
+                <span class="tag-badge" style="font-size:10px;margin-bottom:4px;">{p.manufacturer}</span>
+                <strong>{p.paintName}</strong>
+                <code style="color:var(--brand-indigo);font-weight:700;">OEM: {p.oemCode}</code>
+                <small style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">Model: {p.model}</small>
+                <span class="tool-arrow" style="font-size:11px;margin-top:6px;">Preview on Bike →</span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <h2>Motorcycle Wraps vs Custom Respray</h2>
+        <ul>
+          <li><strong>Vinyl Wrap Benefits:</strong> Lower cost, protective shield for factory paint, extensive texture options (matte, satin, forged carbon), and 100% reversible when selling the bike.</li>
+          <li><strong>Paint Benefits:</strong> Seamless coverage over sharp tank weld seams, infinite custom airbrushing possibilities, complete fuel resistance when properly clear-coated, and deeper optical gloss.</li>
+        </ul>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Bike Tools</h3>
+        <a href="/bike-color-customizer/">Motorcycle Customizer Tool</a>
+        <a href="/bike-color-identifier/">Motorcycle Paint Scanner</a>
+        <a href="/car-color-customizer/">Car Color Customizer</a>
+        <a href="/car-paint-color-preview/">Car Paint Sprayout Guide</a>
+        <a href="/workspace/">Personal Workspace</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

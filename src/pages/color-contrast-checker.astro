@@ -1,10 +1,286 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const toolSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'WCAG Color Contrast Checker',
+  applicationCategory: 'DesignApplication',
+  operatingSystem: 'Any',
+  description: 'Evaluate color contrast ratios against WCAG 2.1 AA and AAA criteria for normal text, large text, and interactive UI components.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+};
+
+const faq = [
+  {
+    q: 'What is WCAG 2.1 contrast compliance?',
+    a: 'The Web Content Accessibility Guidelines (WCAG) require sufficient luminance contrast between text and its background to ensure legibility for users with low vision or color deficiencies. Level AA requires at least 4.5:1 for normal text and 3:1 for large text. Level AAA requires 7:1 for normal text and 4.5:1 for large text.'
+  },
+  {
+    q: 'What qualifies as "large text" under WCAG?',
+    a: 'Large text is defined as at least 18pt (24px) regular weight or at least 14pt (approx. 18.66px) bold weight.'
+  }
+];
 ---
-<BaseLayout title="Color Contrast Checker — Check WCAG Text Contrast" description="Check the contrast ratio between foreground text and a background color. Review WCAG AA and AAA contrast thresholds for accessible design."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Color Contrast Checker</div><span class="eyebrow">Accessibility tool</span><h1>Color Contrast Checker</h1><p>Compare text and background colors to estimate WCAG contrast compliance for readable interfaces.</p></div><div class="converter-card"><div class="form-row"><div class="field"><label for="foreground">Text color (HEX)</label><input id="foreground" value="#17152B" /></div><div class="field"><label for="background">Background color (HEX)</label><input id="background" value="#FFFFFF" /></div></div><div id="contrast-preview" class="info-card" style="margin-top:16px;background:#FFFFFF;color:#17152B"><h3>Sample text preview</h3><p>The quick brown fox jumps over the lazy dog.</p><small>Use this preview to inspect the selected foreground and background colors.</small></div><div class="converter-output"><strong id="contrast-ratio">17.2:1</strong><p id="contrast-status" class="muted">Calculating contrast…</p><div id="contrast-badges"></div></div><p id="contrast-error" class="scanner-message" role="status"></p></div><article class="prose"><h2>WCAG contrast thresholds</h2><ul><li>AA normal text: at least 4.5:1.</li><li>AA large text: at least 3:1.</li><li>AAA normal text: at least 7:1.</li><li>AAA large text: at least 4.5:1.</li></ul><p>Large text generally means at least 18pt regular or 14pt bold. Contrast is one part of accessibility; do not rely on color alone to communicate meaning.</p></article></div></BaseLayout>
+
+<BaseLayout
+  title="Color Contrast Checker — Test WCAG AA & AAA Accessibility Ratios"
+  description="Test foreground and background text contrast for WCAG AA and AAA compliance. View live contrast ratios, preview UI components, and discover accessible alternatives."
+>
+  <JsonLd data={toolSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/tools/">Tools</a> / Color Contrast Checker
+      </div>
+      <span class="eyebrow">Accessibility & Usability</span>
+      <h1>WCAG Color Contrast Checker</h1>
+      <p>Evaluate contrast ratios between text and background colors against WCAG 2.1 Level AA and AAA standards.</p>
+    </div>
+
+    <div class="converter-card" style="max-width:860px;">
+      <div class="form-row">
+        <div class="field">
+          <label for="foreground">Foreground / Text Color</label>
+          <div style="display:flex;gap:8px;">
+            <input id="fg-picker" type="color" value="#17152B" style="width:50px;height:45px;padding:2px;border-radius:8px;" />
+            <input id="foreground" value="#17152B" placeholder="#17152B" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="background">Background Color</label>
+          <div style="display:flex;gap:8px;">
+            <input id="bg-picker" type="color" value="#FFFFFF" style="width:50px;height:45px;padding:2px;border-radius:8px;" />
+            <input id="background" value="#FFFFFF" placeholder="#FFFFFF" />
+          </div>
+        </div>
+      </div>
+
+      <div style="margin:14px 0;display:flex;gap:10px;">
+        <button id="swap-btn" class="button button-secondary button-small" type="button">⇄ Swap Colors</button>
+      </div>
+
+      <div id="contrast-preview" style="background:#FFFFFF;color:#17152B;padding:24px;border-radius:14px;border:1px solid var(--border);margin:16px 0;">
+        <span style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;opacity:0.8;display:block;margin-bottom:6px;">LIVE PREVIEW</span>
+        <h2 style="font-size:24px;margin:0 0 8px;line-height:1.2;">The quick brown fox jumps over the lazy dog</h2>
+        <p style="font-size:15px;margin:0;line-height:1.6;">
+          Good typography and sufficient luminance contrast allow all readers, including older adults and those with low contrast sensitivity, to comfortably consume your content.
+        </p>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;background:var(--surface-soft);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin:18px 0;">
+        <div>
+          <span class="eyebrow">Calculated Contrast Ratio</span>
+          <div style="font-size:36px;font-weight:800;letter-spacing:-0.03em;color:var(--ink);" id="contrast-ratio">17.2:1</div>
+          <p id="contrast-status" style="margin:4px 0 0;font-size:13px;color:var(--muted);"></p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span id="badge-aa-normal" class="tag-badge">AA Normal: Pass</span>
+          <span id="badge-aaa-normal" class="tag-badge">AAA Normal: Pass</span>
+          <span id="badge-aa-large" class="tag-badge">AA Large: Pass</span>
+          <span id="badge-ui" class="tag-badge">UI Components: Pass</span>
+        </div>
+      </div>
+
+      <div id="suggestions-box" style="display:none;background:var(--surface-tint);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px;">
+        <strong style="font-size:13px;color:var(--ink);">Suggested Accessible Alternatives</strong>
+        <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;">
+          Your current color combination does not meet the 4.5:1 threshold for normal body text. Here are recommended adjustments:
+        </p>
+        <div id="suggestions-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+
+      <p id="contrast-error" class="scanner-message" role="status"></p>
+    </div>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>WCAG 2.1 Contrast Requirements Breakdown</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Criteria Level</th>
+              <th>Required Ratio</th>
+              <th>Applicable Elements</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Level AA (Minimum)</td>
+              <td><strong>4.5:1</strong></td>
+              <td>Standard body text, subheadings, links under 18pt regular / 14pt bold.</td>
+            </tr>
+            <tr>
+              <td>Level AA (Large Text)</td>
+              <td><strong>3.0:1</strong></td>
+              <td>Headings 18pt (24px) or larger, or 14pt (18.66px) bold text.</td>
+            </tr>
+            <tr>
+              <td>Level AA (Non-Text UI)</td>
+              <td><strong>3.0:1</strong></td>
+              <td>Form input borders, icons required for comprehension, focus indicators.</td>
+            </tr>
+            <tr>
+              <td>Level AAA (Enhanced)</td>
+              <td><strong>7.0:1</strong></td>
+              <td>Optimal readability standard for standard body copy.</td>
+            </tr>
+            <tr>
+              <td>Level AAA (Large Text)</td>
+              <td><strong>4.5:1</strong></td>
+              <td>Enhanced readability for large display headlines.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {faq.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Related Design Tools</h3>
+        <a href="/color-blindness-simulator/">Color Blindness Simulator</a>
+        <a href="/color-shades-generator/">Color Shades Generator</a>
+        <a href="/color-palette-generator/">Palette Generator</a>
+        <a href="/blog/what-is-wcag-color-contrast/">WCAG Guide Article</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
 <script>
-import { parseHex, contrastRatio } from '../lib/color';
-const fg=document.querySelector<HTMLInputElement>('#foreground'),bg=document.querySelector<HTMLInputElement>('#background'),preview=document.querySelector<HTMLElement>('#contrast-preview'),ratio=document.querySelector<HTMLElement>('#contrast-ratio'),status=document.querySelector<HTMLElement>('#contrast-status'),badges=document.querySelector<HTMLElement>('#contrast-badges'),error=document.querySelector<HTMLElement>('#contrast-error');
-function update(){const a=parseHex(fg?.value||''),b=parseHex(bg?.value||'');if(!a||!b){if(error)error.textContent='Enter valid HEX values for both colors.';return;}const r=contrastRatio(a,b);if(preview){preview.style.color=fg!.value;preview.style.backgroundColor=bg!.value;}if(ratio)ratio.textContent=`${r.toFixed(2)}:1`;if(status)status.textContent=r>=7?'Passes WCAG AAA for normal text and AA for large text.':r>=4.5?'Passes WCAG AA for normal text and AAA for large text.':r>=3?'Passes WCAG AA for large text only.':'Does not meet WCAG AA text contrast thresholds.';if(badges)badges.textContent=`AA normal: ${r>=4.5?'Pass':'Fail'} · AA large: ${r>=3?'Pass':'Fail'} · AAA normal: ${r>=7?'Pass':'Fail'}`;if(error)error.textContent='';}
-fg?.addEventListener('input',update);bg?.addEventListener('input',update);update();
+  import { parseHex, contrastRatio, rgbToHsl, hslToRgb, rgbToHex } from '../lib/color';
+
+  const fgInput = document.querySelector<HTMLInputElement>('#foreground');
+  const fgPicker = document.querySelector<HTMLInputElement>('#fg-picker');
+  const bgInput = document.querySelector<HTMLInputElement>('#background');
+  const bgPicker = document.querySelector<HTMLInputElement>('#bg-picker');
+  const swapBtn = document.querySelector<HTMLButtonElement>('#swap-btn');
+  const preview = document.querySelector<HTMLElement>('#contrast-preview');
+  const ratioEl = document.querySelector<HTMLElement>('#contrast-ratio');
+  const statusEl = document.querySelector<HTMLElement>('#contrast-status');
+  const badgeAaNorm = document.querySelector<HTMLElement>('#badge-aa-normal');
+  const badgeAaaNorm = document.querySelector<HTMLElement>('#badge-aaa-normal');
+  const badgeAaLarge = document.querySelector<HTMLElement>('#badge-aa-large');
+  const badgeUi = document.querySelector<HTMLElement>('#badge-ui');
+  const errorEl = document.querySelector<HTMLElement>('#contrast-error');
+  const suggBox = document.querySelector<HTMLElement>('#suggestions-box');
+  const suggList = document.querySelector<HTMLElement>('#suggestions-list');
+
+  function setBadge(el: HTMLElement | null, pass: boolean, label: string) {
+    if (!el) return;
+    el.textContent = `${label}: ${pass ? 'Pass ✓' : 'Fail ✗'}`;
+    el.style.color = pass ? 'var(--success)' : 'var(--danger)';
+    el.style.borderColor = pass ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+  }
+
+  function update() {
+    const fgVal = fgInput?.value.trim() || '';
+    const bgVal = bgInput?.value.trim() || '';
+    const rgbA = parseHex(fgVal);
+    const rgbB = parseHex(bgVal);
+
+    if (!rgbA || !rgbB) {
+      if (errorEl) errorEl.textContent = 'Please enter valid 3-digit or 6-digit HEX colors for both fields.';
+      return;
+    }
+    if (errorEl) errorEl.textContent = '';
+
+    const ratio = contrastRatio(rgbA, rgbB);
+    if (preview) {
+      preview.style.color = fgVal;
+      preview.style.backgroundColor = bgVal;
+    }
+
+    if (ratioEl) ratioEl.textContent = `${ratio.toFixed(2)}:1`;
+
+    const passAaNorm = ratio >= 4.5;
+    const passAaaNorm = ratio >= 7.0;
+    const passAaLarge = ratio >= 3.0;
+    const passUi = ratio >= 3.0;
+
+    setBadge(badgeAaNorm, passAaNorm, 'AA Normal Text');
+    setBadge(badgeAaaNorm, passAaaNorm, 'AAA Normal Text');
+    setBadge(badgeAaLarge, passAaLarge, 'AA Large Text');
+    setBadge(badgeUi, passUi, 'UI Graphics');
+
+    if (statusEl) {
+      if (passAaaNorm) {
+        statusEl.textContent = 'Excellent contrast. Passes all WCAG 2.1 AA and AAA thresholds.';
+      } else if (passAaNorm) {
+        statusEl.textContent = 'Good contrast. Meets WCAG AA standards for all text sizes.';
+      } else if (passAaLarge) {
+        statusEl.textContent = 'Acceptable for headlines (18pt+) and UI borders only. Insufficient for body copy.';
+      } else {
+        statusEl.textContent = 'Fails WCAG AA minimum contrast standards. Inaccessible for text.';
+      }
+    }
+
+    // Accessible suggestions if failing AA normal text
+    if (!passAaNorm && suggBox && suggList) {
+      suggBox.style.display = 'block';
+      suggList.innerHTML = '';
+
+      const hsl = rgbToHsl(rgbA);
+      const isDarkBg = rgbB.r * 0.299 + rgbB.g * 0.587 + rgbB.b * 0.114 < 128;
+      // Adjust lightness toward 95 if dark background, or toward 10 if light background
+      const targetL = isDarkBg ? Math.min(95, hsl.l + 30) : Math.max(10, hsl.l - 30);
+      const candidateRgb = hslToRgb({ ...hsl, l: targetL });
+      const candidateHex = rgbToHex(candidateRgb);
+
+      const altBtn = document.createElement('button');
+      altBtn.type = 'button';
+      altBtn.className = 'sample-chip';
+      altBtn.innerHTML = `<span style="background:${candidateHex}"></span><small>Use ${candidateHex} (${contrastRatio(candidateRgb, rgbB).toFixed(1)}:1)</small>`;
+      altBtn.addEventListener('click', () => {
+        if (fgInput) fgInput.value = candidateHex;
+        if (fgPicker) fgPicker.value = candidateHex;
+        update();
+      });
+      suggList.appendChild(altBtn);
+    } else if (suggBox) {
+      suggBox.style.display = 'none';
+    }
+  }
+
+  fgInput?.addEventListener('input', () => {
+    const p = parseHex(fgInput.value);
+    if (p && fgPicker) fgPicker.value = fgInput.value;
+    update();
+  });
+  fgPicker?.addEventListener('input', () => {
+    if (fgInput) fgInput.value = fgPicker.value;
+    update();
+  });
+
+  bgInput?.addEventListener('input', () => {
+    const p = parseHex(bgInput.value);
+    if (p && bgPicker) bgPicker.value = bgInput.value;
+    update();
+  });
+  bgPicker?.addEventListener('input', () => {
+    if (bgInput) bgInput.value = bgPicker.value;
+    update();
+  });
+
+  swapBtn?.addEventListener('click', () => {
+    if (!fgInput || !bgInput || !fgPicker || !bgPicker) return;
+    const temp = fgInput.value;
+    fgInput.value = bgInput.value;
+    bgInput.value = temp;
+    fgPicker.value = fgInput.value;
+    bgPicker.value = bgInput.value;
+    update();
+  });
+
+  update();
 </script>

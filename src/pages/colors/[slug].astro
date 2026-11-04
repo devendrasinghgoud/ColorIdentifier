@@ -1,6 +1,382 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro'; import { NAMED_COLORS } from '../../data/colors'; import { parseHex, getColorResult } from '../../lib/color';
-export function getStaticPaths(){return NAMED_COLORS.map(c=>({params:{slug:c.name.toLowerCase().replaceAll(' ','-')},props:{color:c}}));}
-const {color}=Astro.props;const rgb=parseHex(color.hex)!;const result=getColorResult(rgb);
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { NAMED_COLORS, type NamedColor } from '../../data/colors';
+import {
+  parseHex,
+  getColorResult,
+  rgbToHex,
+  hslToRgb,
+  getComplementary,
+  getSplitComplementary,
+  getAnalogous,
+  getTriadic,
+  getTetradic,
+  getMonochromatic,
+  rgbDistance,
+  contrastRatio,
+  toCssRgb,
+  toCssHsl,
+  toCssHsv,
+  toCssCmyk
+} from '../../lib/color';
+import JsonLd from '../../components/JsonLd.astro';
+
+export function getStaticPaths() {
+  return NAMED_COLORS.map((c) => ({
+    params: { slug: c.name.toLowerCase().replaceAll(' ', '-') },
+    props: { color: c }
+  }));
+}
+
+const { color } = Astro.props as { color: NamedColor };
+const rgb = parseHex(color.hex)!;
+const result = getColorResult(rgb);
+
+// Color Harmonies
+const complementaryHsl = getComplementary(result.hsl);
+const complementaryHex = rgbToHex(hslToRgb(complementaryHsl));
+
+const splitHsl = getSplitComplementary(result.hsl);
+const splitHex = splitHsl.map((h) => rgbToHex(hslToRgb(h)));
+
+const analogousHsl = getAnalogous(result.hsl, 30);
+const analogousHex = analogousHsl.map((h) => rgbToHex(hslToRgb(h)));
+
+const triadicHsl = getTriadic(result.hsl);
+const triadicHex = triadicHsl.map((h) => rgbToHex(hslToRgb(h)));
+
+const tetradicHsl = getTetradic(result.hsl);
+const tetradicHex = tetradicHsl.map((h) => rgbToHex(hslToRgb(h)));
+
+const monoHsl = getMonochromatic(result.hsl, 6);
+const monoHex = monoHsl.map((h) => rgbToHex(hslToRgb(h)));
+
+// Tonal Tints & Shades (95% down to 10% lightness)
+const tintsAndShades = [95, 85, 75, 65, 50, 38, 26, 14].map((l) =>
+  rgbToHex(hslToRgb({ ...result.hsl, l }))
+);
+
+// Closest colors from database
+const similarColors = NAMED_COLORS
+  .filter((c) => c.name !== color.name)
+  .map((c) => {
+    const cand = parseHex(c.hex)!;
+    return { ...c, distance: rgbDistance(rgb, cand) };
+  })
+  .sort((a, b) => a.distance - b.distance)
+  .slice(0, 4);
+
+const whiteRgb = { r: 255, g: 255, b: 255 };
+const blackRgb = { r: 0, g: 0, b: 0 };
+const whiteContrast = contrastRatio(rgb, whiteRgb);
+const blackContrast = contrastRatio(rgb, blackRgb);
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://your-domain.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Color Database', item: 'https://your-domain.com/color-names/' },
+    { '@type': 'ListItem', position: 3, name: color.name, item: `https://your-domain.com/colors/${color.name.toLowerCase().replaceAll(' ', '-')}/` }
+  ]
+};
 ---
-<BaseLayout title={`${color.name} Color — HEX ${color.hex}`} description={`Explore ${color.name}, a ${color.family.toLowerCase()} color. View its HEX, RGB and HSL values, description and practical design uses.`}><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / <a href="/color-names/">Color Names</a> / {color.name}</div><span class="eyebrow">{color.family} color reference</span><h1>{color.name} Color</h1><p>{color.description}</p></div><div class="converter-card"><div class="color-strip" style={`background:${color.hex};height:120px`}></div><div class="form-row"><div class="field"><label>HEX</label><input readonly value={color.hex}/></div><div class="field"><label>RGB</label><input readonly value={`${result.rgb.r}, ${result.rgb.g}, ${result.rgb.b}`}/></div><div class="field"><label>HSL</label><input readonly value={`${result.hsl.h}°, ${result.hsl.s}%, ${result.hsl.l}%`}/></div></div><p>{color.uses}</p><a class="button button-primary" href="/color-palette-generator/">Create a palette</a></div><article class="prose"><h2>About {color.name.toLowerCase()}</h2><p>{color.description} Its digital reference value in this library is <code>{color.hex}</code>. The RGB and HSL values are calculated from that HEX value.</p><h2>Where can this color be used?</h2><p>{color.uses} Always evaluate the color alongside nearby colors, typography, lighting and accessibility needs.</p><h2>Explore more</h2><ul><li><a href="/color-name-finder/">Find a color name from HEX</a></li><li><a href="/html-color-codes/">Browse HTML color codes</a></li><li><a href="/color-identifier/">Identify a color from a photo</a></li></ul></article></div></BaseLayout>
+
+<BaseLayout
+  title={`${color.name} Color Code — HEX ${color.hex}, RGB, HSL & Harmonies`}
+  description={`Explore ${color.name} (${color.hex}). Color codes in HEX, RGB, HSL, HSV, CMYK, tints and shades, complementary harmonies, WCAG accessibility, and vehicle customizer preview.`}
+>
+  <JsonLd data={breadcrumbSchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / <a href="/color-names/">Color Database</a> / {color.name}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <span class="eyebrow">{color.family} Color Family</span>
+        <span class="tag-badge" style="font-size:10px;">{color.sourceType}</span>
+      </div>
+      <h1>{color.name} Color Code</h1>
+      <p>{color.description}</p>
+    </div>
+
+    <div class="converter-card" style="max-width:100%;">
+      <div
+        class="color-strip"
+        style={`background:${color.hex};height:150px;border-radius:16px;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.1);display:flex;align-items:flex-end;justify-content:space-between;padding:16px;`}
+      >
+        <span
+          style="background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(6px);padding:6px 14px;border-radius:8px;font-family:monospace;font-size:15px;font-weight:700;letter-spacing:0.05em;"
+        >
+          {color.hex}
+        </span>
+        <span
+          style="background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(6px);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;"
+        >
+          {color.warmth.toUpperCase()} TONE
+        </span>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+        <button class="button button-primary button-small" id="btn-copy-hex" data-hex={color.hex} type="button">
+          Copy {color.hex}
+        </button>
+        <button class="button button-secondary button-small" id="btn-fav" data-hex={color.hex} data-name={color.name} type="button">
+          ★ Save to favorites
+        </button>
+        <a class="button button-secondary button-small" href={`/car-color-customizer/?color=${encodeURIComponent(color.hex)}`}>
+          🚘 Preview on Car
+        </a>
+        <a class="button button-secondary button-small" href={`/bike-color-customizer/?color=${encodeURIComponent(color.hex)}`}>
+          🏍️ Preview on Bike
+        </a>
+        <a class="button button-quiet button-small" href={`/color-mixer/?c1=${encodeURIComponent(color.hex)}`}>
+          Mix with another color
+        </a>
+        <a class="button button-quiet button-small" href={`/gradient-generator/?start=${encodeURIComponent(color.hex)}`}>
+          Create gradient
+        </a>
+      </div>
+
+      <div class="value-grid" style="grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:12px;">
+        <div class="copy-box" data-val={color.hex} title="Click to copy HEX">
+          <span>HEX Code</span>
+          <strong>{color.hex}</strong>
+        </div>
+        <div class="copy-box" data-val={toCssRgb(result.rgb)} title="Click to copy RGB">
+          <span>RGB Channels</span>
+          <strong>{result.rgb.r}, {result.rgb.g}, {result.rgb.b}</strong>
+        </div>
+        <div class="copy-box" data-val={toCssHsl(result.hsl)} title="Click to copy HSL">
+          <span>HSL Coordinates</span>
+          <strong>{result.hsl.h}°, {result.hsl.s}%, {result.hsl.l}%</strong>
+        </div>
+        <div class="copy-box" data-val={toCssHsv(result.hsv)} title="Click to copy HSV">
+          <span>HSV / HSB</span>
+          <strong>{result.hsv.h}°, {result.hsv.s}%, {result.hsv.v}%</strong>
+        </div>
+        <div class="copy-box" data-val={toCssCmyk(result.cmyk)} title="Click to copy CMYK">
+          <span>CMYK Print</span>
+          <strong>{result.cmyk.c}%, {result.cmyk.m}%, {result.cmyk.y}%, {result.cmyk.k}%</strong>
+        </div>
+        <div>
+          <span>Lightness Profile</span>
+          <strong>{result.hsl.l}% ({(whiteContrast >= 4.5 ? 'Dark Surface' : 'Light Surface')})</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tints and Shades Section -->
+    <section class="section" style="padding-top:10px;padding-bottom:10px;">
+      <h2 style="font-size:20px;letter-spacing:-0.03em;margin-bottom:10px;color:var(--ink);">Tints & Shades Scale for {color.name}</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">From light ambient highlights (95% lightness) down to deep shadows (14% lightness).</p>
+      <div style="display:flex;height:60px;border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+        {tintsAndShades.map((shade) => (
+          <div
+            class="copy-box"
+            data-val={shade}
+            style={`flex:1;background:${shade};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;`}
+            title={`Click to copy ${shade}`}
+          >
+            <span style="font-size:9px;background:rgba(0,0,0,0.5);color:#fff;padding:2px 4px;border-radius:4px;font-family:monospace;">{shade}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Color Harmonies Section -->
+    <section class="section" style="padding-top:10px;">
+      <h2 style="font-size:20px;letter-spacing:-0.03em;margin-bottom:14px;color:var(--ink);">Harmonious Color Palettes</h2>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:16px;">
+        <div class="tool-card">
+          <span class="eyebrow">Complementary (180°)</span>
+          <div style="display:flex;height:48px;border-radius:10px;overflow:hidden;margin:10px 0;border:1px solid var(--border);">
+            <div style={`flex:1;background:${color.hex};`} title={color.name}></div>
+            <div style={`flex:1;background:${complementaryHex};`} title="Complementary"></div>
+          </div>
+          <small class="muted">{color.hex} & {complementaryHex}</small>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Split-Complementary (150° & 210°)</span>
+          <div style="display:flex;height:48px;border-radius:10px;overflow:hidden;margin:10px 0;border:1px solid var(--border);">
+            <div style={`flex:1;background:${color.hex};`}></div>
+            <div style={`flex:1;background:${splitHex[0]};`}></div>
+            <div style={`flex:1;background:${splitHex[1]};`}></div>
+          </div>
+          <small class="muted">{color.hex}, {splitHex[0]}, {splitHex[1]}</small>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Analogous (±30°)</span>
+          <div style="display:flex;height:48px;border-radius:10px;overflow:hidden;margin:10px 0;border:1px solid var(--border);">
+            <div style={`flex:1;background:${analogousHex[0]};`}></div>
+            <div style={`flex:1;background:${color.hex};`}></div>
+            <div style={`flex:1;background:${analogousHex[1]};`}></div>
+          </div>
+          <small class="muted">{analogousHex[0]}, {color.hex}, {analogousHex[1]}</small>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Triadic (120° & 240°)</span>
+          <div style="display:flex;height:48px;border-radius:10px;overflow:hidden;margin:10px 0;border:1px solid var(--border);">
+            <div style={`flex:1;background:${color.hex};`}></div>
+            <div style={`flex:1;background:${triadicHex[0]};`}></div>
+            <div style={`flex:1;background:${triadicHex[1]};`}></div>
+          </div>
+          <small class="muted">{color.hex}, {triadicHex[0]}, {triadicHex[1]}</small>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Tetradic (90°, 180°, 270°)</span>
+          <div style="display:flex;height:48px;border-radius:10px;overflow:hidden;margin:10px 0;border:1px solid var(--border);">
+            <div style={`flex:1;background:${color.hex};`}></div>
+            <div style={`flex:1;background:${tetradicHex[0]};`}></div>
+            <div style={`flex:1;background:${tetradicHex[1]};`}></div>
+            <div style={`flex:1;background:${tetradicHex[2]};`}></div>
+          </div>
+          <small class="muted">{color.hex}, {tetradicHex[0]}, {tetradicHex[1]}, {tetradicHex[2]}</small>
+        </div>
+
+        <div class="tool-card">
+          <span class="eyebrow">Monochromatic Tonal Range</span>
+          <div style="display:flex;height:48px;border-radius:10px;overflow:hidden;margin:10px 0;border:1px solid var(--border);">
+            {monoHex.map((mHex) => (
+              <div style={`flex:1;background:${mHex};`} title={mHex}></div>
+            ))}
+          </div>
+          <small class="muted">{monoHex.join(', ')}</small>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-layout">
+      <article class="prose">
+        <h2>About {color.name}</h2>
+        <p>{color.description}</p>
+        <p>
+          In standard digital sRGB space, <strong>{color.name}</strong> is encoded with the hexadecimal value <code>{color.hex}</code>.
+          This translates to red channel {result.rgb.r}, green channel {result.rgb.g}, and blue channel {result.rgb.b}
+          (channel intensities: {Math.round(result.rgb.r / 2.55)}% red, {Math.round(result.rgb.g / 2.55)}% green, {Math.round(result.rgb.b / 2.55)}% blue).
+        </p>
+
+        <h2>Accessibility & WCAG 2.1 Contrast Analysis</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Target Background</th>
+              <th>Contrast Ratio</th>
+              <th>WCAG AA Normal Text (4.5:1)</th>
+              <th>WCAG AAA Normal Text (7:1)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>White (#FFFFFF)</td>
+              <td><strong>{whiteContrast.toFixed(2)}:1</strong></td>
+              <td>{whiteContrast >= 4.5 ? '✅ Pass' : '❌ Fail'}</td>
+              <td>{whiteContrast >= 7 ? '✅ Pass' : '❌ Fail'}</td>
+            </tr>
+            <tr>
+              <td>Black (#000000)</td>
+              <td><strong>{blackContrast.toFixed(2)}:1</strong></td>
+              <td>{blackContrast >= 4.5 ? '✅ Pass' : '❌ Fail'}</td>
+              <td>{blackContrast >= 7 ? '✅ Pass' : '❌ Fail'}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Practical Applications & Best Uses</h2>
+        <p>{color.uses}</p>
+
+        <h2>CSS Color Tokens & Snippets</h2>
+        <div class="converter-card" style="padding:16px;margin:14px 0;">
+          <pre style="margin:0;font-family:monospace;font-size:13px;color:var(--ink);overflow-x:auto;"><code>/* CSS Design Tokens for {color.name} */
+--color-{color.name.toLowerCase().replaceAll(' ', '-')}: {color.hex};
+color: {color.hex};
+background-color: {toCssRgb(result.rgb)};
+border-color: {toCssHsl(result.hsl)};</code></pre>
+        </div>
+
+        <h2>Similar Colors in Database</h2>
+        <div class="color-reference-grid" style="margin-top:14px;">
+          {similarColors.map((sim) => (
+            <a class="color-reference" href={`/colors/${sim.name.toLowerCase().replaceAll(' ', '-')}/`}>
+              <div class="color-reference-swatch" style={`background:${sim.hex};`}></div>
+              <div class="color-reference-body">
+                <strong>{sim.name}</strong>
+                <code>{sim.hex}</code>
+                <small style="display:block;color:var(--muted);font-size:11px;">{sim.family}</small>
+              </div>
+            </a>
+          ))}
+        </div>
+      </article>
+
+      <aside class="sidebar-card">
+        <h3>Vehicle Customizers</h3>
+        <a href={`/car-color-customizer/?color=${encodeURIComponent(color.hex)}`}>🚘 Preview on Car Body</a>
+        <a href={`/bike-color-customizer/?color=${encodeURIComponent(color.hex)}`}>🏍️ Preview on Motorcycle</a>
+
+        <h3 style="margin-top:20px;">Color Utilities</h3>
+        <a href={`/color-mixer/?c1=${encodeURIComponent(color.hex)}`}>Mix {color.name}</a>
+        <a href="/complementary-color-finder/">Harmonies Finder</a>
+        <a href="/color-contrast-checker/">Check Contrast Ratio</a>
+        <a href="/color-blindness-simulator/">Simulate Color Blindness</a>
+        <a href="/color-palette-extractor/">Palette Extractor</a>
+        <a href="/color-identifier/">Scan Color with Camera</a>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { toggleFavorite, isFavorite } from '../../lib/workspace';
+
+  const copyHexBtn = document.querySelector<HTMLButtonElement>('#btn-copy-hex');
+  const favBtn = document.querySelector<HTMLButtonElement>('#btn-fav');
+  const hex = copyHexBtn?.getAttribute('data-hex') || '';
+  const name = favBtn?.getAttribute('data-name') || '';
+
+  if (copyHexBtn && hex) {
+    copyHexBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(hex);
+        copyHexBtn.textContent = 'Copied!';
+        setTimeout(() => { copyHexBtn.textContent = `Copy ${hex}`; }, 1200);
+      } catch {}
+    });
+  }
+
+  function updateFavUI() {
+    if (!favBtn || !hex) return;
+    const fav = isFavorite(hex);
+    favBtn.textContent = fav ? '★ Favorited' : '★ Save to favorites';
+    favBtn.classList.toggle('button-primary', fav);
+    favBtn.classList.toggle('button-secondary', !fav);
+  }
+
+  if (favBtn && hex) {
+    updateFavUI();
+    favBtn.addEventListener('click', () => {
+      toggleFavorite(hex, name);
+      updateFavUI();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('.copy-box').forEach((box) => {
+    box.addEventListener('click', async () => {
+      const val = box.getAttribute('data-val');
+      if (!val) return;
+      try {
+        await navigator.clipboard.writeText(val);
+        const originalStrong = box.querySelector('strong')?.textContent;
+        const s = box.querySelector('strong');
+        if (s) s.textContent = 'COPIED!';
+        setTimeout(() => { if (s && originalStrong) s.textContent = originalStrong; }, 1000);
+      } catch {}
+    });
+  });
+</script>

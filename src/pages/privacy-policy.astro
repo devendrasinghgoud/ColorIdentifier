@@ -1,4 +1,69 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import JsonLd from '../components/JsonLd.astro';
+
+const policySchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Privacy Policy — ColorCode Identifier',
+  description: 'ColorCode Identifier privacy policy detailing client-side local image processing, camera permissions, and localStorage data persistence.'
+};
 ---
-<BaseLayout title="Privacy Policy" description="Read how ColorCode Identifier handles browser-based image processing, analytics and advertising. Update this policy to match your deployed services."><div class="container"><div class="page-hero"><div class="breadcrumbs"><a href="/">Home</a> / Privacy Policy</div><h1>Privacy Policy</h1><p>Last updated: November 4, 2026</p></div><article class="prose"><div class="notice">Review and customize this policy with your actual hosting, analytics, consent and advertising setup before launch. This template is not legal advice.</div><h2>Images and camera access</h2><p>The color sampling feature processes selected images locally in your browser. The current implementation does not send image files to our application server. Camera access is requested only after you select the camera option and is controlled by your browser.</p><h2>Analytics and advertising</h2><p>If analytics or advertising services are enabled, those providers may use cookies or similar technologies subject to their own policies and applicable consent requirements. Add the exact services, purposes, retention periods and opt-out details used by your production site before publishing.</p><h2>Contact and policy updates</h2><p>Add a monitored contact method before launch. We may update this policy as the website changes.</p></article></div></BaseLayout>
+
+<BaseLayout
+  title="Privacy Policy — 100% Client-Side Processing & Data Protection"
+  description="Learn how ColorCode Identifier protects your privacy. All camera frames and photos are processed locally in your browser. We never upload your images."
+>
+  <JsonLd data={policySchema} />
+
+  <div class="container">
+    <div class="page-hero">
+      <div class="breadcrumbs">
+        <a href="/">Home</a> / Privacy Policy
+      </div>
+      <span class="eyebrow">Trust & Transparency</span>
+      <h1>Privacy Policy</h1>
+      <p>Last updated: November 4, 2026</p>
+    </div>
+
+    <article class="prose" style="max-width:820px;">
+      <h2>1. Client-Side Image and Camera Processing</h2>
+      <p>
+        Your privacy is our core engineering principle. All image decoding, pixel sampling, dominant color extraction, and live video camera streams are executed <strong>strictly within your local web browser using client-side HTML5 APIs and JavaScript</strong>.
+      </p>
+      <ul>
+        <li><strong>No Image Uploads:</strong> Photos you select are never uploaded to any remote server or third-party cloud storage.</li>
+        <li><strong>No Camera Recording:</strong> Camera streams accessed via <code>getUserMedia()</code> are rendered directly into local device canvas memory for real-time pixel sampling and are immediately discarded when you stop the camera or close the tab.</li>
+      </ul>
+
+      <h2>2. Local Storage Usage (localStorage)</h2>
+      <p>
+        ColorCode Identifier utilizes browser <code>localStorage</code> to deliver personalization without requiring user accounts or passwords:
+      </p>
+      <ul>
+        <li><code>cci_theme</code>: Remembers your interface theme preference (Light, Dark, or System).</li>
+        <li><code>cci_favorites</code>: Stores color codes you explicitly choose to bookmark.</li>
+        <li><code>cci_history</code>: Caches your most recent sampled colors for easy re-selection.</li>
+        <li><code>cci_collections</code>: Organizes custom color groups and user-created palettes.</li>
+      </ul>
+      <p>
+        This data is stored solely on your physical device. It is never synchronized across devices or accessible to other websites. You can completely wipe this data at any time from the <a href="/workspace/">Personal Workspace</a> by clicking "Clear all local data", or through your browser settings.
+      </p>
+
+      <h2>3. Camera and Device Permissions</h2>
+      <p>
+        Camera access is requested only when you explicitly click "Start camera" or "Use camera". You can revoke this permission at any moment using your browser's site settings. If permission is denied, all image upload and color converter tools remain 100% functional.
+      </p>
+
+      <h2>4. Analytics and Third-Party Services</h2>
+      <p>
+        If analytics or performance monitoring tools (such as Google Analytics or Microsoft Clarity) are integrated in the future, they operate subject to appropriate consent management mechanisms and do not collect private image or biometric data.
+      </p>
+
+      <h2>5. Contact & Questions</h2>
+      <p>
+        If you have questions regarding our privacy practices or security architecture, please visit our <a href="/contact/">Contact page</a>.
+      </p>
+    </article>
+  </div>
+</BaseLayout>
