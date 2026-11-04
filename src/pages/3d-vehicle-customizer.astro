@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Vehicle3DCustomizer from '../components/Vehicle3DCustomizer.astro';
+
+const title = '3D Vehicle Color Customizer – Interactive 3D Car & Motorcycle Paint Configurator';
+const description = 'Customize and preview any car or motorcycle in full interactive 3D WebGL. Recolor individual body panels, tune gloss, metallic, satin and matte clearcoats in real-time.';
+const canonicalURL = 'https://colorcodeidentifier.com/3d-vehicle-customizer/';
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'ColorCode Identifier 3D Vehicle Customizer',
+  url: canonicalURL,
+  applicationCategory: 'DesignApplication',
+  operatingSystem: 'All',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD'
+  },
+  featureList: [
+    'Interactive 3D WebGL vehicle viewer',
+    '360-degree orbit rotation, pan and zoom controls',
+    'Independent per-panel body mesh recoloring',
+    'Gloss, metallic, satin and matte paint finishes',
+    'Preserved glass, headlight and tire geometry',
+    'High-resolution PNG screenshot export'
+  ]
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://colorcodeidentifier.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://colorcodeidentifier.com/tools/' },
+    { '@type': 'ListItem', position: 3, name: '3D Vehicle Customizer', item: canonicalURL }
+  ]
+};
+---
+
+<BaseLayout title={title} description={description} canonical={canonicalURL}>
+  <script type="application/ld+json" set:html={JSON.stringify(webAppSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+
+  <div class="container" style="padding-top: 32px; padding-bottom: 64px;">
+    <!-- Breadcrumb Nav -->
+    <nav aria-label="Breadcrumb" style="margin-bottom: 20px;">
+      <ol style="display:flex;gap:8px;font-size:12px;list-style:none;padding:0;margin:0;color:var(--muted);align-items:center;">
+        <li><a href="/" style="color:var(--muted);text-decoration:none;">Home</a></li>
+        <li><span>/</span></li>
+        <li><a href="/tools/" style="color:var(--muted);text-decoration:none;">Tools</a></li>
+        <li><span>/</span></li>
+        <li style="color:var(--ink);font-weight:700;">3D Vehicle Customizer</li>
+      </ol>
+    </nav>
+
+    <!-- Hero Header -->
+    <header style="margin-bottom: 28px;">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-tint);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;color:var(--brand-indigo);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;">
+        <span>🎮 Interactive WebGL Studio</span>
+      </div>
+      <h1 style="font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: -0.04em; line-height: 1.15; margin: 0 0 12px;">
+        3D Vehicle Color Customizer
+      </h1>
+      <p style="font-size: 16px; color: var(--muted); max-width: 820px; margin: 0; line-height: 1.6;">
+        Explore vehicle paint shades in realistic three-dimensional WebGL space. Rotate 360°, zoom in on panel seams, and recolor bonnets, roofs, doors, and aero wings independently with factory-grade gloss, metallic, satin, and matte clearcoat shaders.
+      </p>
+    </header>
+
+    <!-- 3D Interactive Customizer Studio -->
+    <Vehicle3DCustomizer />
+
+    <!-- Educational & Technical Deep Dive -->
+    <section class="content-layout" style="margin-top: 64px;">
+      <article class="main-article">
+        <h2>How 3D Vehicle Paint Visualization Works</h2>
+        <p>
+          Automotive paint consists of multiple physical layers: an electrocoat primer, basecoat pigmented paint, flake metallic or pearlescent particles, and an ultraviolet-resistant clearcoat. In modern real-time WebGL rendering, this multi-layer structure is simulated through Physically Based Rendering (PBR) metallic-roughness material pipelines.
+        </p>
+
+        <h3>Independent Per-Panel Customization</h3>
+        <p>
+          Unlike primitive 3D model viewers that apply a single global tint across the entire vehicle body, ColorCode Identifier separates individual body panels into distinct mesh nodes:
+        </p>
+        <ul>
+          <li><strong>Bonnet & Hood:</strong> Front engine cowl with distinct surface camber and reflection angles.</li>
+          <li><strong>Canopy Roof:</strong> Top horizontal plane receiving direct overhead sun simulation.</li>
+          <li><strong>Doors & Fenders:</strong> Side body profiles susceptible to ambient road bounce light.</li>
+          <li><strong>Aero Diffusers & Wings:</strong> Carbon composite or accent trim finished independently.</li>
+        </ul>
+
+        <h3>Preserving Non-Painted Components</h3>
+        <p>
+          Changing vehicle paint should never discolor functional vehicle components. ColorCode Identifier isolates tinted laminated safety glass, rubber tire compounds, machined alloy wheel rims, and polycarbonate headlamp housings from the paint shader pipeline.
+        </p>
+
+        <div class="card" style="padding: 24px; margin: 32px 0; border-left: 4px solid var(--brand-indigo);">
+          <h4 style="margin: 0 0 8px; font-size: 15px;">Legal Licensing & Transparency Commitment</h4>
+          <p style="font-size: 13px; color: var(--muted); margin: 0; line-height: 1.6;">
+            ColorCode Identifier respects original manufacturer intellectual property and trademarks. The active 3D models provided in this configurator are procedurally engineered platforms licensed under open-source MIT terms. Manufacturer models currently in legal verification are transparently labeled as pending without misleading substitutions.
+          </p>
+        </div>
+
+        <h2>Frequently Asked Questions</h2>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:16px;">
+          <div class="card" style="padding: 16px 20px;">
+            <strong style="display:block;font-size:14px;margin-bottom:6px;">Can I change one panel without changing the rest of the car?</strong>
+            <p style="font-size:13px;color:var(--muted);margin:0;">Yes. Clicking any body panel in the 3D viewer or selecting it from the panel pill selector allows you to apply any HEX color or finish preset to that exact panel exclusively.</p>
+          </div>
+          <div class="card" style="padding: 16px 20px;">
+            <strong style="display:block;font-size:14px;margin-bottom:6px;">Can I use colors from the ColorCode Identifier Color Database?</strong>
+            <p style="font-size:13px;color:var(--muted);margin:0;">Yes. Any color in our database can be previewed directly by passing the color parameter in the URL (for example, <code>?color=%233B82F6</code>) or selecting quick palette swatches.</p>
+          </div>
+          <div class="card" style="padding: 16px 20px;">
+            <strong style="display:block;font-size:14px;margin-bottom:6px;">How do I export my customized 3D design?</strong>
+            <p style="font-size:13px;color:var(--muted);margin:0;">Click the "Capture Screenshot" button in the top navigation bar to instantly generate a high-resolution PNG file of your customized vehicle from your current viewing angle.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- Sidebar Links -->
+      <aside class="sidebar">
+        <div class="card sidebar-card" style="padding: 20px;">
+          <h4 style="margin: 0 0 12px; font-size: 15px;">Related Color Tools</h4>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;font-size:13px;">
+            <li><a href="/car-color-customizer/" style="color:var(--brand-indigo);font-weight:600;">🚗 2D Car Color Customizer</a></li>
+            <li><a href="/bike-color-customizer/" style="color:var(--brand-indigo);font-weight:600;">🏍️ 2D Bike Color Customizer</a></li>
+            <li><a href="/car-paint-color-codes/" style="color:var(--brand-indigo);font-weight:600;">🏷️ OEM Car Paint Code Directory</a></li>
+            <li><a href="/colors/" style="color:var(--brand-indigo);font-weight:600;">📚 Color Names Database 2.0</a></li>
+            <li><a href="/color-contrast-checker/" style="color:var(--brand-indigo);font-weight:600;">⚖️ WCAG Contrast Checker</a></li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </div>
+</BaseLayout>

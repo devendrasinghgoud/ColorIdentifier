@@ -1,5 +1,5 @@
 ---
-import { VEHICLE_TEMPLATES } from '../data/vehicleTemplates';
+import { VEHICLE_TEMPLATES, type VehicleTemplate } from '../data/vehicleTemplates';
 
 interface Props {
   initialType?: 'car' | 'bike';
@@ -9,81 +9,87 @@ interface Props {
 
 const {
   initialType = 'car',
-  title = 'Vehicle Color Customizer & Paint Visualizer',
-  subtitle = 'Choose a car or motorcycle template or upload your own vehicle photo. Preview any color with glossy, metallic, matte, or satin finishes.'
+  title = 'Vehicle Color Customizer Studio',
+  subtitle = 'Preview and test any paint shade on cars and motorcycles. Choose factory templates or upload your vehicle photo.'
 } = Astro.props;
 
 const presetColors = [
-  { name: 'Racing Blue', hex: '#0E3A75' },
-  { name: 'Soul Red', hex: '#8D0B1C' },
-  { name: 'Alpine White', hex: '#F7F8F9' },
-  { name: 'Sapphire Black', hex: '#16181D' },
-  { name: 'Lime Green', hex: '#6CB33F' },
-  { name: 'Guards Red', hex: '#CC1122' },
-  { name: 'Electric Cyan', hex: '#22D3EE' },
-  { name: 'Brand Indigo', hex: '#6C5CE7' },
-  { name: 'Sunflower Yellow', hex: '#FFD700' },
-  { name: 'Titanium Gray', hex: '#878681' },
-  { name: 'Brushed Copper', hex: '#B87333' },
-  { name: 'Baby Blue', hex: '#89CFF0' }
+  { name: 'Ultra Indigo', hex: '#6C5CE7' },
+  { name: 'Hyper Violet', hex: '#8B5CF6' },
+  { name: 'Cyan Streak', hex: '#22D3EE' },
+  { name: 'Daytona Blue', hex: '#0E3A75' },
+  { name: 'Monza Red', hex: '#D40026' },
+  { name: 'Speed Yellow', hex: '#FFBF00' },
+  { name: 'British Racing Green', hex: '#004225' },
+  { name: 'Nardo Gray', hex: '#6B7280' },
+  { name: 'Obsidian Black', hex: '#111827' },
+  { name: 'Pearl White', hex: '#F8FAFC' }
 ];
+
+const cars = VEHICLE_TEMPLATES.filter((t) => t.type === 'car');
+const bikes = VEHICLE_TEMPLATES.filter((t) => t.type === 'bike');
 ---
 
-<section class="scanner-card" aria-labelledby="customizer-title" style="margin: 20px 0;">
-  <div class="scanner-heading">
+<section class="card" style="padding: 24px; margin: 32px 0;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:20px;">
     <div>
-      <span class="eyebrow">INTERACTIVE VEHICLE COLORIZER</span>
-      <h2 id="customizer-title">{title}</h2>
-      <p>{subtitle}</p>
+      <h2 style="font-size:22px; margin:0 0 6px;">{title}</h2>
+      <p style="color:var(--muted); font-size:14px; margin:0;">{subtitle}</p>
     </div>
-    <span class="scanner-icon" aria-hidden="true">🎨</span>
+
+    <!-- Step 1: Type Selection Switch -->
+    <div style="display:flex; gap:8px;">
+      <button
+        id="btn-type-car"
+        class={`button ${initialType === 'car' ? 'button-primary' : 'button-secondary'}`}
+        type="button"
+      >
+        🚗 Car Studio
+      </button>
+      <button
+        id="btn-type-bike"
+        class={`button ${initialType === 'bike' ? 'button-primary' : 'button-secondary'}`}
+        type="button"
+      >
+        🏍️ Bike Studio
+      </button>
+      <a href="/3d-vehicle-customizer/" class="button button-quiet" title="Open Interactive 3D WebGL Configurator">
+        🎮 3D Studio &rarr;
+      </a>
+    </div>
   </div>
 
-  <!-- Step 1: Vehicle Type & Template Selection -->
-  <div style="margin: 18px 0 14px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
-      <div style="display:inline-flex;gap:4px;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px;padding:4px;">
-        <button
-          class="button button-small vtype-btn"
-          id="btn-type-car"
-          data-type="car"
-          type="button"
-          class:list={[{ 'button-primary': initialType === 'car', 'button-secondary': initialType !== 'car' }]}
-        >
-          🚘 Cars (6 Styles)
-        </button>
-        <button
-          class="button button-small vtype-btn"
-          id="btn-type-bike"
-          data-type="bike"
-          type="button"
-          class:list={[{ 'button-primary': initialType === 'bike', 'button-secondary': initialType !== 'bike' }]}
-        >
-          🏍️ Motorcycles (5 Styles)
-        </button>
-      </div>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <label class="button button-secondary button-small upload-button" for="vehicle-photo-upload">
-          📁 Upload Your Vehicle Photo
-        </label>
-        <input id="vehicle-photo-upload" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" hidden />
-        <button id="btn-use-template" class="button button-quiet button-small" type="button" style="display:none;">
-          ← Back to templates
-        </button>
-      </div>
+  <!-- Step 2: Vehicle Template Selection Carousel / Grid -->
+  <div style="margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em;">
+        SELECT VEHICLE TEMPLATE OR UPLOAD PHOTO
+      </span>
+      <label class="button button-small button-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+        <span>📷 Upload Vehicle Photo</span>
+        <input type="file" id="vehicle-photo-upload" accept="image/*" style="display:none;" />
+      </label>
     </div>
 
-    <!-- Template Pills -->
-    <div id="template-selector" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;">
-      {VEHICLE_TEMPLATES.map((tmpl) => (
+    <div id="template-pill-list" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; scrollbar-width:thin;">
+      {cars.map((tmpl, idx) => (
         <button
-          class="button button-small button-secondary tmpl-btn"
+          class={`button button-small tmpl-btn ${idx === 0 && initialType === 'car' ? 'button-primary' : 'button-secondary'}`}
           data-id={tmpl.id}
-          data-type={tmpl.type}
-          data-color={tmpl.defaultColor}
+          data-type="car"
           type="button"
-          style={tmpl.type === initialType ? '' : 'display:none;'}
+          style={initialType === 'car' ? '' : 'display:none;'}
+        >
+          {tmpl.name}
+        </button>
+      ))}
+      {bikes.map((tmpl, idx) => (
+        <button
+          class={`button button-small tmpl-btn ${idx === 0 && initialType === 'bike' ? 'button-primary' : 'button-secondary'}`}
+          data-id={tmpl.id}
+          data-type="bike"
+          type="button"
+          style={initialType === 'bike' ? '' : 'display:none;'}
         >
           {tmpl.name}
         </button>
@@ -91,31 +97,32 @@ const presetColors = [
     </div>
   </div>
 
-  <!-- Main Viewport / Stage -->
-  <div class="scanner-stage" id="customizer-stage" style="min-height:360px;padding:16px;background:var(--surface-soft);border-radius:18px;position:relative;overflow:hidden;">
-    <!-- SVG Template Renderer -->
-    <div id="template-viewport" style="width:100%;max-width:880px;margin:auto;display:flex;justify-content:center;align-items:center;position:relative;">
-      <svg
-        id="vehicle-svg"
-        viewBox="0 0 900 360"
-        style="width:100%;height:auto;max-height:360px;filter:drop-shadow(0 15px 25px rgba(0,0,0,0.15));"
-      >
+  <!-- Main Vehicle Customizer Canvas / SVG Viewport -->
+  <div style="position:relative; background:var(--surface-elevated); border:1px solid var(--border); border-radius:16px; padding:24px; min-height:360px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+    <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px;">
+      <button id="btn-use-template" class="button button-small button-quiet" type="button" style="display:none;">
+        &larr; Back to Templates
+      </button>
+    </div>
+
+    <!-- Scalable Vector Vehicle Template Renderer -->
+    <div id="template-viewport" style="width:100%; max-width:880px; margin:auto; display:flex; justify-content:center; align-items:center;">
+      <svg id="vehicle-svg" viewBox="0 0 900 360" style="width:100%; height:auto; max-height:420px; filter:drop-shadow(0 12px 28px rgba(0,0,0,0.15)); user-select:none;">
         <defs>
           <clipPath id="split-clip-left">
-            <rect id="clip-rect-left" x="0" y="0" width="900" height="360" />
+            <rect id="clip-rect-left" x="0" y="0" width="0" height="450" />
           </clipPath>
           <clipPath id="split-clip-right">
-            <rect id="clip-rect-right" x="0" y="0" width="900" height="360" />
+            <rect id="clip-rect-right" x="0" y="0" width="900" height="450" />
           </clipPath>
-          <radialGradient id="tire-grad" cx="50%" cy="50%" r="50%">
-            <stop offset="60%" stop-color="#1F242D" />
-            <stop offset="90%" stop-color="#11141A" />
-            <stop offset="100%" stop-color="#090B0E" />
-          </radialGradient>
           <linearGradient id="rim-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="#E2E8F0" />
             <stop offset="50%" stop-color="#94A3B8" />
             <stop offset="100%" stop-color="#475569" />
+          </linearGradient>
+          <linearGradient id="tire-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1E293B" />
+            <stop offset="100%" stop-color="#090B0E" />
           </linearGradient>
           <linearGradient id="glass-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="rgba(219, 234, 254, 0.85)" />
@@ -140,7 +147,7 @@ const presetColors = [
         <g id="svg-shadow-layer"></g>
         <!-- Original base body layer for split comparison -->
         <g id="svg-body-layer-orig" clip-path="url(#split-clip-left)"></g>
-        <!-- Recolored body layer for split comparison -->
+        <!-- Recolored multi-panel body layer -->
         <g id="svg-body-layer" clip-path="url(#split-clip-right)"></g>
         <g id="svg-finish-overlay" style="mix-blend-mode:overlay;pointer-events:none;"></g>
         <g id="svg-highlight-layer" style="mix-blend-mode:screen;pointer-events:none;"></g>
@@ -172,6 +179,32 @@ const presetColors = [
       </button>
       <button id="btn-zoom-in" class="button button-small button-secondary" type="button" title="Zoom in">+ Zoom</button>
       <button id="btn-zoom-out" class="button button-small button-secondary" type="button" title="Zoom out">- Zoom</button>
+    </div>
+  </div>
+
+  <!-- Independent Body Panel Selector for Vector Templates -->
+  <div id="panel-picker-container" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;font-weight:700;">Select Body Panel to Customize:</span>
+        <span id="selected-panel-badge" style="font-size:11px;font-weight:700;color:var(--brand-cyan);background:rgba(34,211,238,0.12);padding:3px 10px;border-radius:6px;border:1px solid rgba(34,211,238,0.3);">
+          Editing: Bonnet / Hood
+        </span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button id="btn-reset-panel" class="button button-small button-quiet" type="button" title="Reset selected panel back to default">
+          ↺ Reset This Panel
+        </button>
+        <button id="btn-undo-panel" class="button button-small button-quiet" type="button" title="Undo panel change">
+          ↶ Undo
+        </button>
+        <button id="btn-redo-panel" class="button button-small button-quiet" type="button" title="Redo panel change">
+          ↷ Redo
+        </button>
+      </div>
+    </div>
+    <div id="panel-chips-list" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;">
+      <!-- Populated dynamically per vehicle template -->
     </div>
   </div>
 
@@ -209,11 +242,11 @@ const presetColors = [
       <!-- Color Picker -->
       <div>
         <label for="custom-hex-input" style="display:block;font-size:12px;font-weight:700;margin-bottom:8px;">
-          Choose Color (HEX / Native Picker):
+          <span id="picker-label-target">Panel Color</span> (HEX / Native Picker):
         </label>
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
-          <input id="custom-color-picker" type="color" value="#0E3A75" style="width:54px;height:45px;padding:2px;border-radius:10px;cursor:pointer;" />
-          <input id="custom-hex-input" value="#0E3A75" placeholder="#0E3A75" style="font-family:monospace;font-weight:700;" />
+          <input id="custom-color-picker" type="color" value="#3B82F6" style="width:54px;height:45px;padding:2px;border-radius:10px;cursor:pointer;" />
+          <input id="custom-hex-input" value="#3B82F6" placeholder="#3B82F6" style="font-family:monospace;font-weight:700;" />
           <button id="btn-copy-color" class="button button-secondary button-small" type="button">Copy HEX</button>
         </div>
 
@@ -263,7 +296,7 @@ const presetColors = [
     <!-- Actions & Download -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:20px;border-top:1px solid var(--border);padding-top:14px;">
       <div style="display:flex;gap:10px;align-items:center;">
-        <button id="btn-reset-all" class="button button-quiet button-small" type="button">Reset Default</button>
+        <button id="btn-reset-all" class="button button-quiet button-small" type="button">Reset Entire Vehicle</button>
         <button id="btn-share-custom" class="button button-secondary button-small" type="button">Share Build</button>
       </div>
       <div style="display:flex;gap:10px;">
@@ -275,14 +308,75 @@ const presetColors = [
   </div>
 </section>
 
+<style>
+  :global(.panel-chip) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  :global(.panel-chip:hover) {
+    border-color: var(--brand-indigo);
+  }
+  :global(.panel-chip.is-active) {
+    background: var(--surface-tint);
+    border-color: var(--brand-cyan);
+    color: var(--brand-indigo);
+    box-shadow: 0 0 6px rgba(34, 211, 238, 0.35);
+  }
+  :global(.panel-chip-dot) {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  :global(.vehicle-panel-svg) {
+    cursor: pointer;
+    transition: fill 0.15s ease, stroke 0.15s ease, filter 0.15s ease;
+  }
+  :global(.vehicle-panel-svg:hover) {
+    filter: brightness(1.1);
+  }
+  :global(.vehicle-panel-svg.is-selected) {
+    filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.85));
+  }
+</style>
+
 <script>
-  import { VEHICLE_TEMPLATES } from '../data/vehicleTemplates';
+  import { VEHICLE_TEMPLATES, type VehicleTemplate } from '../data/vehicleTemplates';
   import { parseHex, rgbToHsl, hslToRgb, rgbToHex } from '../lib/color';
+
+  interface PanelState {
+    color: string;
+    finish: 'glossy' | 'metallic' | 'matte' | 'satin';
+  }
+
+  interface VehicleConfig {
+    vehicleId: string;
+    regions: Record<string, PanelState>;
+  }
 
   let currentType: 'car' | 'bike' = 'car';
   let currentTemplate: VehicleTemplate = VEHICLE_TEMPLATES[0];
-  let currentColor = '#0E3A75';
-  let currentFinish = 'glossy';
+  let selectedPanelId: string = currentTemplate.panels[0]?.id || 'bonnet';
+
+  // Per-vehicle configuration storage
+  const vehicleConfigurations: Record<string, VehicleConfig> = {};
+
+  // Undo / Redo for panels
+  const panelUndoStack: string[] = [];
+  const panelRedoStack: string[] = [];
+
   let intensity = 1.0;
   let brightness = 0;
   let isCustomPhoto = false;
@@ -300,6 +394,13 @@ const presetColors = [
   const templateViewport = document.querySelector<HTMLElement>('#template-viewport');
   const uploadViewport = document.querySelector<HTMLElement>('#upload-viewport');
   const brushControls = document.querySelector<HTMLElement>('#brush-controls');
+  const panelPickerContainer = document.querySelector<HTMLElement>('#panel-picker-container');
+  const panelChipsList = document.querySelector<HTMLElement>('#panel-chips-list');
+  const selectedPanelBadge = document.querySelector<HTMLElement>('#selected-panel-badge');
+  const btnResetPanel = document.querySelector<HTMLButtonElement>('#btn-reset-panel');
+  const btnUndoPanel = document.querySelector<HTMLButtonElement>('#btn-undo-panel');
+  const btnRedoPanel = document.querySelector<HTMLButtonElement>('#btn-redo-panel');
+  const pickerLabelTarget = document.querySelector<HTMLElement>('#picker-label-target');
 
   const svg = document.querySelector<SVGElement>('#vehicle-svg');
   const shadowLayer = document.querySelector<SVGGElement>('#svg-shadow-layer');
@@ -336,7 +437,7 @@ const presetColors = [
   const btnShare = document.querySelector<HTMLButtonElement>('#btn-share-custom');
   const btnDownload = document.querySelector<HTMLButtonElement>('#btn-download-png');
 
-  // Canvas & Brush Elements
+  // Canvas & Brush Elements for Photo Upload
   const canvas = document.querySelector<HTMLCanvasElement>('#photo-canvas');
   const ctx = canvas?.getContext('2d', { willReadFrequently: true });
   const brushSizeSlider = document.querySelector<HTMLInputElement>('#brush-size');
@@ -357,18 +458,45 @@ const presetColors = [
   let lastY = 0;
   let brushMode: 'paint' | 'erase' = 'paint';
   let brushRadius = 25;
-  let undoStack: ImageData[] = [];
-  let redoStack: ImageData[] = [];
+  let photoUndoStack: ImageData[] = [];
+  let photoRedoStack: ImageData[] = [];
+
+  // Helper: Get or Init configuration for current vehicle template
+  function getVehicleConfig(vehicleId: string): VehicleConfig {
+    if (!vehicleConfigurations[vehicleId]) {
+      const saved = localStorage.getItem(`colorcode_vehicle_${vehicleId}`);
+      if (saved) {
+        try {
+          vehicleConfigurations[vehicleId] = JSON.parse(saved);
+        } catch (e) {}
+      }
+      if (!vehicleConfigurations[vehicleId]) {
+        const tmpl = VEHICLE_TEMPLATES.find((t) => t.id === vehicleId) || currentTemplate;
+        const regions: Record<string, PanelState> = {};
+        tmpl.panels.forEach((p) => {
+          regions[p.id] = {
+            color: p.defaultColor || tmpl.defaultColor,
+            finish: p.defaultFinish || 'glossy'
+          };
+        });
+        vehicleConfigurations[vehicleId] = { vehicleId, regions };
+      }
+    }
+    return vehicleConfigurations[vehicleId];
+  }
+
+  function recordPanelState() {
+    const cfg = getVehicleConfig(currentTemplate.id);
+    panelUndoStack.push(JSON.stringify(cfg.regions));
+    if (panelUndoStack.length > 25) panelUndoStack.shift();
+    panelRedoStack.length = 0;
+  }
 
   // Check URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const paramColor = urlParams.get('color');
   const paramType = urlParams.get('type');
-  if (paramColor && /^#?[0-9a-fA-F]{6}$/.test(paramColor)) {
-    currentColor = paramColor.startsWith('#') ? paramColor : '#' + paramColor;
-    if (colorPicker) colorPicker.value = currentColor;
-    if (hexInput) hexInput.value = currentColor;
-  }
+
   if (paramType === 'bike' || paramType === 'car') {
     currentType = paramType;
   }
@@ -394,9 +522,12 @@ const presetColors = [
   function selectTemplate(tmpl: VehicleTemplate) {
     currentTemplate = tmpl;
     isCustomPhoto = false;
+    selectedPanelId = tmpl.panels[0]?.id || 'bonnet';
+
     if (templateViewport) templateViewport.style.display = 'flex';
     if (uploadViewport) uploadViewport.style.display = 'none';
     if (brushControls) brushControls.style.display = 'none';
+    if (panelPickerContainer) panelPickerContainer.style.display = 'block';
     if (backToTemplateBtn) backToTemplateBtn.style.display = 'none';
 
     templateBtns.forEach((btn) => {
@@ -405,12 +536,81 @@ const presetColors = [
       btn.classList.toggle('button-secondary', !match);
     });
 
+    // If paramColor was passed, apply to initial panel
+    if (paramColor && /^#?[0-9a-fA-F]{6}$/.test(paramColor)) {
+      const hex = paramColor.startsWith('#') ? paramColor : '#' + paramColor;
+      const cfg = getVehicleConfig(tmpl.id);
+      if (cfg.regions[selectedPanelId]) {
+        cfg.regions[selectedPanelId].color = hex;
+      }
+    }
+
+    renderPanelChips();
+    selectPanel(selectedPanelId);
     renderTemplate();
   }
 
-  function getCalculatedColor(): string {
-    const rgb = parseHex(currentColor);
-    if (!rgb) return currentColor;
+  function renderPanelChips() {
+    if (!panelChipsList) return;
+    panelChipsList.innerHTML = '';
+
+    const cfg = getVehicleConfig(currentTemplate.id);
+
+    currentTemplate.panels.forEach((p) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `panel-chip ${p.id === selectedPanelId ? 'is-active' : ''}`;
+      btn.dataset.panelId = p.id;
+
+      const pCfg = cfg.regions[p.id] || { color: currentTemplate.defaultColor, finish: 'glossy' };
+
+      btn.innerHTML = `
+        <span class="panel-chip-dot" style="background:${pCfg.color};"></span>
+        <span>${p.name}</span>
+      `;
+
+      btn.addEventListener('click', () => {
+        selectPanel(p.id);
+      });
+
+      panelChipsList.appendChild(btn);
+    });
+  }
+
+  function selectPanel(panelId: string) {
+    selectedPanelId = panelId;
+    const cfg = getVehicleConfig(currentTemplate.id);
+    const pCfg = cfg.regions[panelId] || { color: currentTemplate.defaultColor, finish: 'glossy' };
+    const pDef = currentTemplate.panels.find((p) => p.id === panelId);
+
+    if (selectedPanelBadge) {
+      selectedPanelBadge.textContent = `Editing: ${pDef ? pDef.name : panelId}`;
+    }
+    if (pickerLabelTarget) {
+      pickerLabelTarget.textContent = pDef ? pDef.name : 'Panel Color';
+    }
+
+    if (colorPicker) colorPicker.value = pCfg.color;
+    if (hexInput) hexInput.value = pCfg.color;
+
+    finishBtns.forEach((b) => {
+      const f = b.getAttribute('data-finish');
+      const active = f === pCfg.finish;
+      b.classList.toggle('button-primary', active);
+      b.classList.toggle('button-secondary', !active);
+    });
+
+    const chips = document.querySelectorAll<HTMLButtonElement>('.panel-chip');
+    chips.forEach((c) => {
+      c.classList.toggle('is-active', c.dataset.panelId === panelId);
+    });
+
+    renderTemplate();
+  }
+
+  function getCalculatedColor(baseHex: string): string {
+    const rgb = parseHex(baseHex);
+    if (!rgb) return baseHex;
     const hsl = rgbToHsl(rgb);
     const adjS = Math.max(0, Math.min(100, hsl.s * intensity));
     const adjL = Math.max(5, Math.min(95, hsl.l + brightness));
@@ -421,10 +621,10 @@ const presetColors = [
     if (!svg || !bodyLayer || !shadowLayer || !glassLayer || !wheelLayer || !trimLayer) return;
     svg.setAttribute('viewBox', currentTemplate.viewBox);
 
-    const activeColor = getCalculatedColor();
-    const origColor = currentTemplate.defaultColor;
+    const cfg = getVehicleConfig(currentTemplate.id);
+    const panels = currentTemplate.panels;
 
-    // Split comparison clip path calculations
+    // Split comparison calculations
     const vbMatch = currentTemplate.viewBox.split(' ');
     const vbWidth = Number(vbMatch[2]) || 900;
     const splitX = Math.round((splitPercent / 100) * vbWidth);
@@ -447,40 +647,49 @@ const presetColors = [
 
     // Original body layer (left side of split)
     if (bodyLayerOrig) {
-      bodyLayerOrig.innerHTML = currentTemplate.bodyPaths
-        .map((d) => `<path d="${d}" fill="${origColor}" stroke="rgba(0,0,0,0.18)" stroke-width="2" />`)
+      bodyLayerOrig.innerHTML = panels
+        .map((p) => `<path d="${p.d}" fill="${p.defaultColor || currentTemplate.defaultColor}" stroke="rgba(0,0,0,0.18)" stroke-width="2" />`)
         .join('');
     }
 
-    // Recolored body layer (right side of split)
-    bodyLayer.innerHTML = currentTemplate.bodyPaths
-      .map((d) => `<path d="${d}" fill="${activeColor}" stroke="rgba(0,0,0,0.18)" stroke-width="2" />`)
+    // Independent multi-panel recolored body layer (right side of split)
+    bodyLayer.innerHTML = panels
+      .map((p) => {
+        const pCfg = cfg.regions[p.id] || { color: currentTemplate.defaultColor, finish: 'glossy' };
+        const calcCol = getCalculatedColor(pCfg.color);
+        const isSelected = p.id === selectedPanelId;
+        const strokeColor = isSelected ? '#22D3EE' : 'rgba(0,0,0,0.22)';
+        const strokeWidth = isSelected ? '3.5' : '1.5';
+        const filterAttr = isSelected ? 'filter: drop-shadow(0 0 5px rgba(34,211,238,0.85));' : '';
+        return `<path d="${p.d}" data-panel-id="${p.id}" fill="${calcCol}" stroke="${strokeColor}" stroke-width="${strokeWidth}" style="cursor:pointer; transition: fill 0.15s ease, stroke 0.15s ease; ${filterAttr}" class="vehicle-panel-svg ${isSelected ? 'is-selected' : ''}" />`;
+      })
       .join('');
 
-    // Finish Overlay Simulation
+    // Per-panel Finish Overlay Simulation
     if (finishOverlay) {
-      if (currentFinish === 'metallic') {
-        finishOverlay.innerHTML = currentTemplate.bodyPaths
-          .map((d) => `<path d="${d}" fill="url(#metallic-flake)" opacity="0.75" />`)
-          .join('');
-      } else if (currentFinish === 'satin') {
-        finishOverlay.innerHTML = currentTemplate.bodyPaths
-          .map((d) => `<path d="${d}" fill="#FFFFFF" opacity="0.15" />`)
-          .join('');
-      } else if (currentFinish === 'matte') {
-        finishOverlay.innerHTML = currentTemplate.bodyPaths
-          .map((d) => `<path d="${d}" fill="#000000" opacity="0.22" style="mix-blend-mode:multiply;" />`)
-          .join('');
-      } else {
-        finishOverlay.innerHTML = '';
-      }
+      finishOverlay.innerHTML = panels
+        .map((p) => {
+          const pCfg = cfg.regions[p.id] || { color: currentTemplate.defaultColor, finish: 'glossy' };
+          if (pCfg.finish === 'metallic') {
+            return `<path d="${p.d}" fill="url(#metallic-flake)" opacity="0.75" />`;
+          } else if (pCfg.finish === 'satin') {
+            return `<path d="${p.d}" fill="#FFFFFF" opacity="0.15" />`;
+          } else if (pCfg.finish === 'matte') {
+            return `<path d="${p.d}" fill="#000000" opacity="0.22" style="mix-blend-mode:multiply;" />`;
+          }
+          return '';
+        })
+        .join('');
     }
 
-    // Body highlights & shadows
+    // Highlights & Shadows
     if (highlightLayer) {
-      const opacity = currentFinish === 'matte' ? '0.2' : currentFinish === 'satin' ? '0.4' : '0.65';
-      highlightLayer.innerHTML = currentTemplate.bodyPaths
-        .map((d) => `<path d="${d}" fill="url(#body-highlight)" opacity="${opacity}" />`)
+      highlightLayer.innerHTML = panels
+        .map((p) => {
+          const pCfg = cfg.regions[p.id] || { color: currentTemplate.defaultColor, finish: 'glossy' };
+          const op = pCfg.finish === 'matte' ? '0.2' : pCfg.finish === 'satin' ? '0.4' : '0.65';
+          return `<path d="${p.d}" fill="url(#body-highlight)" opacity="${op}" />`;
+        })
         .join('');
     }
 
@@ -509,7 +718,18 @@ const presetColors = [
       .join('');
   }
 
-  // User Photo Upload and Manual Masking
+  // Direct SVG Panel Clicking Listener
+  bodyLayer?.addEventListener('click', (e) => {
+    const target = (e.target as SVGElement).closest<SVGPathElement>('[data-panel-id]');
+    if (target) {
+      const pId = target.getAttribute('data-panel-id');
+      if (pId) {
+        selectPanel(pId);
+      }
+    }
+  });
+
+  // Photo Upload and Manual Masking
   photoUpload?.addEventListener('change', () => {
     const file = photoUpload.files?.[0];
     if (!file) return;
@@ -522,6 +742,7 @@ const presetColors = [
       if (templateViewport) templateViewport.style.display = 'none';
       if (uploadViewport) uploadViewport.style.display = 'block';
       if (brushControls) brushControls.style.display = 'block';
+      if (panelPickerContainer) panelPickerContainer.style.display = 'none';
       if (backToTemplateBtn) backToTemplateBtn.style.display = 'inline-flex';
 
       setupPhotoCanvas();
@@ -546,8 +767,8 @@ const presetColors = [
     maskCanvas.height = canvas.height;
     maskCtx = maskCanvas.getContext('2d');
 
-    undoStack = [];
-    redoStack = [];
+    photoUndoStack = [];
+    photoRedoStack = [];
     saveMaskState();
     renderUserPhoto();
   }
@@ -555,123 +776,98 @@ const presetColors = [
   function saveMaskState() {
     if (!maskCtx || !maskCanvas) return;
     const data = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-    undoStack.push(data);
-    if (undoStack.length > 20) undoStack.shift();
-    redoStack = [];
+    photoUndoStack.push(data);
+    if (photoUndoStack.length > 20) photoUndoStack.shift();
+    photoRedoStack = [];
   }
 
-  function renderUserPhoto() {
-    if (!canvas || !ctx || !uploadedImg || !maskCanvas || !maskCtx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(uploadedImg, 0, 0, canvas.width, canvas.height);
-
-    const activeColor = getCalculatedColor();
-    const tintRgb = parseHex(activeColor);
-    if (!tintRgb) return;
-
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const maskData = maskCtx.getImageData(0, 0, canvas.width, canvas.height);
-    const p = imgData.data;
-    const m = maskData.data;
-
-    const targetHsl = rgbToHsl(tintRgb);
-    const splitX = Math.round((splitPercent / 100) * canvas.width);
-
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        const i = (y * canvas.width + x) * 4;
-
-        // Apply recolor only on right side of split line
-        if (x < canvas.width - splitX) {
-          continue;
-        }
-
-        const alpha = m[i + 3];
-        if (alpha > 20) {
-          const lum = (0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]) / 255;
-
-          // Preserve specular highlights by tapering saturation above 85% luminance
-          let sat = targetHsl.s;
-          if (lum > 0.85) {
-            sat = Math.round(sat * (1 - (lum - 0.85) * 5));
-          }
-
-          // Finish adjustments
-          let lVal = Math.round(lum * 100);
-          if (currentFinish === 'matte') {
-            lVal = Math.round(lVal * 0.9 + 5);
-          } else if (currentFinish === 'metallic') {
-            const flake = ((x * 13 + y * 17) % 7) - 3;
-            lVal = Math.max(0, Math.min(100, lVal + flake));
-          }
-
-          const blended = hslToRgb({
-            h: targetHsl.h,
-            s: Math.max(0, Math.min(100, sat)),
-            l: lVal
-          });
-
-          const factor = alpha / 255;
-          p[i] = Math.round(p[i] * (1 - factor) + blended.r * factor);
-          p[i + 1] = Math.round(p[i + 1] * (1 - factor) + blended.g * factor);
-          p[i + 2] = Math.round(p[i + 2] * (1 - factor) + blended.b * factor);
-        }
-      }
-    }
-    ctx.putImageData(imgData, 0, 0);
-
-    // If split line is active, draw divider indicator
-    if (splitPercent > 0 && splitPercent < 100) {
-      const divX = canvas.width - splitX;
-      ctx.strokeStyle = '#22D3EE';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(divX, 0);
-      ctx.lineTo(divX, canvas.height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Draw active mask overlay if enabled or while drawing
-    if ((isDrawing || showMaskOverlay) && maskCtx && brushControls?.style.display !== 'none') {
-      ctx.drawImage(maskCanvas, 0, 0);
-    }
-  }
-
-  function paintBrushStroke(fromX: number, fromY: number, toX: number, toY: number) {
-    if (!maskCtx || !maskCanvas) return;
-    maskCtx.save();
-    maskCtx.lineWidth = brushRadius * 2;
+  function paintBrushStroke(startX: number, startY: number, endX: number, endY: number) {
+    if (!maskCtx) return;
     maskCtx.lineCap = 'round';
     maskCtx.lineJoin = 'round';
+    maskCtx.lineWidth = brushRadius * 2;
 
     if (brushMode === 'paint') {
       maskCtx.globalCompositeOperation = 'source-over';
-      maskCtx.strokeStyle = 'rgba(34, 211, 238, 0.45)';
-      maskCtx.beginPath();
-      maskCtx.moveTo(fromX, fromY);
-      maskCtx.lineTo(toX, toY);
-      maskCtx.stroke();
+      maskCtx.strokeStyle = 'rgba(255, 255, 255, 1)';
     } else {
       maskCtx.globalCompositeOperation = 'destination-out';
-      maskCtx.beginPath();
-      maskCtx.moveTo(fromX, fromY);
-      maskCtx.lineTo(toX, toY);
-      maskCtx.stroke();
+      maskCtx.strokeStyle = 'rgba(0, 0, 0, 1)';
     }
-    maskCtx.restore();
+
+    maskCtx.beginPath();
+    maskCtx.moveTo(startX, startY);
+    maskCtx.lineTo(endX, endY);
+    maskCtx.stroke();
+
     renderUserPhoto();
   }
 
-  function getCanvasCoords(clientX: number, clientY: number) {
+  function getCanvasCoords(clientX: number, clientY: number): { x: number; y: number } {
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * canvas.width;
-    const y = ((clientY - rect.top) / rect.height) * canvas.height;
-    return { x: Math.round(x), y: Math.round(y) };
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
   }
 
+  function renderUserPhoto() {
+    if (!ctx || !canvas || !uploadedImg || !maskCanvas || !maskCtx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(uploadedImg, 0, 0, canvas.width, canvas.height);
+
+    const activeColor = getCalculatedColor(colorPicker?.value || '#3B82F6');
+    const splitX = Math.round((splitPercent / 100) * canvas.width);
+
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const maskData = maskCtx.getImageData(0, 0, canvas.width, canvas.height);
+    const targetRgb = parseHex(activeColor) || { r: 59, g: 130, b: 246 };
+
+    const pixels = imgData.data;
+    const maskPixels = maskData.data;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        const maskAlpha = maskPixels[idx + 3];
+
+        if (maskAlpha > 15 && x >= (w - splitX)) {
+          const r = pixels[idx];
+          const g = pixels[idx + 1];
+          const b = pixels[idx + 2];
+
+          const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const blendStrength = (maskAlpha / 255) * (lum > 0.85 ? Math.max(0.1, 1 - (lum - 0.85) * 4) : 1);
+
+          let newR = targetRgb.r * lum;
+          let newG = targetRgb.g * lum;
+          let newB = targetRgb.b * lum;
+
+          pixels[idx] = Math.round(r * (1 - blendStrength) + newR * blendStrength);
+          pixels[idx + 1] = Math.round(g * (1 - blendStrength) + newG * blendStrength);
+          pixels[idx + 2] = Math.round(b * (1 - blendStrength) + newB * blendStrength);
+        }
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    // Mask boundary highlight
+    if (showMaskOverlay && brushMode === 'paint') {
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = '#22D3EE';
+      ctx.drawImage(maskCanvas, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  // Canvas Mouse / Touch Painting
   canvas?.addEventListener('mousedown', (e) => {
     isDrawing = true;
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
@@ -712,7 +908,6 @@ const presetColors = [
     if (brushCursor) brushCursor.style.display = 'none';
   });
 
-  // Touchscreen drawing with preventDefault to stop scrolling while painting
   canvas?.addEventListener('touchstart', (e) => {
     const t = e.touches[0];
     if (!t) return;
@@ -770,42 +965,41 @@ const presetColors = [
   });
 
   btnUndo?.addEventListener('click', () => {
-    if (undoStack.length > 1 && maskCtx) {
-      const cur = undoStack.pop()!;
-      redoStack.push(cur);
-      const prev = undoStack[undoStack.length - 1];
-      if (prev) maskCtx.putImageData(prev, 0, 0);
+    if (photoUndoStack.length > 1 && maskCtx && maskCanvas) {
+      photoRedoStack.push(photoUndoStack.pop()!);
+      const prev = photoUndoStack[photoUndoStack.length - 1];
+      maskCtx.putImageData(prev, 0, 0);
       renderUserPhoto();
     }
   });
 
   btnRedo?.addEventListener('click', () => {
-    if (redoStack.length > 0 && maskCtx) {
-      const nxt = redoStack.pop()!;
-      undoStack.push(nxt);
-      maskCtx.putImageData(nxt, 0, 0);
+    if (photoRedoStack.length > 0 && maskCtx && maskCanvas) {
+      const next = photoRedoStack.pop()!;
+      photoUndoStack.push(next);
+      maskCtx.putImageData(next, 0, 0);
       renderUserPhoto();
     }
   });
 
   btnClearMask?.addEventListener('click', () => {
-    if (!maskCtx || !maskCanvas) return;
-    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-    saveMaskState();
-    renderUserPhoto();
+    if (maskCtx && maskCanvas) {
+      saveMaskState();
+      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      renderUserPhoto();
+    }
   });
 
-  // Split comparison slider
+  // Split Comparison Slider
   splitSlider?.addEventListener('input', () => {
     splitPercent = Number(splitSlider.value);
     if (splitLabel) {
-      splitLabel.textContent = splitPercent === 100 ? '100% Recolor' : splitPercent === 0 ? '100% Original' : `${100 - splitPercent}% Orig / ${splitPercent}% New`;
+      splitLabel.textContent = splitPercent === 100 ? '100% Recolor' : splitPercent === 0 ? 'Original' : `${splitPercent}% Split`;
     }
     if (isCustomPhoto) renderUserPhoto();
     else renderTemplate();
   });
 
-  // Peek original button (hold down to view original)
   let prevSplit = 100;
   btnPeek?.addEventListener('mousedown', () => {
     prevSplit = splitPercent;
@@ -820,13 +1014,14 @@ const presetColors = [
       else renderTemplate();
     }
   });
+
   btnPeek?.addEventListener('touchstart', (e) => {
     e.preventDefault();
     prevSplit = splitPercent;
     splitPercent = 0;
     if (isCustomPhoto) renderUserPhoto();
     else renderTemplate();
-  }, { passive: false });
+  });
   btnPeek?.addEventListener('touchend', (e) => {
     e.preventDefault();
     splitPercent = prevSplit;
@@ -834,7 +1029,7 @@ const presetColors = [
     else renderTemplate();
   });
 
-  // Zoom controls
+  // Zoom Controls
   btnZoomIn?.addEventListener('click', () => {
     zoomLevel = Math.min(2.5, zoomLevel + 0.25);
     applyZoom();
@@ -852,7 +1047,7 @@ const presetColors = [
     }
   }
 
-  // Event Listeners for Controls
+  // Type & Template Selection
   typeCarBtn?.addEventListener('click', () => setVehicleType('car'));
   typeBikeBtn?.addEventListener('click', () => setVehicleType('bike'));
 
@@ -864,37 +1059,80 @@ const presetColors = [
     });
   });
 
-  function updateColor(hex: string) {
-    currentColor = hex;
+  // Color & Finish Updates (Independent Per Panel)
+  function updateActivePanelColor(hex: string) {
+    if (isCustomPhoto) {
+      if (colorPicker) colorPicker.value = hex;
+      if (hexInput) hexInput.value = hex;
+      renderUserPhoto();
+      return;
+    }
+
+    recordPanelState();
+    const cfg = getVehicleConfig(currentTemplate.id);
+    if (!cfg.regions[selectedPanelId]) {
+      cfg.regions[selectedPanelId] = { color: hex, finish: 'glossy' };
+    } else {
+      cfg.regions[selectedPanelId].color = hex;
+    }
+
     if (colorPicker) colorPicker.value = hex;
     if (hexInput) hexInput.value = hex;
-    if (isCustomPhoto) renderUserPhoto();
-    else renderTemplate();
+
+    // Update chip dot
+    const chipDot = document.querySelector<HTMLElement>(`.panel-chip[data-panel-id="${selectedPanelId}"] .panel-chip-dot`);
+    if (chipDot) chipDot.style.background = hex;
+
+    localStorage.setItem(`colorcode_vehicle_${currentTemplate.id}`, JSON.stringify(cfg));
+    renderTemplate();
   }
 
-  colorPicker?.addEventListener('input', () => updateColor(colorPicker.value));
+  function updateActivePanelFinish(finish: 'glossy' | 'metallic' | 'matte' | 'satin') {
+    if (isCustomPhoto) {
+      finishBtns.forEach((b) => {
+        const active = b.getAttribute('data-finish') === finish;
+        b.classList.toggle('button-primary', active);
+        b.classList.toggle('button-secondary', !active);
+      });
+      renderUserPhoto();
+      return;
+    }
+
+    recordPanelState();
+    const cfg = getVehicleConfig(currentTemplate.id);
+    if (!cfg.regions[selectedPanelId]) {
+      cfg.regions[selectedPanelId] = { color: currentTemplate.defaultColor, finish };
+    } else {
+      cfg.regions[selectedPanelId].finish = finish;
+    }
+
+    finishBtns.forEach((b) => {
+      const active = b.getAttribute('data-finish') === finish;
+      b.classList.toggle('button-primary', active);
+      b.classList.toggle('button-secondary', !active);
+    });
+
+    localStorage.setItem(`colorcode_vehicle_${currentTemplate.id}`, JSON.stringify(cfg));
+    renderTemplate();
+  }
+
+  colorPicker?.addEventListener('input', () => updateActivePanelColor(colorPicker.value));
   hexInput?.addEventListener('input', () => {
     const p = parseHex(hexInput.value);
-    if (p) updateColor(hexInput.value.toUpperCase());
+    if (p) updateActivePanelColor(hexInput.value.toUpperCase());
   });
 
   presetBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const hx = btn.getAttribute('data-hex');
-      if (hx) updateColor(hx);
+      if (hx) updateActivePanelColor(hx);
     });
   });
 
   finishBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      currentFinish = btn.getAttribute('data-finish') || 'glossy';
-      finishBtns.forEach((b) => {
-        const active = b === btn;
-        b.classList.toggle('button-primary', active);
-        b.classList.toggle('button-secondary', !active);
-      });
-      if (isCustomPhoto) renderUserPhoto();
-      else renderTemplate();
+      const finish = (btn.getAttribute('data-finish') || 'glossy') as 'glossy' | 'metallic' | 'matte' | 'satin';
+      updateActivePanelFinish(finish);
     });
   });
 
@@ -913,105 +1151,154 @@ const presetColors = [
   });
 
   copyColorBtn?.addEventListener('click', async () => {
+    const hex = hexInput?.value || colorPicker?.value || '#3B82F6';
     try {
-      await navigator.clipboard.writeText(currentColor);
+      await navigator.clipboard.writeText(hex);
       copyColorBtn.textContent = 'Copied!';
       setTimeout(() => { copyColorBtn.textContent = 'Copy HEX'; }, 1200);
     } catch {}
   });
 
+  // Reset Active Panel Only
+  btnResetPanel?.addEventListener('click', () => {
+    if (isCustomPhoto) return;
+    recordPanelState();
+    const cfg = getVehicleConfig(currentTemplate.id);
+    const pDef = currentTemplate.panels.find((p) => p.id === selectedPanelId);
+    const defCol = pDef?.defaultColor || currentTemplate.defaultColor;
+    const defFin = pDef?.defaultFinish || 'glossy';
+
+    cfg.regions[selectedPanelId] = { color: defCol, finish: defFin };
+    localStorage.setItem(`colorcode_vehicle_${currentTemplate.id}`, JSON.stringify(cfg));
+
+    renderPanelChips();
+    selectPanel(selectedPanelId);
+    renderTemplate();
+  });
+
+  // Reset Entire Vehicle
   btnReset?.addEventListener('click', () => {
-    currentColor = currentTemplate.defaultColor;
-    currentFinish = 'glossy';
+    if (isCustomPhoto) {
+      if (canvas && ctx && uploadedImg) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(uploadedImg, 0, 0, canvas.width, canvas.height);
+      }
+      return;
+    }
+
+    recordPanelState();
+    const cfg = getVehicleConfig(currentTemplate.id);
+    currentTemplate.panels.forEach((p) => {
+      cfg.regions[p.id] = {
+        color: p.defaultColor || currentTemplate.defaultColor,
+        finish: p.defaultFinish || 'glossy'
+      };
+    });
+
+    localStorage.removeItem(`colorcode_vehicle_${currentTemplate.id}`);
     intensity = 1.0;
     brightness = 0;
     splitPercent = 100;
     zoomLevel = 1.0;
     applyZoom();
+
     if (splitSlider) splitSlider.value = '100';
     if (splitLabel) splitLabel.textContent = '100% Recolor';
-    if (colorPicker) colorPicker.value = currentColor;
-    if (hexInput) hexInput.value = currentColor;
     if (sliderIntensity) sliderIntensity.value = '100';
     if (sliderBrightness) sliderBrightness.value = '0';
     if (intensityVal) intensityVal.textContent = '100%';
     if (brightnessVal) brightnessVal.textContent = '0%';
-    finishBtns.forEach((b) => {
-      const isGloss = b.getAttribute('data-finish') === 'glossy';
-      b.classList.toggle('button-primary', isGloss);
-      b.classList.toggle('button-secondary', !isGloss);
-    });
-    if (isCustomPhoto) renderUserPhoto();
-    else renderTemplate();
+
+    renderPanelChips();
+    selectPanel(selectedPanelId);
+    renderTemplate();
+  });
+
+  // Undo / Redo for Panels
+  btnUndoPanel?.addEventListener('click', () => {
+    if (panelUndoStack.length === 0) return;
+    const cfg = getVehicleConfig(currentTemplate.id);
+    panelRedoStack.push(JSON.stringify(cfg.regions));
+
+    const prev = panelUndoStack.pop();
+    if (prev) {
+      cfg.regions = JSON.parse(prev);
+      localStorage.setItem(`colorcode_vehicle_${currentTemplate.id}`, JSON.stringify(cfg));
+      renderPanelChips();
+      selectPanel(selectedPanelId);
+      renderTemplate();
+    }
+  });
+
+  btnRedoPanel?.addEventListener('click', () => {
+    if (panelRedoStack.length === 0) return;
+    const cfg = getVehicleConfig(currentTemplate.id);
+    panelUndoStack.push(JSON.stringify(cfg.regions));
+
+    const next = panelRedoStack.pop();
+    if (next) {
+      cfg.regions = JSON.parse(next);
+      localStorage.setItem(`colorcode_vehicle_${currentTemplate.id}`, JSON.stringify(cfg));
+      renderPanelChips();
+      selectPanel(selectedPanelId);
+      renderTemplate();
+    }
   });
 
   btnShare?.addEventListener('click', async () => {
     const url = new URL(window.location.href);
-    url.searchParams.set('color', currentColor);
+    const cfg = getVehicleConfig(currentTemplate.id);
     url.searchParams.set('type', currentType);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${currentTemplate.name} in ${currentColor}`,
-          text: `Check out this custom ${currentTemplate.name} in ${currentColor} on ColorCode Identifier.`,
-          url: url.toString()
-        });
-      } catch {}
-    } else {
-      try {
-        await navigator.clipboard.writeText(url.toString());
-        btnShare.textContent = 'Link Copied!';
-        setTimeout(() => { btnShare.textContent = 'Share Build'; }, 1200);
-      } catch {}
-    }
+    url.searchParams.set('color', cfg.regions[selectedPanelId]?.color || currentTemplate.defaultColor);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      btnShare.textContent = 'Link Copied!';
+      setTimeout(() => { btnShare.textContent = 'Share Build'; }, 1500);
+    } catch {}
   });
 
+  // PNG Export
   btnDownload?.addEventListener('click', () => {
     if (isCustomPhoto && canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
-      a.download = `customized-${currentType}-${currentColor.replace('#', '')}.png`;
-      a.href = canvas.toDataURL('image/png');
+      a.download = `customized-${currentType}.png`;
+      a.href = dataUrl;
       a.click();
-      return;
-    }
+    } else if (svg) {
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(svg);
 
-    if (svg) {
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const URLObj = window.URL || window.webkitURL || window;
-      const blobURL = URLObj.createObjectURL(svgBlob);
+      if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
 
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = 1200;
-      downloadCanvas.height = 480;
-      const dCtx = downloadCanvas.getContext('2d');
-      if (!dCtx) return;
-
+      const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const DOMURL = window.URL || window.webkitURL || window;
+      const url = DOMURL.createObjectURL(svgBlob);
       const img = new Image();
+
       img.onload = () => {
-        dCtx.fillStyle = '#FFFFFF';
-        dCtx.fillRect(0, 0, 1200, 480);
-        dCtx.drawImage(img, 50, 40, 1100, 400);
-
-        dCtx.fillStyle = '#17152B';
-        dCtx.font = 'bold 20px Inter, sans-serif';
-        dCtx.fillText(`${currentTemplate.name} — ${currentColor}`, 60, 450);
-
-        dCtx.fillStyle = '#64748B';
-        dCtx.font = '14px Inter, sans-serif';
-        dCtx.fillText(`ColorCode Identifier · Finish: ${currentFinish.toUpperCase()}`, 750, 450);
-
-        const a = document.createElement('a');
-        a.download = `${currentTemplate.id}-${currentColor.replace('#', '')}.png`;
-        a.href = downloadCanvas.toDataURL('image/png');
-        a.click();
-        URLObj.revokeObjectURL(blobURL);
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = 1800;
+        outCanvas.height = 720;
+        const outCtx = outCanvas.getContext('2d');
+        if (outCtx) {
+          outCtx.fillStyle = '#0B1020';
+          outCtx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+          outCtx.drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+          const pngUrl = outCanvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.download = `${currentTemplate.id}-customized.png`;
+          a.href = pngUrl;
+          a.click();
+        }
+        DOMURL.revokeObjectURL(url);
       };
-      img.src = blobURL;
+      img.src = url;
     }
   });
 
   // Initial load
-  setVehicleType(currentType);
-  if (paramColor) updateColor(paramColor);
+  setVehicleType(initialType);
 </script>

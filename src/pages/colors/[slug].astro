@@ -125,6 +125,9 @@ const breadcrumbSchema = {
         <button class="button button-secondary button-small" id="btn-fav" data-hex={color.hex} data-name={color.name} type="button">
           ★ Save to favorites
         </button>
+        <a class="button button-secondary button-small" href={`/3d-vehicle-customizer/?color=${encodeURIComponent(color.hex)}&name=${encodeURIComponent(color.name)}`}>
+          🎮 Preview in 3D
+        </a>
         <a class="button button-secondary button-small" href={`/car-color-customizer/?color=${encodeURIComponent(color.hex)}`}>
           🚘 Preview on Car
         </a>
@@ -317,6 +320,7 @@ border-color: {toCssHsl(result.hsl)};</code></pre>
 
       <aside class="sidebar-card">
         <h3>Vehicle Customizers</h3>
+        <a href={`/3d-vehicle-customizer/?color=${encodeURIComponent(color.hex)}&name=${encodeURIComponent(color.name)}`}>🎮 Preview in 3D WebGL</a>
         <a href={`/car-color-customizer/?color=${encodeURIComponent(color.hex)}`}>🚘 Preview on Car Body</a>
         <a href={`/bike-color-customizer/?color=${encodeURIComponent(color.hex)}`}>🏍️ Preview on Motorcycle</a>
 

@@ -1,0 +1,1430 @@
+---
+import { VEHICLE_MODELS_3D, COUNTRIES } from '../data/vehicleModels3D';
+
+interface Props {
+  initialModelId?: string;
+  initialColor?: string;
+}
+
+const { initialModelId = 'sports-sedan-gt', initialColor = '#3B82F6' } = Astro.props;
+
+const presetColors = [
+  { name: 'Ultra Indigo', hex: '#6C5CE7' },
+  { name: 'Hyper Violet', hex: '#8B5CF6' },
+  { name: 'Cyan Streak', hex: '#22D3EE' },
+  { name: 'Daytona Blue', hex: '#3B82F6' },
+  { name: 'Monza Red', hex: '#EF4444' },
+  { name: 'Speed Yellow', hex: '#FFBF00' },
+  { name: 'Emerald Green', hex: '#10B981' },
+  { name: 'Nardo Gray', hex: '#78716C' },
+  { name: 'Phantom Black', hex: '#111827' },
+  { name: 'Pearl White', hex: '#F8FAFC' }
+];
+---
+
+<div class="customizer-3d-root" id="customizer-3d-root" data-initial-model={initialModelId} data-initial-color={initialColor}>
+  <!-- Top Bar: Vehicle Selector & Country Filters -->
+  <div class="customizer-topbar">
+    <div class="country-filter-group">
+      <label for="select-country" class="filter-label">Region / Country:</label>
+      <select id="select-country" class="select-control">
+        {COUNTRIES.map((c) => (
+          <option value={c}>{c}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="model-select-group">
+      <label for="select-model" class="filter-label">Vehicle Model:</label>
+      <select id="select-model" class="select-control">
+        {VEHICLE_MODELS_3D.map((m) => (
+          <option value={m.id} selected={m.id === initialModelId}>
+            {m.manufacturer} - {m.modelName} ({m.yearGeneration}) {m.status === 'available' ? '✓ 3D' : '⏳ Pending'}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="btn-reset-camera" class="button button-small button-quiet" type="button" title="Reset View Angle">
+        🎥 Center Camera
+      </button>
+      <button id="btn-export-3d" class="button button-small button-primary" type="button">
+        📸 Capture Screenshot
+      </button>
+    </div>
+  </div>
+
+  <!-- 3D Viewport Area -->
+  <div class="viewport-wrapper">
+    <div id="canvas-container" class="canvas-container">
+      <!-- Three.js Canvas injected here -->
+      <div id="loading-overlay" class="loading-overlay" style="display:none;">
+        <div class="spinner"></div>
+        <span id="loading-text" class="loading-text">Loading 3D Vehicle Geometry...</span>
+      </div>
+
+      <!-- Unavailable State Banner (for models whose 3D licensing is in progress) -->
+      <div id="unavailable-banner" class="unavailable-banner" style="display:none;">
+        <div class="banner-card">
+          <div class="banner-icon">🛡️</div>
+          <h3 id="unavail-title">Licensing Curation in Progress</h3>
+          <p id="unavail-desc">
+            To strictly honor manufacturer intellectual property and avoid unauthorized assets, this model's 3D mesh is undergoing legal license verification.
+          </p>
+          <div class="unavail-meta" id="unavail-attribution"></div>
+          <div class="banner-buttons">
+            <button id="btn-load-fallback" class="button button-primary" type="button">
+              Load Available 3D Prototype Platform
+            </button>
+            <a href="/car-color-customizer/" class="button button-secondary">
+              Open 2D Color Customizer
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fallback when WebGL is unsupported -->
+      <div id="webgl-fallback" class="webgl-fallback" style="display:none;">
+        <h3>WebGL Hardware Acceleration Required</h3>
+        <p>Your browser or graphics environment does not currently have WebGL active to render interactive 3D geometry.</p>
+        <a href="/car-color-customizer/" class="button button-primary">Use Lightweight 2D Customizer</a>
+      </div>
+    </div>
+
+    <!-- Floating Viewport Overlay: Click Hint & Active Part Badge -->
+    <div class="viewport-hud">
+      <div class="hud-pill" id="active-mesh-hud">
+        <span class="hud-dot" id="hud-color-dot" style={`background:${initialColor};`}></span>
+        <span id="hud-mesh-name">Selected: Bonnet / Hood</span>
+      </div>
+      <div class="hud-hint">
+        <span>💡 Left click / touch drag to rotate &bull; Pinch / Scroll to zoom &bull; Click any vehicle body panel to select</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Selection Bar: Visual Pill Badges for All Body Meshes -->
+  <div class="mesh-selection-container">
+    <div class="section-title-row">
+      <span class="section-label">Select Body Panel to Customize:</span>
+      <span class="section-sub" id="mesh-count-label">16 Independent Panels</span>
+    </div>
+    <div class="mesh-chips-scroll" id="mesh-chips-container">
+      <!-- Dynamic panel chips injected via JavaScript -->
+    </div>
+  </div>
+
+  <!-- Customization Controls Grid: Material, Colors & Finishes -->
+  <div class="controls-grid">
+    <!-- Active Panel Color Picker -->
+    <div class="card control-card">
+      <div class="card-header-row">
+        <h4 id="panel-editor-title">Panel Color: Bonnet / Hood</h4>
+        <span class="badge badge-cyan" id="panel-status-tag">Active</span>
+      </div>
+
+      <div class="color-picker-row">
+        <input type="color" id="picker-3d" value={initialColor} class="native-picker" />
+        <input type="text" id="hex-3d" value={initialColor} placeholder="#3B82F6" class="hex-input" />
+        <button id="btn-copy-hex-3d" class="button button-small button-secondary" type="button">Copy</button>
+      </div>
+
+      <span class="sub-label">QUICK AUTOMOTIVE PALETTE</span>
+      <div class="preset-swatches-grid">
+        {presetColors.map((p) => (
+          <button
+            class="preset-swatch-3d"
+            data-hex={p.hex}
+            title={`${p.name} (${p.hex})`}
+            type="button"
+            style={`background:${p.hex};`}
+          />
+        ))}
+      </div>
+    </div>
+
+    <!-- Active Panel Finish / Material Preset -->
+    <div class="card control-card">
+      <div class="card-header-row">
+        <h4>Material Finish Preset</h4>
+        <span class="finish-tag" id="current-finish-tag">Glossy</span>
+      </div>
+
+      <div class="finish-buttons-grid">
+        <button class="button button-small button-primary btn-finish-3d" data-finish="glossy" type="button">
+          ✨ Gloss Clearcoat
+        </button>
+        <button class="button button-small button-secondary btn-finish-3d" data-finish="metallic" type="button">
+          🌟 Metallic Flake
+        </button>
+        <button class="button button-small button-secondary btn-finish-3d" data-finish="satin" type="button">
+          💎 Satin Semi-Gloss
+        </button>
+        <button class="button button-small button-secondary btn-finish-3d" data-finish="matte" type="button">
+          🌑 Matte Stealth
+        </button>
+      </div>
+
+      <!-- Sliders for Clearcoat Roughness & Metalness Fine-Tuning -->
+      <div class="tuning-sliders">
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <span>Surface Roughness</span>
+            <span id="roughness-val">25%</span>
+          </div>
+          <input type="range" id="slider-roughness" min="5" max="95" value="25" class="range-control" />
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <span>Metallic Sheen</span>
+            <span id="metalness-val">60%</span>
+          </div>
+          <input type="range" id="slider-metalness" min="0" max="100" value="60" class="range-control" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Wheels & Trim Customization -->
+    <div class="card control-card">
+      <div class="card-header-row">
+        <h4>Wheels & Trim Accents</h4>
+      </div>
+      <p class="card-caption">
+        Customize wheel rims and accent trim independently without altering body paint.
+      </p>
+
+      <div class="accessory-controls">
+        <div class="accessory-row">
+          <span>Wheel Rim Finish:</span>
+          <div class="rim-presets">
+            <button class="btn-rim-preset" data-rim="silver" style="background:#E2E8F0;" title="Silver Alloy"></button>
+            <button class="btn-rim-preset" data-rim="bronze" style="background:#B45309;" title="Matte Bronze"></button>
+            <button class="btn-rim-preset" data-rim="black" style="background:#0F172A;" title="Gloss Black"></button>
+            <button class="btn-rim-preset" data-rim="gold" style="background:#EAB308;" title="Race Gold"></button>
+          </div>
+        </div>
+
+        <div class="accessory-row">
+          <span>Glass Tint Level:</span>
+          <select id="select-glass-tint" class="select-control-compact">
+            <option value="light">Factory Light Tint (85%)</option>
+            <option value="medium" selected>Sport Medium Tint (65%)</option>
+            <option value="dark">Limo Dark Privacy (30%)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar: Reset, Undo & Configuration Save -->
+  <div class="customizer-bottombar">
+    <div class="bottom-left-actions">
+      <button id="btn-reset-panel" class="button button-quiet button-small" type="button">
+        Reset Selected Panel
+      </button>
+      <button id="btn-reset-all-3d" class="button button-quiet button-small" type="button" style="color:var(--danger);">
+        Reset Entire Vehicle
+      </button>
+      <button id="btn-undo-3d" class="button button-quiet button-small" type="button" title="Undo change">
+        ↶ Undo
+      </button>
+    </div>
+
+    <div class="bottom-right-actions">
+      <a href="/colors/" class="button button-secondary button-small">
+        🎨 Browse Color Database
+      </a>
+      <button id="btn-save-config" class="button button-primary button-small" type="button">
+        💾 Save Configuration
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .customizer-3d-root {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .customizer-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 18px;
+  }
+
+  .country-filter-group,
+  .model-select-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .select-control {
+    background: var(--surface-elevated);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .select-control-compact {
+    background: var(--surface-elevated);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .viewport-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 480px;
+    height: 60vh;
+    max-height: 680px;
+    background: radial-gradient(circle at center, #1E293B 0%, #0B1020 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.25);
+  }
+
+  .canvas-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .canvas-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .canvas-container canvas:active {
+    cursor: grabbing;
+  }
+
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 16, 32, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 20;
+  }
+
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border: 3.5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--brand-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brand-cyan);
+    letter-spacing: 0.02em;
+  }
+
+  .unavailable-banner {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 16, 32, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 25;
+  }
+
+  .banner-card {
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    box-shadow: var(--shadow-card);
+  }
+
+  .banner-icon {
+    font-size: 38px;
+    margin-bottom: 12px;
+  }
+
+  .banner-card h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: var(--ink);
+  }
+
+  .banner-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0 0 14px;
+  }
+
+  .unavail-meta {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 18px;
+    text-align: left;
+  }
+
+  .banner-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .viewport-hud {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hud-pill {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #F1F5F9;
+  }
+
+  .hud-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid #FFFFFF;
+    display: inline-block;
+  }
+
+  .hud-hint {
+    font-size: 11px;
+    color: #94A3B8;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+
+  .mesh-selection-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+  }
+
+  .section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .section-sub {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .mesh-chips-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+
+  :global(.mesh-chip) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  :global(.mesh-chip:hover) {
+    border-color: var(--brand-indigo);
+  }
+
+  :global(.mesh-chip.is-active) {
+    background: var(--surface-tint);
+    border-color: var(--brand-cyan);
+    color: var(--brand-indigo);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.25);
+  }
+
+  :global(.mesh-chip-dot) {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .control-card {
+    padding: 16px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-header-row h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .badge-cyan {
+    background: rgba(34, 211, 238, 0.15);
+    color: var(--brand-cyan);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+  }
+
+  .finish-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-indigo);
+    background: var(--surface-tint);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .color-picker-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .native-picker {
+    width: 48px;
+    height: 42px;
+    padding: 2px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .hex-input {
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-elevated);
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .sub-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .preset-swatches-grid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .preset-swatch-3d {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .preset-swatch-3d:hover {
+    transform: scale(1.15);
+  }
+
+  .finish-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .tuning-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .slider-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .range-control {
+    width: 100%;
+    accent-color: var(--brand-indigo);
+  }
+
+  .card-caption {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .accessory-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .accessory-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .rim-presets {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-rim-preset {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+  }
+
+  .customizer-bottombar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 18px;
+  }
+
+  .bottom-left-actions,
+  .bottom-right-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  @media(max-width: 640px) {
+    .viewport-wrapper { min-height: 380px; height: 50vh; }
+    .customizer-topbar { flex-direction: column; align-items: stretch; }
+    .country-filter-group, .model-select-group { justify-content: space-between; }
+    .viewport-hud { flex-direction: column; align-items: flex-start; }
+    .hud-hint { display: none; }
+  }
+</style>
+
+<script>
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+  import { VEHICLE_MODELS_3D, type VehicleModel3D, type MeshRegionDefinition } from '../data/vehicleModels3D';
+
+  const rootEl = document.getElementById('customizer-3d-root');
+  if (rootEl) {
+    init3DCustomizer(rootEl);
+  }
+
+  function init3DCustomizer(container: HTMLElement) {
+    const canvasContainer = container.querySelector<HTMLElement>('#canvas-container');
+    const loadingOverlay = container.querySelector<HTMLElement>('#loading-overlay');
+    const unavailableBanner = container.querySelector<HTMLElement>('#unavailable-banner');
+    const webglFallback = container.querySelector<HTMLElement>('#webgl-fallback');
+    const unavailTitle = container.querySelector<HTMLElement>('#unavail-title');
+    const unavailDesc = container.querySelector<HTMLElement>('#unavail-desc');
+    const unavailAttribution = container.querySelector<HTMLElement>('#unavail-attribution');
+    const btnLoadFallback = container.querySelector<HTMLButtonElement>('#btn-load-fallback');
+
+    const countrySelect = container.querySelector<HTMLSelectElement>('#select-country');
+    const modelSelect = container.querySelector<HTMLSelectElement>('#select-model');
+    const btnResetCam = container.querySelector<HTMLButtonElement>('#btn-reset-camera');
+    const btnExport = container.querySelector<HTMLButtonElement>('#btn-export-3d');
+
+    const hudMeshName = container.querySelector<HTMLElement>('#hud-mesh-name');
+    const hudColorDot = container.querySelector<HTMLElement>('#hud-color-dot');
+    const meshCountLabel = container.querySelector<HTMLElement>('#mesh-count-label');
+    const meshChipsContainer = container.querySelector<HTMLElement>('#mesh-chips-container');
+
+    const panelEditorTitle = container.querySelector<HTMLElement>('#panel-editor-title');
+    const picker3D = container.querySelector<HTMLInputElement>('#picker-3d');
+    const hex3D = container.querySelector<HTMLInputElement>('#hex-3d');
+    const btnCopyHex = container.querySelector<HTMLButtonElement>('#btn-copy-hex-3d');
+    const currentFinishTag = container.querySelector<HTMLElement>('#current-finish-tag');
+    const finishBtns = container.querySelectorAll<HTMLButtonElement>('.btn-finish-3d');
+    const sliderRoughness = container.querySelector<HTMLInputElement>('#slider-roughness');
+    const sliderMetalness = container.querySelector<HTMLInputElement>('#slider-metalness');
+    const roughnessVal = container.querySelector<HTMLElement>('#roughness-val');
+    const metalnessVal = container.querySelector<HTMLElement>('#metalness-val');
+
+    const rimPresets = container.querySelectorAll<HTMLButtonElement>('.btn-rim-preset');
+    const selectGlassTint = container.querySelector<HTMLSelectElement>('#select-glass-tint');
+
+    const btnResetPanel = container.querySelector<HTMLButtonElement>('#btn-reset-panel');
+    const btnResetAll = container.querySelector<HTMLButtonElement>('#btn-reset-all-3d');
+    const btnUndo = container.querySelector<HTMLButtonElement>('#btn-undo-3d');
+    const btnSaveConfig = container.querySelector<HTMLButtonElement>('#btn-save-config');
+
+    // WebGL Check
+    function isWebGLAvailable() {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      } catch (e) {
+        return false;
+      }
+    }
+
+    if (!isWebGLAvailable() || !canvasContainer) {
+      if (webglFallback) webglFallback.style.display = 'block';
+      return;
+    }
+
+    // Three.js Scene Setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0e1322);
+
+    const camera = new THREE.PerspectiveCamera(40, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 100);
+    camera.position.set(3.8, 1.8, 3.8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+    renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    canvasContainer.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent camera from going underneath ground
+    controls.minDistance = 2.0;
+    controls.maxDistance = 10.0;
+
+    // Studio Lighting Setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.7);
+    hemiLight.position.set(0, 20, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.6);
+    fillLight.position.set(-6, 6, -5);
+    scene.add(fillLight);
+
+    // Subtle Ground Grid & Shadow Plane
+    const groundGeom = new THREE.PlaneGeometry(30, 30);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x0b1020,
+      roughness: 0.9,
+      metalness: 0.1
+    });
+    const ground = new THREE.Mesh(groundGeom, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.01;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const gridHelper = new THREE.GridHelper(20, 20, 0x22d3ee, 0x1e293b);
+    gridHelper.position.y = 0;
+    scene.add(gridHelper);
+
+    // State Variables
+    let currentModel: VehicleModel3D = VEHICLE_MODELS_3D[0];
+    let loadedObject: THREE.Object3D | null = null;
+    let selectedPanelDef: MeshRegionDefinition | null = null;
+    let selectedMesh: THREE.Mesh | null = null;
+
+    // Per-vehicle configuration storage
+    // { [modelId]: { [regionId]: { color: string, finish: string, roughness: number, metalness: number } } }
+    const modelConfigurations: Record<string, Record<string, { color: string; finish: string; roughness: number; metalness: number }>> = {};
+
+    // Undo / Redo Stack
+    const undoStack: string[] = [];
+
+    // Parse URL Query Params for initial color and model
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramModel = urlParams.get('model');
+    const paramColor = urlParams.get('color');
+    const paramName = urlParams.get('name');
+
+    if (paramModel) {
+      const found = VEHICLE_MODELS_3D.find((m) => m.id === paramModel);
+      if (found) currentModel = found;
+    }
+
+    let defaultInitialColor = paramColor || container.dataset.initialColor || '#3B82F6';
+    if (!defaultInitialColor.startsWith('#')) defaultInitialColor = '#' + defaultInitialColor;
+
+    // Raycaster for 3D Panel Clicking
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      if (!loadedObject) return;
+
+      const intersects = raycaster.intersectObjects(loadedObject.children, true);
+      for (const hit of intersects) {
+        const obj = hit.object;
+        if (obj instanceof THREE.Mesh) {
+          // Check if this mesh is in namedBodyMeshes
+          const panelDef = currentModel.namedBodyMeshes.find((p) => p.meshName === obj.name);
+          if (panelDef) {
+            selectPanel(panelDef);
+            break;
+          }
+        }
+      }
+    });
+
+    // Helper: Get or Init configuration for current model
+    function getModelConfig() {
+      if (!modelConfigurations[currentModel.id]) {
+        const saved = localStorage.getItem(`colorcode_3d_${currentModel.id}`);
+        if (saved) {
+          try {
+            modelConfigurations[currentModel.id] = JSON.parse(saved);
+          } catch (e) {}
+        }
+        if (!modelConfigurations[currentModel.id]) {
+          const cfg: Record<string, { color: string; finish: string; roughness: number; metalness: number }> = {};
+          currentModel.namedBodyMeshes.forEach((p) => {
+            cfg[p.id] = {
+              color: p.defaultColor || currentModel.defaultColor || defaultInitialColor,
+              finish: p.defaultFinish || 'glossy',
+              roughness: 0.25,
+              metalness: 0.6
+            };
+          });
+          modelConfigurations[currentModel.id] = cfg;
+        }
+      }
+      return modelConfigurations[currentModel.id];
+    }
+
+    function recordState() {
+      const snap = JSON.stringify(getModelConfig());
+      undoStack.push(snap);
+      if (undoStack.length > 30) undoStack.shift();
+    }
+
+    // Material finish presets
+    function applyFinishToMaterial(mat: THREE.MeshStandardMaterial, finish: string, roughness?: number, metalness?: number) {
+      if (finish === 'glossy') {
+        mat.roughness = roughness !== undefined ? roughness : 0.2;
+        mat.metalness = metalness !== undefined ? metalness : 0.65;
+      } else if (finish === 'metallic') {
+        mat.roughness = roughness !== undefined ? roughness : 0.22;
+        mat.metalness = metalness !== undefined ? metalness : 0.92;
+      } else if (finish === 'satin') {
+        mat.roughness = roughness !== undefined ? roughness : 0.45;
+        mat.metalness = metalness !== undefined ? metalness : 0.35;
+      } else if (finish === 'matte') {
+        mat.roughness = roughness !== undefined ? roughness : 0.82;
+        mat.metalness = metalness !== undefined ? metalness : 0.08;
+      }
+      mat.needsUpdate = true;
+    }
+
+    // Load Model function
+    const loader = new GLTFLoader();
+
+    function loadVehicleModel(model: VehicleModel3D) {
+      currentModel = model;
+
+      // Handle License Pending / Unavailable State
+      if (model.status !== 'available' || !model.glbUrl) {
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (unavailableBanner) {
+          unavailableBanner.style.display = 'flex';
+          if (unavailTitle) unavailTitle.textContent = `${model.manufacturer} ${model.modelName} (3D Asset Pending)`;
+          if (unavailAttribution) unavailAttribution.textContent = `Licensing Notice: ${model.sourceAttribution} — License Status: ${model.license}`;
+        }
+        return;
+      }
+
+      if (unavailableBanner) unavailableBanner.style.display = 'none';
+      if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+      // Remove previously loaded object
+      if (loadedObject) {
+        scene.remove(loadedObject);
+        loadedObject = null;
+      }
+
+      loader.load(
+        model.glbUrl,
+        (gltf) => {
+          if (loadingOverlay) loadingOverlay.style.display = 'none';
+          const obj = gltf.scene;
+          loadedObject = obj;
+          scene.add(obj);
+
+          // Position Camera
+          camera.position.set(...model.cameraPosition);
+          controls.target.set(0, 0.7, 0);
+          controls.update();
+
+          // Apply saved panel configuration
+          const cfg = getModelConfig();
+
+          obj.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+
+              // Check if mesh is a body mesh
+              const panelDef = model.namedBodyMeshes.find((p) => p.meshName === child.name);
+              if (panelDef) {
+                // Ensure unique cloned material
+                child.material = (child.material as THREE.Material).clone();
+                const m = child.material as THREE.MeshStandardMaterial;
+                const panelCfg = cfg[panelDef.id];
+                if (panelCfg) {
+                  m.color.set(panelCfg.color);
+                  applyFinishToMaterial(m, panelCfg.finish, panelCfg.roughness, panelCfg.metalness);
+                }
+              }
+            }
+          });
+
+          // Render panel chips
+          renderMeshChips();
+
+          // Select first panel by default
+          if (model.namedBodyMeshes.length > 0) {
+            selectPanel(model.namedBodyMeshes[0]);
+          }
+        },
+        undefined,
+        (err) => {
+          if (loadingOverlay) loadingOverlay.style.display = 'none';
+          console.error('Failed to load 3D GLB model:', err);
+        }
+      );
+    }
+
+    // Render Panel Chips UI
+    function renderMeshChips() {
+      if (!meshChipsContainer) return;
+      meshChipsContainer.innerHTML = '';
+      if (meshCountLabel) meshCountLabel.textContent = `${currentModel.namedBodyMeshes.length} Independent Panels`;
+
+      const cfg = getModelConfig();
+
+      currentModel.namedBodyMeshes.forEach((panel) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `mesh-chip ${selectedPanelDef?.id === panel.id ? 'is-active' : ''}`;
+        btn.dataset.panelId = panel.id;
+
+        const panelCfg = cfg[panel.id];
+        const color = panelCfg?.color || currentModel.defaultColor;
+
+        btn.innerHTML = `
+          <span class="mesh-chip-dot" style="background:${color};"></span>
+          <span>${panel.name}</span>
+        `;
+
+        btn.addEventListener('click', () => {
+          selectPanel(panel);
+        });
+
+        meshChipsContainer.appendChild(btn);
+      });
+    }
+
+    // Select Panel
+    function selectPanel(panelDef: MeshRegionDefinition) {
+      selectedPanelDef = panelDef;
+
+      // Find mesh in scene
+      if (loadedObject) {
+        selectedMesh = null;
+        loadedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.name === panelDef.meshName) {
+            selectedMesh = child;
+          }
+        });
+      }
+
+      // Update HUD
+      const cfg = getModelConfig();
+      const panelCfg = cfg[panelDef.id] || { color: currentModel.defaultColor, finish: 'glossy', roughness: 0.25, metalness: 0.6 };
+
+      if (hudMeshName) hudMeshName.textContent = `Selected: ${panelDef.name}`;
+      if (hudColorDot) hudColorDot.style.background = panelCfg.color;
+      if (panelEditorTitle) panelEditorTitle.textContent = `Panel Color: ${panelDef.name}`;
+
+      if (picker3D) picker3D.value = panelCfg.color;
+      if (hex3D) hex3D.value = panelCfg.color;
+      if (currentFinishTag) currentFinishTag.textContent = panelCfg.finish.toUpperCase();
+
+      finishBtns.forEach((b) => {
+        b.className = b.dataset.finish === panelCfg.finish ? 'button button-small button-primary btn-finish-3d' : 'button button-small button-secondary btn-finish-3d';
+      });
+
+      if (sliderRoughness) sliderRoughness.value = String(Math.round(panelCfg.roughness * 100));
+      if (sliderMetalness) sliderMetalness.value = String(Math.round(panelCfg.metalness * 100));
+      if (roughnessVal) roughnessVal.textContent = `${Math.round(panelCfg.roughness * 100)}%`;
+      if (metalnessVal) metalnessVal.textContent = `${Math.round(panelCfg.metalness * 100)}%`;
+
+      // Update chip active classes
+      const chips = container.querySelectorAll<HTMLButtonElement>('.mesh-chip');
+      chips.forEach((c) => {
+        c.classList.toggle('is-active', c.dataset.panelId === panelDef.id);
+      });
+    }
+
+    // Apply color to selected panel
+    function updateSelectedPanelColor(hex: string) {
+      if (!selectedPanelDef || !selectedMesh) return;
+      recordState();
+
+      const cfg = getModelConfig();
+      if (!cfg[selectedPanelDef.id]) {
+        cfg[selectedPanelDef.id] = { color: hex, finish: 'glossy', roughness: 0.25, metalness: 0.6 };
+      } else {
+        cfg[selectedPanelDef.id].color = hex;
+      }
+
+      const mat = selectedMesh.material as THREE.MeshStandardMaterial;
+      mat.color.set(hex);
+      mat.needsUpdate = true;
+
+      if (hudColorDot) hudColorDot.style.background = hex;
+      if (picker3D) picker3D.value = hex;
+      if (hex3D) hex3D.value = hex;
+
+      // Update chip dot
+      const chip = container.querySelector<HTMLButtonElement>(`.mesh-chip[data-panel-id="${selectedPanelDef.id}"] .mesh-chip-dot`);
+      if (chip) chip.style.background = hex;
+
+      localStorage.setItem(`colorcode_3d_${currentModel.id}`, JSON.stringify(cfg));
+    }
+
+    // Apply finish to selected panel
+    function updateSelectedPanelFinish(finish: string) {
+      if (!selectedPanelDef || !selectedMesh) return;
+      recordState();
+
+      const cfg = getModelConfig();
+      if (!cfg[selectedPanelDef.id]) {
+        cfg[selectedPanelDef.id] = { color: currentModel.defaultColor, finish, roughness: 0.25, metalness: 0.6 };
+      } else {
+        cfg[selectedPanelDef.id].finish = finish;
+      }
+
+      const mat = selectedMesh.material as THREE.MeshStandardMaterial;
+      applyFinishToMaterial(mat, finish);
+
+      cfg[selectedPanelDef.id].roughness = mat.roughness;
+      cfg[selectedPanelDef.id].metalness = mat.metalness;
+
+      if (currentFinishTag) currentFinishTag.textContent = finish.toUpperCase();
+      if (sliderRoughness) sliderRoughness.value = String(Math.round(mat.roughness * 100));
+      if (sliderMetalness) sliderMetalness.value = String(Math.round(mat.metalness * 100));
+      if (roughnessVal) roughnessVal.textContent = `${Math.round(mat.roughness * 100)}%`;
+      if (metalnessVal) metalnessVal.textContent = `${Math.round(mat.metalness * 100)}%`;
+
+      finishBtns.forEach((b) => {
+        b.className = b.dataset.finish === finish ? 'button button-small button-primary btn-finish-3d' : 'button button-small button-secondary btn-finish-3d';
+      });
+
+      localStorage.setItem(`colorcode_3d_${currentModel.id}`, JSON.stringify(cfg));
+    }
+
+    // Event Listeners for Pickers
+    picker3D?.addEventListener('input', (e) => {
+      const hex = (e.target as HTMLInputElement).value;
+      updateSelectedPanelColor(hex);
+    });
+
+    hex3D?.addEventListener('change', (e) => {
+      let val = (e.target as HTMLInputElement).value.trim();
+      if (!val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        updateSelectedPanelColor(val);
+      }
+    });
+
+    btnCopyHex?.addEventListener('click', () => {
+      if (hex3D?.value) {
+        navigator.clipboard.writeText(hex3D.value).then(() => {
+          btnCopyHex.textContent = 'Copied!';
+          setTimeout(() => (btnCopyHex.textContent = 'Copy'), 1500);
+        });
+      }
+    });
+
+    // Preset Swatches
+    const presetSwatches = container.querySelectorAll<HTMLButtonElement>('.preset-swatch-3d');
+    presetSwatches.forEach((swatch) => {
+      swatch.addEventListener('click', () => {
+        const hex = swatch.dataset.hex;
+        if (hex) updateSelectedPanelColor(hex);
+      });
+    });
+
+    // Finish Buttons
+    finishBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const finish = btn.dataset.finish;
+        if (finish) updateSelectedPanelFinish(finish);
+      });
+    });
+
+    // Sliders
+    sliderRoughness?.addEventListener('input', (e) => {
+      const val = Number((e.target as HTMLInputElement).value) / 100;
+      if (roughnessVal) roughnessVal.textContent = `${Math.round(val * 100)}%`;
+      if (selectedPanelDef && selectedMesh) {
+        const mat = selectedMesh.material as THREE.MeshStandardMaterial;
+        mat.roughness = val;
+        mat.needsUpdate = true;
+        const cfg = getModelConfig();
+        if (cfg[selectedPanelDef.id]) cfg[selectedPanelDef.id].roughness = val;
+      }
+    });
+
+    sliderMetalness?.addEventListener('input', (e) => {
+      const val = Number((e.target as HTMLInputElement).value) / 100;
+      if (metalnessVal) metalnessVal.textContent = `${Math.round(val * 100)}%`;
+      if (selectedPanelDef && selectedMesh) {
+        const mat = selectedMesh.material as THREE.MeshStandardMaterial;
+        mat.metalness = val;
+        mat.needsUpdate = true;
+        const cfg = getModelConfig();
+        if (cfg[selectedPanelDef.id]) cfg[selectedPanelDef.id].metalness = val;
+      }
+    });
+
+    // Wheel Rim Presets
+    rimPresets.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const rimType = btn.dataset.rim;
+        if (!loadedObject) return;
+        const rimColor = rimType === 'silver' ? 0xe2e8f0 : rimType === 'bronze' ? 0xb45309 : rimType === 'black' ? 0x0f172a : 0xeab308;
+        loadedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.name.includes('rim')) {
+            const m = child.material as THREE.MeshStandardMaterial;
+            m.color.setHex(rimColor);
+            m.metalness = rimType === 'bronze' ? 0.6 : 0.9;
+            m.roughness = 0.25;
+            m.needsUpdate = true;
+          }
+        });
+      });
+    });
+
+    // Glass Tint Selector
+    selectGlassTint?.addEventListener('change', (e) => {
+      const val = (e.target as HTMLSelectElement).value;
+      if (!loadedObject) return;
+      const opacity = val === 'light' ? 0.45 : val === 'medium' ? 0.7 : 0.9;
+      loadedObject.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.name.includes('glass')) {
+          const m = child.material as THREE.MeshPhysicalMaterial;
+          m.opacity = opacity;
+          m.needsUpdate = true;
+        }
+      });
+    });
+
+    // Country Filter
+    countrySelect?.addEventListener('change', (e) => {
+      const country = (e.target as HTMLSelectElement).value;
+      if (!modelSelect) return;
+      modelSelect.innerHTML = '';
+
+      const filtered = country === 'All Countries' ? VEHICLE_MODELS_3D : VEHICLE_MODELS_3D.filter((m) => m.country === country);
+
+      filtered.forEach((m) => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.manufacturer} - ${m.modelName} (${m.yearGeneration}) ${m.status === 'available' ? '✓ 3D' : '⏳ Pending'}`;
+        opt.selected = m.id === currentModel.id;
+        modelSelect.appendChild(opt);
+      });
+
+      if (filtered.length > 0) {
+        loadVehicleModel(filtered[0]);
+      }
+    });
+
+    // Model Select
+    modelSelect?.addEventListener('change', (e) => {
+      const id = (e.target as HTMLSelectElement).value;
+      const found = VEHICLE_MODELS_3D.find((m) => m.id === id);
+      if (found) loadVehicleModel(found);
+    });
+
+    // Reset Camera
+    btnResetCam?.addEventListener('click', () => {
+      camera.position.set(...currentModel.cameraPosition);
+      controls.target.set(0, 0.7, 0);
+      controls.update();
+    });
+
+    // Load Fallback Prototype
+    btnLoadFallback?.addEventListener('click', () => {
+      const fallback = VEHICLE_MODELS_3D.find((m) => m.status === 'available') || VEHICLE_MODELS_3D[0];
+      if (modelSelect) modelSelect.value = fallback.id;
+      loadVehicleModel(fallback);
+    });
+
+    // Reset Single Panel
+    btnResetPanel?.addEventListener('click', () => {
+      if (!selectedPanelDef || !selectedMesh) return;
+      recordState();
+      const defaultHex = selectedPanelDef.defaultColor || currentModel.defaultColor;
+      const defaultFinish = selectedPanelDef.defaultFinish || 'glossy';
+
+      const cfg = getModelConfig();
+      cfg[selectedPanelDef.id] = { color: defaultHex, finish: defaultFinish, roughness: 0.25, metalness: 0.6 };
+
+      const mat = selectedMesh.material as THREE.MeshStandardMaterial;
+      mat.color.set(defaultHex);
+      applyFinishToMaterial(mat, defaultFinish);
+
+      selectPanel(selectedPanelDef);
+      renderMeshChips();
+      localStorage.setItem(`colorcode_3d_${currentModel.id}`, JSON.stringify(cfg));
+    });
+
+    // Reset All Panels
+    btnResetAll?.addEventListener('click', () => {
+      recordState();
+      const cfg: Record<string, { color: string; finish: string; roughness: number; metalness: number }> = {};
+      currentModel.namedBodyMeshes.forEach((p) => {
+        cfg[p.id] = {
+          color: p.defaultColor || currentModel.defaultColor,
+          finish: p.defaultFinish || 'glossy',
+          roughness: 0.25,
+          metalness: 0.6
+        };
+      });
+      modelConfigurations[currentModel.id] = cfg;
+
+      if (loadedObject) {
+        loadedObject.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            const panelDef = currentModel.namedBodyMeshes.find((p) => p.meshName === child.name);
+            if (panelDef) {
+              const m = child.material as THREE.MeshStandardMaterial;
+              m.color.set(cfg[panelDef.id].color);
+              applyFinishToMaterial(m, cfg[panelDef.id].finish);
+            }
+          }
+        });
+      }
+
+      if (selectedPanelDef) selectPanel(selectedPanelDef);
+      renderMeshChips();
+      localStorage.removeItem(`colorcode_3d_${currentModel.id}`);
+    });
+
+    // Undo
+    btnUndo?.addEventListener('click', () => {
+      if (undoStack.length === 0) return;
+      const prev = undoStack.pop();
+      if (!prev) return;
+      try {
+        const cfg = JSON.parse(prev);
+        modelConfigurations[currentModel.id] = cfg;
+
+        if (loadedObject) {
+          loadedObject.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              const panelDef = currentModel.namedBodyMeshes.find((p) => p.meshName === child.name);
+              if (panelDef && cfg[panelDef.id]) {
+                const m = child.material as THREE.MeshStandardMaterial;
+                m.color.set(cfg[panelDef.id].color);
+                applyFinishToMaterial(m, cfg[panelDef.id].finish, cfg[panelDef.id].roughness, cfg[panelDef.id].metalness);
+              }
+            }
+          });
+        }
+        if (selectedPanelDef) selectPanel(selectedPanelDef);
+        renderMeshChips();
+      } catch (e) {}
+    });
+
+    // Save Configuration
+    btnSaveConfig?.addEventListener('click', () => {
+      const cfg = getModelConfig();
+      localStorage.setItem(`colorcode_3d_${currentModel.id}`, JSON.stringify(cfg));
+      btnSaveConfig.textContent = 'Saved! ✓';
+      setTimeout(() => (btnSaveConfig.textContent = '💾 Save Configuration'), 1500);
+    });
+
+    // Screenshot Export
+    btnExport?.addEventListener('click', () => {
+      renderer.render(scene, camera);
+      const dataUrl = renderer.domElement.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `3d-${currentModel.id}-custom.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    // Initial Load
+    loadVehicleModel(currentModel);
+
+    // Responsive Resize Handler
+    function handleResize() {
+      if (!canvasContainer) return;
+      const width = canvasContainer.clientWidth;
+      const height = canvasContainer.clientHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Animation Loop with Idle Optimization
+    let animationFrameId: number;
+    function animate() {
+      animationFrameId = requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  }
+</script>
